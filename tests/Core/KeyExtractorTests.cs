@@ -1,6 +1,7 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Models;
 using Kafka.Ksql.Linq.Serialization.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Xunit;
