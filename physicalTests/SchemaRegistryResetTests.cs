@@ -1,0 +1,58 @@
+using System;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace Kafka.Ksql.Linq.Tests.Integration;
+
+public class SchemaRegistryResetTests
+{
+    private static readonly HttpClient Http = new();
+
+    [KsqlDbFact]
+    [Trait("Category", "Integration")]
+    public async Task Setup_ShouldRegisterAllSchemas()
+    {
+        await TestEnvironment.ResetAsync();
+
+        var subjects = await Http.GetFromJsonAsync<string[]>("http://localhost:8081/subjects");
+        Assert.NotNull(subjects);
+
+        foreach (var table in TestSchema.AllTopicNames)
+        {
+            Assert.Contains($"{table}-value", subjects);
+            Assert.Contains($"{table}-key", subjects);
+        }
+        Assert.Contains("source-value", subjects);
+    }
+
+    [KsqlDbFact]
+    [Trait("Category", "Integration")]
+    public async Task DuplicateSchemaRegistration_ShouldSucceed()
+    {
+        await TestEnvironment.ResetAsync();
+
+        var latest = await Http.GetFromJsonAsync<JsonElement>("http://localhost:8081/subjects/orders-value/versions/latest");
+        var schema = latest.GetProperty("schema").GetString();
+        var resp = await Http.PostAsJsonAsync("http://localhost:8081/subjects/orders-value/versions", new { schema });
+        resp.EnsureSuccessStatusCode();
+    }
+
+    [KsqlDbFact]
+    [Trait("Category", "Integration")]
+    public async Task UpperCaseSubjects_ShouldNotExist()
+    {
+        await TestEnvironment.ResetAsync();
+        var subjects = await Http.GetFromJsonAsync<string[]>("http://localhost:8081/subjects");
+        Assert.NotNull(subjects);
+
+        foreach (var table in TestSchema.AllTopicNames)
+        {
+            Assert.DoesNotContain($"{table.ToUpperInvariant()}-value", subjects);
+            Assert.DoesNotContain($"{table.ToUpperInvariant()}-key", subjects);
+        }
+    }
+}

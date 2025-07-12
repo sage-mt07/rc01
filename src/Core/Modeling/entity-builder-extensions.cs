@@ -1,0 +1,186 @@
+using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Modeling;
+using Kafka.Ksql.Linq.Query.Abstractions;
+using Kafka.Ksql.Linq.Query.Schema;
+using System;
+using System.Linq;
+using System.Linq.Expressions;
+
+namespace Kafka.Ksql.Linq.Core.Modeling;
+
+/// <summary>
+/// EntityBuilderにクエリ定義機能を追加する拡張メソッド
+/// </summary>
+public static class EntityBuilderQueryExtensions
+{
+    /// <summary>
+    /// LINQ式からKey/Value構造を自動抽出してエンティティを設定
+    /// </summary>
+    public static EntityModelBuilder<T> HasQuery<T, TSource>(
+        this EntityModelBuilder<T> builder,
+        Expression<Func<IQueryable<TSource>, IQueryable<T>>> queryExpression)
+        where T : class
+        where TSource : class
+    {
+        // クエリ解析
+        var result = Kafka.Ksql.Linq.Query.Analysis.QueryAnalyzer.AnalyzeQuery(queryExpression);
+        
+        if (!result.Success || result.Schema == null)
+        {
+            throw new InvalidOperationException($"Query analysis failed: {result.ErrorMessage}");
+        }
+
+        var schema = result.Schema;
+        var entityModel = builder.GetModel();
+
+        // Key設定
+        if (schema.KeyProperties.Length > 0)
+        {
+            entityModel.KeyProperties = schema.KeyProperties;
+        }
+
+        // Topic名設定（未設定の場合）
+        if (entityModel.TopicName == null)
+        {
+            entityModel.TopicName = schema.TopicName.ToLowerInvariant();
+        }
+
+        // Stream/Table判定
+        if (schema.IsKeyless)
+        {
+            entityModel.SetStreamTableType(Query.Abstractions.StreamTableType.Stream);
+        }
+        else
+        {
+            entityModel.SetStreamTableType(Query.Abstractions.StreamTableType.Table);
+        }
+
+        // QuerySchemaをメタデータとして保存
+        StoreQuerySchema(entityModel, schema);
+
+        return builder;
+    }
+
+    /// <summary>
+    /// IEntityBuilder<T>用のHasQuery拡張メソッド
+    /// </summary>
+    public static EntityModelBuilder<T> HasQuery<T, TSource>(
+        this IEntityBuilder<T> builder,
+        Expression<Func<IQueryable<TSource>, IQueryable<T>>> queryExpression)
+        where T : class
+        where TSource : class
+    {
+        if (builder is not EntityModelBuilder<T> concreteBuilder)
+            throw new ArgumentException("Builder must be EntityModelBuilder<T>", nameof(builder));
+            
+        return concreteBuilder.HasQuery(queryExpression);
+    }
+
+    /// <summary>
+    /// キー抽出設定付きクエリ定義
+    /// </summary>
+    public static EntityModelBuilder<T> HasQuery<T, TSource>(
+        this EntityModelBuilder<T> builder,
+        Expression<Func<IQueryable<TSource>, IQueryable<T>>> queryExpression,
+        bool autoKeyExtraction = true)
+        where T : class
+        where TSource : class
+    {
+        return builder.HasQuery(queryExpression);
+    }
+
+    /// <summary>
+    /// クエリビルダーを使用した詳細設定
+    /// </summary>
+    public static EntityModelBuilder<T> HasQuery<T>(
+        this EntityModelBuilder<T> builder,
+        Action<IQueryBuilder<T>> configureQuery)
+        where T : class
+    {
+        var queryBuilder = new QueryBuilder<T>();
+        configureQuery(queryBuilder);
+
+        var schema = queryBuilder.GetSchema();
+        if (!schema.IsValid)
+        {
+            throw new InvalidOperationException($"Query configuration invalid: {string.Join(", ", schema.Errors)}");
+        }
+
+        var entityModel = builder.GetModel();
+
+        // スキーマ情報をEntityModelに適用
+        ApplySchemaToEntityModel(entityModel, schema);
+
+        return builder;
+    }
+
+    /// <summary>
+    /// EntityModelにQuerySchemaを適用
+    /// </summary>
+    private static void ApplySchemaToEntityModel(EntityModel entityModel, QuerySchema schema)
+    {
+        // Key設定
+        if (schema.KeyProperties.Length > 0)
+        {
+            entityModel.KeyProperties = schema.KeyProperties;
+        }
+
+        // Topic名設定
+        if (entityModel.TopicName == null && !string.IsNullOrEmpty(schema.TopicName))
+        {
+            entityModel.TopicName = schema.TopicName.ToLowerInvariant();
+        }
+
+        // Stream/Table設定
+        var streamTableType = schema.IsKeyless 
+            ? Query.Abstractions.StreamTableType.Stream 
+            : Query.Abstractions.StreamTableType.Table;
+        entityModel.SetStreamTableType(streamTableType);
+
+        StoreQuerySchema(entityModel, schema);
+    }
+
+    /// <summary>
+    /// QuerySchemaをEntityModelのメタデータとして保存
+    /// </summary>
+    private static void StoreQuerySchema(EntityModel entityModel, QuerySchema schema)
+    {
+        // ValidationResultのWarningsにQuerySchema情報を保存
+        // （既存のEntityModel構造を変更せずに情報を保持）
+        entityModel.ValidationResult ??= new ValidationResult { IsValid = true, Warnings = new() };
+        
+        var schemaInfo = $"QuerySchema:Source={schema.SourceType.Name},Target={schema.TargetType.Name}," +
+                        $"Keys={schema.KeyProperties.Length},Type={schema.GetStreamTableType()}";
+        
+        entityModel.ValidationResult.Warnings.Add(schemaInfo);
+    }
+}
+
+/// <summary>
+/// ModelBuilderにクエリ定義用ヘルパーメソッドを追加
+/// </summary>
+public static class ModelBuilderQueryExtensions
+{
+    /// <summary>
+    /// クエリベースのエンティティ定義を開始
+    /// </summary>
+    public static EntityModelBuilder<T> DefineQuery<T>(this IModelBuilder modelBuilder)
+        where T : class
+    {
+        var entityBuilder = modelBuilder.Entity<T>();
+        return (EntityModelBuilder<T>)entityBuilder;
+    }
+
+    /// <summary>
+    /// ソース型からターゲット型へのクエリ定義
+    /// </summary>
+    public static EntityModelBuilder<TTarget> DefineQuery<TSource, TTarget>(
+        this IModelBuilder modelBuilder,
+        Expression<Func<IQueryable<TSource>, IQueryable<TTarget>>> queryExpression)
+        where TSource : class
+        where TTarget : class
+    {
+        var entityBuilder = (EntityModelBuilder<TTarget>)modelBuilder.Entity<TTarget>();
+        return entityBuilder.HasQuery(queryExpression);
+    }
+}

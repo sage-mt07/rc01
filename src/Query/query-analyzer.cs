@@ -1,0 +1,183 @@
+using Kafka.Ksql.Linq.Query.Schema;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+
+namespace Kafka.Ksql.Linq.Query.Analysis;
+
+/// <summary>
+/// LINQ式からQuerySchemaを抽出する解析エンジン
+/// </summary>
+public static class QueryAnalyzer
+{
+    /// <summary>
+    /// LINQ式を解析してQuerySchemaを生成
+    /// </summary>
+    public static QuerySchemaResult AnalyzeQuery<TSource, TTarget>(
+        Expression<Func<IQueryable<TSource>, IQueryable<TTarget>>> queryExpression)
+        where TSource : class
+        where TTarget : class
+    {
+        try
+        {
+            var visitor = new QueryAnalysisVisitor();
+            visitor.Visit(queryExpression.Body);
+
+            var schema = new QuerySchema
+            {
+                SourceType = typeof(TSource),
+                TargetType = typeof(TTarget),
+                TopicName = typeof(TTarget).Name.ToLowerInvariant()
+            };
+
+            // GroupBy解析
+            if (visitor.GroupByExpression != null)
+            {
+                schema.KeyProperties = ExtractKeyProperties(visitor.GroupByExpression);
+            }
+
+            // Select解析でValueプロパティ取得
+            schema.ValueProperties = GetAllProperties<TTarget>();
+
+            // 検証
+            var validationResult = ValidateSchema(schema);
+            schema.IsValid = validationResult.Success;
+            schema.Errors = validationResult.Errors;
+
+            return QuerySchemaResult.CreateSuccess(schema);
+        }
+        catch (Exception ex)
+        {
+            return QuerySchemaResult.Failure($"Query analysis failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// GroupBy式からキープロパティを抽出
+    /// </summary>
+    private static PropertyInfo[] ExtractKeyProperties(Expression groupByExpression)
+    {
+        if (groupByExpression is UnaryExpression unary &&
+            unary.NodeType == ExpressionType.Quote &&
+            unary.Operand is LambdaExpression quoted)
+        {
+            return ExtractPropertiesFromExpression(quoted.Body);
+        }
+
+        if (groupByExpression is LambdaExpression lambda)
+        {
+            return ExtractPropertiesFromExpression(lambda.Body);
+        }
+
+        return Array.Empty<PropertyInfo>();
+    }
+
+    /// <summary>
+    /// 式からプロパティ情報を抽出
+    /// </summary>
+    private static PropertyInfo[] ExtractPropertiesFromExpression(Expression expression)
+    {
+        var properties = new List<PropertyInfo>();
+
+        switch (expression)
+        {
+            case MemberExpression member when member.Member is PropertyInfo prop:
+                properties.Add(prop);
+                break;
+
+            case NewExpression newExpr:
+                foreach (var arg in newExpr.Arguments)
+                {
+                    if (arg is MemberExpression memberArg && memberArg.Member is PropertyInfo propArg)
+                    {
+                        properties.Add(propArg);
+                    }
+                }
+                break;
+
+            case UnaryExpression unary:
+                return ExtractPropertiesFromExpression(unary.Operand);
+        }
+
+        return properties.ToArray();
+    }
+
+    /// <summary>
+    /// 型の全プロパティを取得
+    /// </summary>
+    private static PropertyInfo[] GetAllProperties<T>() where T : class
+    {
+        return typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+    }
+
+    /// <summary>
+    /// スキーマの検証
+    /// </summary>
+    private static (bool Success, List<string> Errors) ValidateSchema(QuerySchema schema)
+    {
+        var errors = new List<string>();
+
+        // ソース・ターゲット型チェック
+        if (schema.SourceType == null)
+            errors.Add("Source type is required");
+        if (schema.TargetType == null)
+            errors.Add("Target type is required");
+
+        // キープロパティの型チェック
+        foreach (var keyProp in schema.KeyProperties)
+        {
+            if (!IsSupportedKeyType(keyProp.PropertyType))
+            {
+                errors.Add($"Key property {keyProp.Name} has unsupported type {keyProp.PropertyType.Name}");
+            }
+        }
+
+        return (errors.Count == 0, errors);
+    }
+
+    /// <summary>
+    /// サポートされるキー型かチェック
+    /// </summary>
+    private static bool IsSupportedKeyType(Type type)
+    {
+        var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+        return underlyingType == typeof(string) ||
+               underlyingType == typeof(int) ||
+               underlyingType == typeof(long) ||
+               underlyingType == typeof(Guid);
+    }
+}
+
+/// <summary>
+/// クエリ解析用Visitor
+/// </summary>
+internal class QueryAnalysisVisitor : ExpressionVisitor
+{
+    public Expression? GroupByExpression { get; private set; }
+    public Expression? SelectExpression { get; private set; }
+    public bool HasWindow { get; private set; }
+
+    protected override Expression VisitMethodCall(MethodCallExpression node)
+    {
+        switch (node.Method.Name)
+        {
+            case "GroupBy":
+                if (node.Arguments.Count >= 2)
+                    GroupByExpression = node.Arguments[1];
+                break;
+
+            case "Select":
+                if (node.Arguments.Count >= 2)
+                    SelectExpression = node.Arguments[1];
+                break;
+
+            case "Window":
+                HasWindow = true;
+                break;
+        }
+
+        return base.VisitMethodCall(node);
+    }
+}

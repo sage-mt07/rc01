@@ -1,0 +1,95 @@
+using System;
+using System.Linq;
+using System.Linq.Expressions;
+using Kafka.Ksql.Linq.Query.Analysis;
+using Kafka.Ksql.Linq.Application;
+using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Modeling;
+using Xunit;
+
+namespace Kafka.Ksql.Linq.Tests.Query;
+
+public class QueryAnalyzerTests
+{
+    private class ApiMessage
+    {
+        public string Category { get; set; } = string.Empty;
+    }
+
+    private class CategoryCount
+    {
+        public string Key { get; set; } = string.Empty;
+        public long Count { get; set; }
+    }
+
+    [Fact]
+    public void AnalyzeQuery_GroupBySelect_ReturnsValidSchema()
+    {
+        Expression<Func<IQueryable<ApiMessage>, IQueryable<CategoryCount>>> query = q =>
+            q.GroupBy(m => m.Category)
+             .Select(g => new CategoryCount { Key = g.Key, Count = g.Count() });
+
+        var result = QueryAnalyzer.AnalyzeQuery<ApiMessage, CategoryCount>(query);
+        Assert.True(result.Success);
+        Assert.NotNull(result.Schema);
+        var schema = result.Schema!;
+        Assert.True(schema.IsValid);
+        Assert.Equal(typeof(ApiMessage), schema.SourceType);
+        Assert.Equal(typeof(CategoryCount), schema.TargetType);
+        Assert.Single(schema.KeyProperties);
+        Assert.Equal(nameof(ApiMessage.Category), schema.KeyProperties[0].Name);
+        Assert.Equal(2, schema.ValueProperties.Length);
+    }
+
+    [Fact]
+    public void AnalyzeQuery_NoGroupBy_KeylessSchema()
+    {
+        Expression<Func<IQueryable<ApiMessage>, IQueryable<ApiMessage>>> query = q => q.Select(x => x);
+
+        var result = QueryAnalyzer.AnalyzeQuery<ApiMessage, ApiMessage>(query);
+        Assert.True(result.Success);
+        var schema = result.Schema!;
+        Assert.True(schema.IsValid);
+        Assert.Empty(schema.KeyProperties);
+    }
+
+    [Fact]
+    public void AnalyzeQuery_UnsupportedKeyType_FailsValidation()
+    {
+        Expression<Func<IQueryable<TestEntity>, IQueryable<CategoryCount>>> query = q =>
+            q.GroupBy(e => e.IsActive)
+             .Select(g => new CategoryCount { Key = g.Key.ToString(), Count = g.Count() });
+
+        var result = QueryAnalyzer.AnalyzeQuery<TestEntity, CategoryCount>(query);
+        Assert.True(result.Success);
+        var schema = result.Schema!;
+        Assert.False(schema.IsValid);
+        Assert.Contains(schema.Errors, e => e.Contains("unsupported"));
+    }
+
+    private class TestContext : KsqlContext
+    {
+        public TestContext() : base() { }
+        protected override bool SkipSchemaRegistration => true;
+
+        protected override void OnModelCreating(IModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ApiMessage>();
+            modelBuilder.Entity<CategoryCount>()
+                .HasQuery<CategoryCount, ApiMessage>(q =>
+                    q.GroupBy(m => m.Category)
+                     .Select(g => new CategoryCount { Key = g.Key, Count = g.Count() }));
+        }
+    }
+
+    [Fact]
+    public void GetQuerySchema_ReturnsStoredSchema()
+    {
+        var ctx = new TestContext();
+        var schema = ctx.GetQuerySchema<CategoryCount>();
+        Assert.NotNull(schema);
+        Assert.True(schema!.IsValid);
+        Assert.Single(schema.KeyProperties);
+        Assert.Equal(nameof(ApiMessage.Category), schema.KeyProperties[0].Name);
+    }
+}

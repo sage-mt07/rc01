@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <CodeCoverage>
+
+            <!-- 除外する属性 -->
+            <ExcludeByAttribute>
+              <Attribute>GeneratedCodeAttribute</Attribute>
+              <Attribute>CompilerGeneratedAttribute</Attribute>
+              <Attribute>ExcludeFromCodeCoverageAttribute</Attribute>
+            </ExcludeByAttribute>
+
+            <!-- 除外するクラス名・ファイル名 -->
+            <Exclude>
+              <!-- コンパイラ生成の state machine（async/iterator） -->
+              <Class>*d__*</Class>
+              <Class>*DisplayClass*</Class>
+
+              <!-- テストダブルや拡張コードで使われないやつ -->
+              <Class>*Moq.*</Class>
+              <Class>*TestUtilities*</Class>
+
+              <!-- テスト対象外のアセンブリ（必要に応じて） -->
+              <Module>*.Tests</Module>
+              <Module>*.TestHelpers</Module>
+            </Exclude>
+
+            <!-- 除外対象に含めるソースフォルダ（必要に応じて） -->
+            <!--
+            <Include>
+              <Module>Kafka.Ksql.Linq</Module>
+            </Include>
+            -->
+
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
