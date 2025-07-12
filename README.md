@@ -216,6 +216,7 @@ NAME_MISMATCH等のエラー時は手動で該当subject削除後に再実行
 | `docs/troubleshooting.md` | 典型的なエラー時の対処法まとめ |
 | `docs/api_reference.md` | よく使うコマンド・APIリファレンス |
 | `docs/physical_test_minimum.md` | 現場での最小テスト手順 |
+| `docs/new_member_reference.md` | 新規参加者向けの必読資料一覧と利用フロー |
 
 ### 🧑‍🏫 初級〜中級者向け（Kafkaに不慣れな方）
 | ドキュメント | 内容概要 |
@@ -238,6 +239,7 @@ NAME_MISMATCH等のエラー時は手動で該当subject削除後に再実行
 | `docs/architecture_overview.md` | [全体アーキテクチャ構造と各層の責務定義] (./docs/architecture_overview.md)|
 | `docs/test_guidelines.md` | [ksqlDB仕様準拠のテストガイドライン](./docs/test_guidelines.md) |
 | `docs/poco_design_policy.md` | [POCO設計・PK運用・シリアライズ方針](./docs/poco_design_policy.md) |
+- ドキュメントの重複・矛盾チェック結果は [docs/duplication_check_20250729.md](./docs/duplication_check_20250729.md) を参照
 
 ---
 > 本プロジェクトの開発思想・AI協働方法論は[Amagi Protocol統合ドキュメント](./docs/amagiprotocol/amagi_protocol_full.md)、
