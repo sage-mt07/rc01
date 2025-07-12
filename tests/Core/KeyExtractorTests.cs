@@ -101,9 +101,18 @@ public class KeyExtractorTests
     }
 
     [Fact]
+    public void KeyToString_WithGuid_ReturnsGuidString()
+    {
+        var g = Guid.NewGuid();
+        var result = KeyExtractor.KeyToString(g);
+        Assert.Equal(g.ToString(), result);
+    }
+
+    [Fact]
     public void IsSupportedKeyType_ReturnsExpectedResults()
     {
         Assert.True(KeyExtractor.IsSupportedKeyType(typeof(int)));
+        Assert.True(KeyExtractor.IsSupportedKeyType(typeof(Guid?)));
         Assert.False(KeyExtractor.IsSupportedKeyType(typeof(decimal)));
         Assert.False(KeyExtractor.IsSupportedKeyType(typeof(byte[])));
     }

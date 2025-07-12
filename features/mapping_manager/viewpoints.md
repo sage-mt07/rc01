@@ -25,6 +25,7 @@
 2. **複合キーが登録されている場合、`Dictionary<string, object>` としてキーが返る**
 3. **`Register` を複数回呼び出すと後の登録で上書きされる**
 4. **キーが登録されていない場合でも `KeyExtractor` が `Guid` を生成し正常に返る**
+5. **`int` `long` `string` `Guid` 各型のキー値が `KeyToString` で正しく文字列化される**
 
 ### 異常系
 1. **未登録のエンティティを渡すと `InvalidOperationException` が発生する**
@@ -38,6 +39,7 @@
 - 複合キーはプロパティ名→値の辞書に変換し、`null` は空文字列へ変換される。
 - `KeyToString` で `Dictionary` 型を "`key=value`" 形式で連結している。
 - `IsSupportedKeyType` では `Nullable<T>` の実体型を評価する。
+- 複合キー辞書のプロパティ順序がモデル定義順で保持されるか確認する。
 
 ## 4. 現状仕様で不足する論点
 - モデル再登録のロック機構がなく、マルチスレッド環境で競合する可能性。
