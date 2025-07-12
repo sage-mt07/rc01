@@ -5,6 +5,7 @@
 - プロジェクトの目的・理念
 - 主要ディレクトリ・ドキュメント早見表
 - それぞれのフォルダで「誰が何を見るか」「参照・編集担当は誰か」
+- 新規メンバー向けガイドとして [docs/new_member_reference.md](./docs/new_member_reference.md) を参照
 - [詳細運用ルール・AIプロンプトなどは AGENTS.md 参照](./AGENTS.md)
 
 ## 注意事項・運用ルール
