@@ -86,10 +86,10 @@
     - 新アーキテクチャの利用ストーリー（EntitySet→Messagingまで）のサンプル記載・ベストプラクティス整理
       - [`entityset_to_messaging_story.md`](architecture/entityset_to_messaging_story.md) を追加
     - 主要な変更点や設計意図をリリースノート／全体周知ドキュメントへ反映済み
+    -. Query → MappingManager → KsqlContext の自動フロー実装サンプル AddAsyncのAPI標準化とサンプル修正
 
     ## 次の作業
     1. MappingManagerのAPI詳細仕様＆テスト観点リストのさらなる充実
-    2. Query → MappingManager → KsqlContext の自動フロー実装サンプル AddAsyncのAPI標準化とサンプル修正
     3. 残課題・次フェーズへのTODO洗い出し（PM天城主導）
     - 今回修正までの過程で未解決・追加検討が必要な論点をdiff_logなどに明文化
     - 次回マイルストーン（例：初期設計サイクルの確定／統合テスト設計着手など）を暫定設定し、チームへ共有
