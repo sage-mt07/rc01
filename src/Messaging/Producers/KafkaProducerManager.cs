@@ -5,7 +5,9 @@ using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Configuration;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
+using Kafka.Ksql.Linq.Serialization;
 using Kafka.Ksql.Linq.Serialization.Abstractions;
+using Kafka.Ksql.Linq.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -27,11 +29,10 @@ internal class KafkaProducerManager : IDisposable
     private readonly ILoggerFactory? _loggerFactory;
     private readonly ConcurrentDictionary<Type, object> _producers = new();
     private readonly ConcurrentDictionary<(Type, string), object> _topicProducers = new();
-    private readonly ConcurrentDictionary<Type, object> _serializationManagers = new();
+    private readonly ConfluentSerializerFactory _serializerFactory;
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
     private bool _disposed = false;
 
-    // ✅ 修正：コンストラクタからIAvroSerializationManager<object>を削除
     public KafkaProducerManager(
         IOptions<KsqlDslOptions> options,
         ILoggerFactory? loggerFactory = null)
@@ -43,19 +44,21 @@ internal class KafkaProducerManager : IDisposable
         // SchemaRegistryClientの遅延初期化
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
 
+        _serializerFactory = new ConfluentSerializerFactory(_schemaRegistryClient.Value);
+
         _logger?.LogInformation("Type-safe KafkaProducerManager initialized");
     }
 
     /// <summary>
     /// 型安全Producer取得 - 事前確定・キャッシュ
     /// </summary>
-    public async Task<IKafkaProducer<T>> GetProducerAsync<T>() where T : class
+    public Task<IKafkaProducer<T>> GetProducerAsync<T>() where T : class
     {
         var entityType = typeof(T);
 
         if (_producers.TryGetValue(entityType, out var cachedProducer))
         {
-            return (IKafkaProducer<T>)cachedProducer;
+            return Task.FromResult((IKafkaProducer<T>)cachedProducer);
         }
 
         try
@@ -67,15 +70,16 @@ internal class KafkaProducerManager : IDisposable
             var config = BuildProducerConfig(topicName);
             var rawProducer = new ProducerBuilder<object, object>(config).Build();
 
-            // ✅ 追加：型安全なシリアライゼーションマネージャー取得
-            var serializationManager = GetOrCreateSerializationManager<T>();
-            var serializerPair = await serializationManager.GetSerializersAsync();
+            // Serializer creation via Confluent factory
+            var keyType = KeyExtractor.DetermineKeyType(entityModel);
+            var keySerializer = CreateKeySerializer(keyType);
 
-            // 統合Producer作成
+            var valueSerializer = SerializerAdapter.Create(_serializerFactory.CreateSerializer<T>());
+
             var producer = new KafkaProducer<T>(
                 rawProducer,
-                serializerPair.KeySerializer,
-                serializerPair.ValueSerializer,
+                keySerializer,
+                valueSerializer,
                 topicName,
                 entityModel,
                 _loggerFactory);
@@ -83,7 +87,7 @@ internal class KafkaProducerManager : IDisposable
             _producers.TryAdd(entityType, producer);
 
             _logger?.LogDebug("Producer created: {EntityType} -> {TopicName}", entityType.Name, topicName);
-            return producer;
+            return Task.FromResult<IKafkaProducer<T>>(producer);
         }
         catch (Exception ex)
         {
@@ -92,12 +96,12 @@ internal class KafkaProducerManager : IDisposable
         }
     }
 
-    private async Task<IKafkaProducer<T>> GetProducerAsync<T>(string topicName) where T : class
+    private Task<IKafkaProducer<T>> GetProducerAsync<T>(string topicName) where T : class
     {
         var key = (typeof(T), topicName);
         if (_topicProducers.TryGetValue(key, out var existing))
         {
-            return (IKafkaProducer<T>)existing;
+            return Task.FromResult((IKafkaProducer<T>)existing);
         }
 
         var entityModel = GetEntityModel<T>();
@@ -105,19 +109,21 @@ internal class KafkaProducerManager : IDisposable
         var config = BuildProducerConfig(topicName);
         var rawProducer = new ProducerBuilder<object, object>(config).Build();
 
-        var serializationManager = GetOrCreateSerializationManager<T>();
-        var serializerPair = await serializationManager.GetSerializersAsync();
+        var keyType = KeyExtractor.DetermineKeyType(entityModel);
+        var keySerializer = CreateKeySerializer(keyType);
+
+        var valueSerializer = SerializerAdapter.Create(_serializerFactory.CreateSerializer<T>());
 
         var producer = new KafkaProducer<T>(
             rawProducer,
-            serializerPair.KeySerializer,
-            serializerPair.ValueSerializer,
+            keySerializer,
+            valueSerializer,
             topicName,
             entityModel,
             _loggerFactory);
 
         _topicProducers.TryAdd(key, producer);
-        return producer;
+        return Task.FromResult<IKafkaProducer<T>>(producer);
     }
     /// <summary>
     /// Producer設定構築
@@ -175,22 +181,6 @@ internal class KafkaProducerManager : IDisposable
         }
 
         return producerConfig;
-    }
-    // ✅ 追加：型安全なシリアライゼーションマネージャー取得（ConsumerManagerと同様）
-    private IAvroSerializationManager<T> GetOrCreateSerializationManager<T>() where T : class
-    {
-        var entityType = typeof(T);
-
-        if (_serializationManagers.TryGetValue(entityType, out var existingManager))
-        {
-            return (IAvroSerializationManager<T>)existingManager;
-        }
-
-        var newManager = new AvroSerializationManager<T>(_schemaRegistryClient.Value, _loggerFactory);
-        _serializationManagers.TryAdd(entityType, newManager);
-
-        _logger?.LogDebug("Created SerializationManager for {EntityType}", entityType.Name);
-        return newManager;
     }
 
     // ✅ 追加：SchemaRegistryClient作成（ConsumerManagerと同様）
@@ -259,6 +249,14 @@ internal class KafkaProducerManager : IDisposable
             AllProperties = allProperties
         };
     }
+
+    private ISerializer<object> CreateKeySerializer(Type keyType)
+    {
+        var method = typeof(ISerializerFactory).GetMethod("CreateSerializer")!.MakeGenericMethod(keyType);
+        var typed = method.Invoke(_serializerFactory, null);
+        var adapterMethod = typeof(SerializerAdapter).GetMethod("Create")!.MakeGenericMethod(keyType);
+        return (ISerializer<object>)adapterMethod.Invoke(null, new[] { typed! })!;
+    }
     public async Task SendAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class
     {
         if (entity == null)
@@ -324,15 +322,7 @@ internal class KafkaProducerManager : IDisposable
             }
             _topicProducers.Clear();
 
-            // ✅ 追加：SerializationManagerの解放
-            foreach (var manager in _serializationManagers.Values)
-            {
-                if (manager is IDisposable disposable)
-                {
-                    disposable.Dispose();
-                }
-            }
-            _serializationManagers.Clear();
+
 
             // ✅ 追加：SchemaRegistryClientの解放
             if (_schemaRegistryClient.IsValueCreated)

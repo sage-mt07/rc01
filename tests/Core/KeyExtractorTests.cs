@@ -118,15 +118,6 @@ public class KeyExtractorTests
         Assert.False(KeyExtractor.IsSupportedKeyType(typeof(byte[])));
     }
 
-    [Fact]
-    public void ToAvroEntityConfiguration_MapsProperties()
-    {
-        var model = CreateModel();
-        var config = KeyExtractor.ToAvroEntityConfiguration(model);
-        Assert.Equal(model.EntityType, config.EntityType);
-        Assert.Equal("sample-topic", config.TopicName);
-        Assert.Equal(2, config.KeyProperties.Length);
-    }
 
     [Fact]
     public void ExtractKeyParts_WithCompositeKey_ReturnsParts()

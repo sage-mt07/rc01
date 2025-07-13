@@ -62,28 +62,12 @@ public class KafkaProducerManagerTests
         Assert.Equal(200, config.RetryBackoffMs);
     }
 
-    [Fact]
-    public void GetOrCreateSerializationManager_CachesInstance()
-    {
-        var options = new KsqlDslOptions();
-        var manager = (KafkaProducerManager)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(KafkaProducerManager));
-        typeof(KafkaProducerManager).GetField("_options", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(manager, options);
-        typeof(KafkaProducerManager).GetField("_loggerFactory", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(manager, new NullLoggerFactory());
-        typeof(KafkaProducerManager).GetField("_serializationManagers", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(manager, new ConcurrentDictionary<Type, object>());
-        typeof(KafkaProducerManager).GetField("_schemaRegistryClient", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(manager,
-            new Lazy<Confluent.SchemaRegistry.ISchemaRegistryClient>(() =>
-                new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = "localhost" })));
-
-        var first = InvokePrivate<object>(manager, "GetOrCreateSerializationManager", Type.EmptyTypes, new[] { typeof(SampleEntity) });
-        var second = InvokePrivate<object>(manager, "GetOrCreateSerializationManager", Type.EmptyTypes, new[] { typeof(SampleEntity) });
-        Assert.Same(first, second);
-    }
 
     [Fact]
     public void GetEntityModel_ReturnsModelWithAttributes()
     {
-        var manager = (KafkaProducerManager)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(KafkaProducerManager));
-        typeof(KafkaProducerManager).GetField("_serializationManagers", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(manager, new ConcurrentDictionary<Type, object>());
+        var options = Options.Create(new KsqlDslOptions());
+        var manager = new KafkaProducerManager(options, new NullLoggerFactory());
         var model = InvokePrivate<Kafka.Ksql.Linq.Core.Abstractions.EntityModel>(manager, "GetEntityModel", Type.EmptyTypes, new[] { typeof(SampleEntity) });
         Assert.Equal(typeof(SampleEntity), model.EntityType);
         Assert.Empty(model.KeyProperties);

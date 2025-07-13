@@ -6,7 +6,6 @@ using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.Serialization.Abstractions;
-using Kafka.Ksql.Linq.Serialization.Avro.Management;
 using Kafka.Ksql.Linq.StateStore;
 using Kafka.Ksql.Linq.StateStore.Extensions;
 using Kafka.Ksql.Linq.StateStore.Integration;
@@ -30,7 +29,6 @@ public abstract class KsqlContext : KafkaContextCore
     private readonly KafkaConsumerManager _consumerManager;
     private readonly DlqProducer _dlqProducer;
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
-    private readonly IAvroSchemaRegistrationService _schemaRegistrationService;
 
     private readonly KafkaAdminService _adminService;
     private readonly KsqlDslOptions _dslOptions;
@@ -47,7 +45,6 @@ public abstract class KsqlContext : KafkaContextCore
     protected KsqlContext() : base()
     {
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
-        _schemaRegistrationService = CreateSchemaRegistrationService();
         _dslOptions = new KsqlDslOptions();
         _adminService = new KafkaAdminService(
         Microsoft.Extensions.Options.Options.Create(_dslOptions),
@@ -89,7 +86,6 @@ public abstract class KsqlContext : KafkaContextCore
     protected KsqlContext(KafkaContextOptions options) : base(options)
     {
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
-        _schemaRegistrationService = CreateSchemaRegistrationService();
         _dslOptions = new KsqlDslOptions();
         _adminService = new KafkaAdminService(
         Microsoft.Extensions.Options.Options.Create(_dslOptions),
@@ -136,21 +132,9 @@ public abstract class KsqlContext : KafkaContextCore
         // 1. OnModelCreatingでモデル構築
         ConfigureModel();
 
-        // 2. EntityModel → AvroEntityConfiguration変換
-        var entityModels = GetEntityModels();
-        if (entityModels.Count == 0)
-        {
-            throw new InvalidOperationException(
-                "No entities configured. Implement OnModelCreating() method to configure entities, " +
-                "or add [Topic] attributes to your entity classes.");
-        }
+        // 旧Avroスキーマ登録処理は削除済み
 
-        var avroConfigurations = ConvertToAvroConfigurations(entityModels);
-
-        // 3. スキーマ登録（接続確認も含む）
-        RegisterSchemasSync(avroConfigurations);
-
-        // 4. Kafka接続確認
+        // 2. Kafka接続確認
         ValidateKafkaConnectivity();
 
         EnsureKafkaReadyAsync().GetAwaiter().GetResult();
@@ -180,30 +164,6 @@ public abstract class KsqlContext : KafkaContextCore
     {
         return _dslOptions.DlqTopicName;
     }
-    /// <summary>
-    /// スキーマ登録の同期実行（接続確認も兼ねる）
-    /// </summary>
-    private void RegisterSchemasSync(IReadOnlyDictionary<Type, AvroEntityConfiguration> configurations)
-    {
-        try
-        {
-            // スキーマ登録実行（Schema Registry接続エラーはここで検出）
-            var registrationTask = _schemaRegistrationService.RegisterAllSchemasAsync(configurations);
-            registrationTask.Wait(TimeSpan.FromSeconds(30));
-
-            if (!registrationTask.IsCompletedSuccessfully)
-            {
-                var exception = registrationTask.Exception?.GetBaseException() ??
-                    new TimeoutException("Schema registration timed out after 30 seconds");
-                throw exception;
-            }
-        }
-        catch (AggregateException ex)
-        {
-            throw ex.GetBaseException();
-        }
-    }
-
     /// <summary>
     /// Kafka接続確認
     /// </summary>
@@ -290,13 +250,7 @@ public abstract class KsqlContext : KafkaContextCore
         return new ConfluentSchemaRegistry.CachedSchemaRegistryClient(config);
     }
 
-    /// <summary>
-    /// スキーマ登録サービス作成
-    /// </summary>
-    private IAvroSchemaRegistrationService CreateSchemaRegistrationService()
-    {
-        return new AvroSchemaRegistrationService(_schemaRegistryClient.Value, null);
-    }
+
 
     /// <summary>
     /// Core層EventSet実装（上位層機能統合）
@@ -354,30 +308,6 @@ public abstract class KsqlContext : KafkaContextCore
             return (model.TopicName ?? typeof(T).Name).ToLowerInvariant();
         }
         return typeof(T).Name.ToLowerInvariant();
-    }
-
-    /// <summary>
-    /// EntityModel の情報を AvroEntityConfiguration へ変換する
-    /// </summary>
-    protected IReadOnlyDictionary<Type, AvroEntityConfiguration> ConvertToAvroConfigurations(
-        Dictionary<Type, EntityModel> entityModels)
-    {
-        var avroConfigs = new Dictionary<Type, AvroEntityConfiguration>();
-
-        foreach (var kvp in entityModels)
-        {
-            var entityModel = kvp.Value;
-            var avroConfig = new AvroEntityConfiguration(entityModel.EntityType)
-            {
-                TopicName = entityModel.TopicName,
-                KeyProperties = entityModel.KeyProperties,
-                EnableCaching = entityModel.EnableCache
-            };
-
-            avroConfigs[kvp.Key] = avroConfig;
-        }
-
-        return avroConfigs;
     }
 
     protected override void Dispose(bool disposing)
