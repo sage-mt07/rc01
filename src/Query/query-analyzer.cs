@@ -32,6 +32,11 @@ public static class QueryAnalyzer
                 TopicName = typeof(TTarget).Name.ToLowerInvariant()
             };
 
+            schema.KeyInfo.ClassName = $"{typeof(TTarget).Name}Key";
+            schema.KeyInfo.Namespace = typeof(TTarget).Namespace ?? string.Empty;
+            schema.ValueInfo.ClassName = $"{typeof(TTarget).Name}Value";
+            schema.ValueInfo.Namespace = typeof(TTarget).Namespace ?? string.Empty;
+
             // GroupBy解析
             if (visitor.GroupByExpression != null)
             {

@@ -149,8 +149,12 @@ public static class EntityBuilderQueryExtensions
         // （既存のEntityModel構造を変更せずに情報を保持）
         entityModel.ValidationResult ??= new ValidationResult { IsValid = true, Warnings = new() };
         
-        var schemaInfo = $"QuerySchema:Source={schema.SourceType.Name},Target={schema.TargetType.Name}," +
-                        $"Keys={schema.KeyProperties.Length},Type={schema.GetStreamTableType()}";
+        var schemaInfo =
+            $"QuerySchema:Source={schema.SourceType.FullName}," +
+            $"Target={schema.TargetType.FullName}," +
+            $"KeyClass={schema.KeyInfo.ClassName},KeyNs={schema.KeyInfo.Namespace}," +
+            $"ValueClass={schema.ValueInfo.ClassName},ValueNs={schema.ValueInfo.Namespace}," +
+            $"Keys={schema.KeyProperties.Length},Type={schema.GetStreamTableType()}";
         
         entityModel.ValidationResult.Warnings.Add(schemaInfo);
     }

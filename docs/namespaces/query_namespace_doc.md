@@ -126,3 +126,12 @@ Core.Abstractions → Query.Abstractions ← Query.Builders
 3. **3テーブル制限**: ストリーム処理性能のための制限
 4. **式木安全性**: 深度・複雑度制限によるスタックオーバーフロー防止
 5. **NULL安全**: 全Builder・Generatorで統一されたNULL処理
+
+## 論理Key/Valueメタ情報提供への転換
+
+2025-07-13 の設計変更により、Query namespace は LINQ 解析結果から
+"物理モデル" だけを抽出する方式を改め、論理 Key/Value 構造と
+クラス名・namespace を含むメタ情報を `QuerySchema` として返すよう統一した。
+このメタ情報は MappingManager とスキーマ生成ロジックに連携され、
+Kafka/Avro/Schema Registry まで一貫した管理を実現する。
+将来のスキーマバージョンや互換性フラグも `KeyInfo`/`ValueInfo` に拡張可能である。

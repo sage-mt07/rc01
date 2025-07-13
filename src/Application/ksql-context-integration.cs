@@ -74,8 +74,8 @@ public static class KsqlContextQueryExtensions
             return null;
 
         // 正規表現でスキーマ情報をパース
-        var match = Regex.Match(schemaWarning, 
-            @"QuerySchema:Source=([^,]+),Target=([^,]+),Keys=(\d+),Type=([^,]+)");
+        var match = Regex.Match(schemaWarning,
+            @"QuerySchema:Source=([^,]+),Target=([^,]+),KeyClass=([^,]+),KeyNs=([^,]+),ValueClass=([^,]+),ValueNs=([^,]+),Keys=(\d+),Type=([^,]+)");
         
         if (!match.Success)
             return null;
@@ -84,18 +84,26 @@ public static class KsqlContextQueryExtensions
         {
             var sourceTypeName = match.Groups[1].Value;
             var targetTypeName = match.Groups[2].Value;
-            var keyCount = int.Parse(match.Groups[3].Value);
-            var streamTableType = match.Groups[4].Value;
+            var keyClass = match.Groups[3].Value;
+            var keyNs = match.Groups[4].Value;
+            var valueClass = match.Groups[5].Value;
+            var valueNs = match.Groups[6].Value;
+            var keyCount = int.Parse(match.Groups[7].Value);
+            var streamTableType = match.Groups[8].Value;
 
             var schema = new QuerySchema
             {
                 SourceType = Type.GetType(sourceTypeName) ?? entityModel.EntityType,
                 TargetType = entityModel.EntityType,
-                KeyProperties = entityModel.KeyProperties.Take(keyCount).ToArray(),
-                ValueProperties = entityModel.AllProperties,
                 TopicName = entityModel.TopicName ?? entityModel.EntityType.Name.ToLowerInvariant(),
                 IsValid = entityModel.IsValid
             };
+            schema.KeyInfo.ClassName = keyClass;
+            schema.KeyInfo.Namespace = keyNs;
+            schema.ValueInfo.ClassName = valueClass;
+            schema.ValueInfo.Namespace = valueNs;
+            schema.KeyProperties = entityModel.KeyProperties.Take(keyCount).ToArray();
+            schema.ValueProperties = entityModel.AllProperties;
 
             return schema;
         }
