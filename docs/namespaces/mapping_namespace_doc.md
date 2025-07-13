@@ -9,6 +9,9 @@ POCO へ復元する責務を持つ。
 ## 主要クラス
 - **`PocoMapper`**: 静的 API として `ToKeyValue` と `FromKeyValue` を提供。
   - 型変換、null 管理、複合キー対応を内部で処理。
+- **`MappingRegistry`**: `PropertyMeta[]` から key/value 用クラスを動的生成し `KeyValueTypeMapping` として登録・取得する。
+- 生成される型の名前と名前空間は、POCO の完全修飾名を小文字化し `-key` / `-value` を付与した ksqlDB スキーマ名に合わせる。
+- **`KeyValueTypeMapping`**: 生成された `KeyType`/`ValueType` と各 `PropertyMeta[]` を保持する単純モデル。
 
 ## 責任境界
 - ✅ `QuerySchema` に基づくプロパティ抽出と型変換
