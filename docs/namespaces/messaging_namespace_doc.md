@@ -1,7 +1,7 @@
 # Kafka.Ksql.Linq.Messaging 責務ドキュメント
 
 ## 概要
-Kafka メッセージング機能の型安全な抽象化層を提供する namespace。Producer/Consumer の統一管理、設定管理、エラーハンドリング（DLQ）を担当。
+Kafka メッセージング機能の型安全な抽象化層を提供する namespace。Producer/Consumer の統一管理、設定管理、エラーハンドリング（DLQ）を担当。新アーキテクチャでは **key/value の送受信のみを担う最小 API** へ責務を絞る。
 
 ## 主要な責務
 
