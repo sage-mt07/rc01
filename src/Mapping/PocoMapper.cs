@@ -2,7 +2,6 @@ using Kafka.Ksql.Linq.Query.Schema;
 using Kafka.Ksql.Linq.Core.Models;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Kafka.Ksql.Linq.Mapping;
 
@@ -51,32 +50,34 @@ public static class PocoMapper
     {
         var parts = new List<CompositeKeyPart>();
 
-        foreach (var property in schema.KeyProperties)
+        foreach (var meta in schema.KeyProperties)
         {
-            var valueObj = property.GetValue(entity);
+            if (meta.PropertyInfo == null) continue;
+            var valueObj = meta.PropertyInfo.GetValue(entity);
             var valueStr = valueObj?.ToString() ?? string.Empty;
-            parts.Add(new CompositeKeyPart(property.Name, property.PropertyType, valueStr));
+            parts.Add(new CompositeKeyPart(meta.Name, meta.PropertyType, valueStr));
         }
         return parts;
     }
 
-    private static void MergeSingleKey(object keyValue, object target, PropertyInfo property)
+    private static void MergeSingleKey(object keyValue, object target, PropertyMeta meta)
     {
-        var converted = ConvertKeyValue(keyValue, property.PropertyType);
-        property.SetValue(target, converted);
+        if (meta.PropertyInfo == null) return;
+        var converted = ConvertKeyValue(keyValue, meta.PropertyType);
+        meta.PropertyInfo.SetValue(target, converted);
     }
 
-    private static void MergeCompositeKey(object keyValue, object target, PropertyInfo[] properties)
+    private static void MergeCompositeKey(object keyValue, object target, PropertyMeta[] metas)
     {
         if (keyValue is not Dictionary<string, object> dict)
             throw new InvalidOperationException($"Expected Dictionary<string, object> for composite key, but got {keyValue.GetType().Name}");
 
-        foreach (var property in properties)
+        foreach (var meta in metas)
         {
-            if (dict.TryGetValue(property.Name, out var value))
+            if (meta.PropertyInfo != null && dict.TryGetValue(meta.Name, out var value))
             {
-                var converted = ConvertKeyValue(value, property.PropertyType);
-                property.SetValue(target, converted);
+                var converted = ConvertKeyValue(value, meta.PropertyType);
+                meta.PropertyInfo.SetValue(target, converted);
             }
         }
     }

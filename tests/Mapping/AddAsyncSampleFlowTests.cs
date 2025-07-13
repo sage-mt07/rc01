@@ -6,8 +6,10 @@ using Kafka.Ksql.Linq.Messaging.Producers.Core;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Entities.Samples.Models;
 using Kafka.Ksql.Linq.Query.Schema;
+using Kafka.Ksql.Linq.Core.Models;
 using SampleOrder = Kafka.Ksql.Linq.Entities.Samples.Models.Order;
 using Kafka.Ksql.Linq.Entities.Samples;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
@@ -81,10 +83,12 @@ public class AddAsyncSampleFlowTests
             IsValid = true,
             KeyProperties = new[]
             {
-                typeof(SampleOrder).GetProperty(nameof(SampleOrder.OrderId))!,
-                typeof(SampleOrder).GetProperty(nameof(SampleOrder.UserId))!
+                PropertyMeta.FromProperty(typeof(SampleOrder).GetProperty(nameof(SampleOrder.OrderId))!),
+                PropertyMeta.FromProperty(typeof(SampleOrder).GetProperty(nameof(SampleOrder.UserId))!)
             },
             ValueProperties = typeof(SampleOrder).GetProperties()
+                .Select(p => PropertyMeta.FromProperty(p))
+                .ToArray()
         };
         schema.KeyInfo.ClassName = "OrderKey";
         schema.KeyInfo.Namespace = typeof(SampleOrder).Namespace ?? string.Empty;

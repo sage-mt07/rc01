@@ -36,7 +36,10 @@ public static class EntityBuilderQueryExtensions
         // Key設定
         if (schema.KeyProperties.Length > 0)
         {
-            entityModel.KeyProperties = schema.KeyProperties;
+            entityModel.KeyProperties = schema.KeyProperties
+                .Select(m => m.PropertyInfo!)
+                .Where(p => p != null)
+                .ToArray();
         }
 
         // Topic名設定（未設定の場合）
@@ -122,7 +125,10 @@ public static class EntityBuilderQueryExtensions
         // Key設定
         if (schema.KeyProperties.Length > 0)
         {
-            entityModel.KeyProperties = schema.KeyProperties;
+            entityModel.KeyProperties = schema.KeyProperties
+                .Select(m => m.PropertyInfo!)
+                .Where(p => p != null)
+                .ToArray();
         }
 
         // Topic名設定

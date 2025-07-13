@@ -8,6 +8,7 @@ using Kafka.Ksql.Linq.Messaging.Producers.Core;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.Query.Schema;
+using Kafka.Ksql.Linq.Core.Models;
 using System.Linq;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -75,8 +76,10 @@ public class AutomaticQueryFlowTests
             TargetType = typeof(User),
             TopicName = "users",
             IsValid = true,
-            KeyProperties = new[] { typeof(User).GetProperty(nameof(User.Id))! },
+            KeyProperties = new[] { PropertyMeta.FromProperty(typeof(User).GetProperty(nameof(User.Id))!) },
             ValueProperties = typeof(User).GetProperties()
+                .Select(p => PropertyMeta.FromProperty(p))
+                .ToArray()
         };
         schema.KeyInfo.ClassName = "UserKey";
         schema.KeyInfo.Namespace = typeof(User).Namespace ?? string.Empty;
