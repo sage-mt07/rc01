@@ -39,6 +39,8 @@ public class QueryAnalyzerTests
         Assert.Single(schema.KeyProperties);
         Assert.Equal(nameof(ApiMessage.Category), schema.KeyProperties[0].Name);
         Assert.Equal(2, schema.ValueProperties.Length);
+        Assert.Equal("CategoryCountKey", schema.KeyInfo.ClassName);
+        Assert.Equal("CategoryCountValue", schema.ValueInfo.ClassName);
     }
 
     [Fact]

@@ -7,15 +7,36 @@ namespace Kafka.Ksql.Linq.Query.Schema;
 /// <summary>
 /// クエリによって生成されるKey/Value構造の定義
 /// </summary>
+public class KeyValueSchemaInfo
+{
+    public string ClassName { get; set; } = string.Empty;
+    public string Namespace { get; set; } = string.Empty;
+    public PropertyInfo[] Properties { get; set; } = Array.Empty<PropertyInfo>();
+    public string SchemaVersion { get; set; } = "1";
+    public string Compatibility { get; set; } = string.Empty;
+}
+
 public class QuerySchema
 {
     public Type SourceType { get; set; } = default!;
     public Type TargetType { get; set; } = default!;
-    public PropertyInfo[] KeyProperties { get; set; } = Array.Empty<PropertyInfo>();
-    public PropertyInfo[] ValueProperties { get; set; } = Array.Empty<PropertyInfo>();
+    public KeyValueSchemaInfo KeyInfo { get; set; } = new();
+    public KeyValueSchemaInfo ValueInfo { get; set; } = new();
     public string TopicName { get; set; } = string.Empty;
     public bool IsValid { get; set; }
     public List<string> Errors { get; set; } = new();
+
+    public PropertyInfo[] KeyProperties
+    {
+        get => KeyInfo.Properties;
+        set => KeyInfo.Properties = value;
+    }
+
+    public PropertyInfo[] ValueProperties
+    {
+        get => ValueInfo.Properties;
+        set => ValueInfo.Properties = value;
+    }
 
     /// <summary>
     /// 単一キーかどうか
