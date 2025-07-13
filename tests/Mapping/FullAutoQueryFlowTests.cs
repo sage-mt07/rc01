@@ -89,4 +89,40 @@ public class FullAutoQueryFlowTests
         await ctx.Set<User>().AddAsync(user);
         Assert.True(stub.Sent);
     }
+
+    [Fact]
+    public async Task QuerySchemaHelper_Validate_Summary_FullFlow()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IMappingManager, MappingManager>();
+        services.AddSingleton<TestContext>();
+        var provider = services.BuildServiceProvider();
+        var ctx = provider.GetRequiredService<TestContext>();
+
+        var manager = new KafkaProducerManager(Options.Create(new KsqlDslOptions()), null);
+        ctx.SetProducerManager(manager);
+        var stub = new StubProducer<User>();
+        var dict = (ConcurrentDictionary<System.Type, object>)typeof(KafkaProducerManager)
+            .GetField("_producers", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(manager)!;
+        dict[typeof(User)] = stub;
+
+        var mapping = provider.GetRequiredService<IMappingManager>();
+        mapping.Register<User>(ctx.GetEntityModels()[typeof(User)]);
+
+        var result = QueryAnalyzer.AnalyzeQuery<User, User>(
+            src => src.Where(u => u.Id == 1));
+        Assert.True(result.Success);
+
+        var schema = result.Schema!;
+        Assert.True(QuerySchemaHelper.ValidateQuerySchema(schema, out var errors));
+        Assert.Empty(errors);
+
+        var summary = QuerySchemaHelper.GetSchemaSummary(schema);
+        Assert.Contains("user", summary);
+
+        var user = new User(1, "Alice");
+        await ctx.Set<User>().AddAsync(user);
+        Assert.True(stub.Sent);
+    }
 }
