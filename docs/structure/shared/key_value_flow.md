@@ -154,9 +154,11 @@ await ctx.AddAsync(entity);
 - PropertyMetaはFluentAPI設定や設計フェーズで決定され、コード属性やリフレクションには依存しない。
 
 ### 8.2 Mappingによるkey/valueクラス自動生成・登録
-- Mappingは、POCO＋PropertyMeta[]を受け取り、key/valueごとに内部クラス型（KeyType/ValueType）を自動生成・登録する。
-- 登録時、KeyType/ValueTypeとPropertyMeta[]をKeyValueTypeMappingとして一元管理。
+- Mappingは、POCO＋PropertyMeta[]を受け取り、key/valueごとに内部クラス型（KeyType/ValueType）を動的生成し登録する。
+- 登録時、KeyType/ValueTypeとPropertyMeta[]を`KeyValueTypeMapping`として一元管理する。取得APIは`GetMapping(Type pocoType)`が基本となる。
 - 設計情報の唯一の出入口はMappingであり、他namespaceはこの情報のみ参照することが公式ルール。
+- KeyType / ValueType の型名・名前空間は ksqlDB スキーマ登録時の命名規約と一致させること。
+- スキーマ名は POCO の完全修飾名を小文字化し、key は "-key"、value は "-value" を付与した形式とする。
 
 ### 8.3 Serialization/Deserializationの流れ
 - シリアライズ/デシリアライズ時はMappingからkey/value型＋PropertyMeta[]を取得し、Confluent.Avro公式ライブラリで変換処理を行う。
