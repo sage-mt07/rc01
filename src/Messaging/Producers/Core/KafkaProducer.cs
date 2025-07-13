@@ -3,7 +3,6 @@ using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Core.Models;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
-using Kafka.Ksql.Linq.Messaging.Producers.Exception;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -86,72 +85,6 @@ internal class KafkaProducer<T> : IKafkaProducer<T> where T : class
             throw;
         }
     }
-
-    public async Task<KafkaBatchDeliveryResult> SendBatchAsync(IEnumerable<T> messages, KafkaMessageContext? context = null, CancellationToken cancellationToken = default)
-    {
-        if (messages == null)
-            throw new ArgumentNullException(nameof(messages));
-
-        var messageList = messages.ToList();
-        if (messageList.Count == 0)
-            return new KafkaBatchDeliveryResult
-            {
-                Topic = TopicName,
-                TotalMessages = 0,
-                SuccessfulCount = 0,
-                FailedCount = 0,
-                Results = new List<KafkaDeliveryResult>(),
-                Errors = new List<BatchDeliveryError>(),
-                TotalLatency = TimeSpan.Zero
-            };
-
-        var results = new List<KafkaDeliveryResult>();
-        var errors = new List<BatchDeliveryError>();
-
-        var tasks = messageList.Select(async (message, index) =>
-        {
-            try
-            {
-                var result = await SendAsync(message, context, cancellationToken);
-                return new { Index = index, Result = (KafkaDeliveryResult?)result, Error = (Error?)null };
-            }
-            catch (ProduceException<object, object> ex)
-            {
-                return new { Index = index, Result = (KafkaDeliveryResult?)null, Error = (Error?)ex.Error };
-            }
-        });
-
-        var taskResults = await Task.WhenAll(tasks);
-
-        foreach (var taskResult in taskResults)
-        {
-            if (taskResult.Error != null)
-            {
-                errors.Add(new BatchDeliveryError
-                {
-                    MessageIndex = taskResult.Index,
-                    Error = taskResult.Error,
-                    OriginalMessage = messageList[taskResult.Index]
-                });
-            }
-            else if (taskResult.Result != null)
-            {
-                results.Add(taskResult.Result);
-            }
-        }
-
-        return new KafkaBatchDeliveryResult
-        {
-            Topic = TopicName,
-            TotalMessages = messageList.Count,
-            SuccessfulCount = results.Count,
-            FailedCount = errors.Count,
-            Results = results,
-            Errors = errors,
-            TotalLatency = TimeSpan.Zero // Confluent.Kafkaの統計に委譲
-        };
-    }
-
 
 
     public async Task FlushAsync(TimeSpan timeout)

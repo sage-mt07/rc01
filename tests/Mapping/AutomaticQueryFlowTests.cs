@@ -33,11 +33,7 @@ public class AutomaticQueryFlowTests
             Sent = true;
             return Task.FromResult(new KafkaDeliveryResult());
         }
-        public Task<KafkaBatchDeliveryResult> SendBatchAsync(IEnumerable<T> messages, KafkaMessageContext? context = null, CancellationToken cancellationToken = default)
-        {
-            Sent = true;
-            return Task.FromResult(new KafkaBatchDeliveryResult());
-        }
+        // Batch sending removed
         public Task FlushAsync(System.TimeSpan timeout) => Task.CompletedTask;
         public void Dispose() { }
     }
