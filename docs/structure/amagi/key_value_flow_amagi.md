@@ -6,7 +6,6 @@
 
 ```
 Query
-  ↳ POCO-Query Mapping
       ↳ KsqlContext
           ↳ Messaging
               ↳ Serialization
@@ -14,14 +13,14 @@ Query
 ```
 
 1. **Query**: DSL入力とLINQ式を担当。最初に仕様変更の影響を受ける。
-2. **POCO-Query Mapping**: `MappingManager` により POCO とクエリの対応関係を管理。
-3. **KsqlContext**: 構成情報を集中管理し、Pipeline初期化を行うハブ。
-4. **Messaging**: Kafka とのやり取りを抽象化。プロデューサ/コンシューマの両責任を持つ。
-5. **Serialization**: Avroスキーマの生成と変換。互換性維持が重要なため、更新は慎重に。
-6. **Kafka**: 実行基盤。外部依存のためテスト環境と本番環境の切り替えを明確化する。
+2. **KsqlContext**: 構成情報を集中管理し、Pipeline初期化を行うハブ。
+3. **Messaging**: Kafka とのやり取りを抽象化。プロデューサ/コンシューマの両責任を持つ。
+4. **Serialization**: Avroスキーマの生成と変換。互換性維持が重要なため、更新は慎重に。
+5. **Kafka**: 実行基盤。外部依存のためテスト環境と本番環境の切り替えを明確化する。
 
 ## 優先度マップ
 
+MappingManager の登録処理は KsqlContext 初期化と同時にまとめて実施する。
 | 項目 | 優先度 | 管理方針 |
 |-----|-------|---------|
 | スキーマ互換性 | 高 | 変更時は必ず `diff_log` に記録し、全チームでレビュー |

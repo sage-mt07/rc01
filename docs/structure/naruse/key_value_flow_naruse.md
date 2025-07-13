@@ -5,7 +5,7 @@
 ## 依存順
 
 ```
-Query -> POCO-Query Mapping -> KsqlContext -> Messaging -> Serialization -> Kafka
+Query -> KsqlContext -> Messaging -> Serialization -> Kafka
 ```
 
 ## 責務分離
@@ -14,7 +14,6 @@ Query -> POCO-Query Mapping -> KsqlContext -> Messaging -> Serialization -> Kafk
 |---------------|-------------|------|
 | **Builder** | `KsqlContextBuilder` | DSL設定を集約し `KsqlContext` を生成 |
 | **Pipeline** | `QueryBuilder` | LINQ式を解析して key/value を抽出 |
-| **Mapping** | `PocoMapper` | POCO と KSQL・Key/Value の相互変換 |
 | **Context** | `KsqlContext` | Produce/Consume の統括と DI 初期化 |
 | **Serializer** | `AvroSerializer` | key/value を Avro フォーマットへ変換 |
 | **Messaging** | `KafkaProducer`, `KafkaConsumer` | トピック単位の送受信を担当 |
@@ -23,7 +22,7 @@ Query -> POCO-Query Mapping -> KsqlContext -> Messaging -> Serialization -> Kafk
 
 1. アプリケーションは `EntitySet<T>` で LINQ クエリを記述します。
 2. `QueryBuilder` が式ツリーを解析し、`QuerySchema` を生成します。
-3. `PocoMapper` の `ToKeyValue` により key/value が生成されます。
+3. `KsqlContext` の `ExtractKeyValue` (内部で `PocoMapper` を利用) により key/value が得られます。
 4. `KsqlContextBuilder` が各種オプションをまとめ `KsqlContext` を構築します。
 5. `KsqlContext` から `KafkaProducer` または `KafkaConsumer` を取得し、メッセージの送受信を実行します。
 6. `AvroSerializer` がオブジェクトをシリアライズし、Kafka ブローカーへ配信します。
@@ -57,3 +56,20 @@ await context.AddAsync(entity);
 ```
 
 上記のように `Query` から生成したエンティティを `PocoMapper` で key/value に変換し、`KsqlContext` 経由で Kafka へ送信します。
+
+## 運用フロー詳細(抜粋)
+1. POCO定義・LINQ式生成
+    - Query namespaceでkey/value候補を取得し、key未指定時はGuidを自動割当。
+2. Mapping登録処理
+    - KsqlContextがPOCOとkey/value情報をMappingに登録し、DLQ用POCOも合わせて設定。
+3. KSQLクラス名生成
+    - namespaceとクラス名から一意なschema名を生成し、登録時と一致させる。
+4. スキーマ登録
+    - schema registryへKSQL名でスキーマを登録。
+5. インスタンス生成
+    - POCOごとにMessaging/Serializationを初期化し、OnModelCreating直後に実施。
+
+### ベストプラクティス
+- `MappingManager` へ登録するモデルは `OnModelCreating` で一括定義する。
+- `QueryBuilder` から返される KSQL 文はデバッグログで確認しておく。
+- `KsqlContext` のライフサイクルは DI コンテナに任せ、使い回しを避ける。
