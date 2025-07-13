@@ -38,23 +38,21 @@
     - restructure_outputs/serialization
 
 2. pocoの属性廃止、FluentAPI化
-    - Coreからpoco用の属性を排除 
-    - FluentAPIの追加　 
+    - Coreからpoco用の属性を排除（完了）
+    - FluentAPIを導入し、`core_namespace_redesign_plan.md` に移行方針を記載
 
     ## 修正対象
-     - readme.mdからリンクされてるファイル
+     - readme.md からリンクされているファイル
      - src/Core/**
      - tests/**
 
     ## 📤 現状
-    - Coreからpoco用の属性を排除　完了
-    - FluentAPIの追加　 `core_namespace_redesign_plan.md` を作成済み
-    1. FluentAPIの初期設計・実装サンプル作成（鳴瀬）
-    -  FluentAPIによるPOCOモデル構成の「設計ガイドライン」「利用サンプルコード」を作成し、
-    -　コア属性廃止後の推奨FluentAPI記述例
-    - 既存POCO→FluentAPI移行フロー例をまとめてください。
-    - 併せてMappingManagerとの連携例・ベストプラクティスもサンプルとして明記    
-    ## 次の作業
+    鳴瀬が以下のドキュメントとサンプルを作成し、FluentAPI 化の初期実装を完了
+    - `fluent_api_initial_design.md`: 設計ガイドライン、推奨記述例、移行フロー
+    - `tests/Mapping/FluentSampleIntegrationTests.cs` 等のサンプルコード
+    - MappingManager との連携ベストプラクティスを整理
+
+    本ステップの主要タスクは完了済み。
 
 
 3. KsqlContextBuilder／QueryBuilderの責任分割設計案
