@@ -147,3 +147,84 @@ await ctx.AddAsync(entity);
 1. `MappingManager` に登録されていないエンティティを渡した場合、`InvalidOperationException` が発生する。
 2. `KsqlContext` との接続に失敗した場合は `KafkaException` を上位へ伝搬する。
 
+## 8. 型情報・設計情報管理フロー
+
+### 8.1 PropertyMetaによる型情報一元管理
+- 各POCOプロパティの型・精度（decimal）・フォーマット（DateTimeFormat等）・属性情報は**PropertyMeta（PropertyInfo＋Attribute配列）**にまとめて保持する。
+- PropertyMetaはFluentAPI設定や設計フェーズで決定され、コード属性やリフレクションには依存しない。
+
+### 8.2 Mappingによるkey/valueクラス自動生成・登録
+- Mappingは、POCO＋PropertyMeta[]を受け取り、key/valueごとに内部クラス型（KeyType/ValueType）を自動生成・登録する。
+- 登録時、KeyType/ValueTypeとPropertyMeta[]をKeyValueTypeMappingとして一元管理。
+- 設計情報の唯一の出入口はMappingであり、他namespaceはこの情報のみ参照することが公式ルール。
+
+### 8.3 Serialization/Deserializationの流れ
+- シリアライズ/デシリアライズ時はMappingからkey/value型＋PropertyMeta[]を取得し、Confluent.Avro公式ライブラリで変換処理を行う。
+- POCO⇄key/value⇄バイト列の流れで、型安全・設計一貫性を担保。
+
+### 8.4 Messaging層の責務純化
+- Messagingは型や属性・設計情報を一切保持せず、keyBytes/valueBytes/トピック名の送受信に専念する。
+- 型進化や属性追加はMapping更新だけで全体へ即反映され、Messaging層の実装・運用は完全不変となる。
+
+### 8.5 設計進化時の運用ポイント
+- 新しいPOCOや属性、精度/フォーマットの追加もMappingへの登録・PropertyMeta反映だけでOK。
+- 既存MessagingやSerializationの実装変更は原則不要。
+
+### 8.6 補足：設計フロー図・サンプルコード
+■ シーケンス図（Mermaid記法）
+
+```mermaid
+sequenceDiagram
+    participant App as Application
+    participant Query as QueryProvider
+    participant Ksql as KsqlContext
+    participant Map as Mapping
+    participant Ser as Serialization
+    participant Msg as Messaging
+
+    App->>Query: POCO/クエリ定義
+    Query->>Ksql: PropertyMeta[]（key/value情報）取得
+    Ksql->>Map: RegisterMapping(pocoType, keyMeta[], valueMeta[])
+    Map->>Map: KeyType/ValueType自動生成＋登録
+
+    App->>Ser: POCOインスタンス渡す
+    Ser->>Map: Key/Value型＋PropertyMeta取得
+    Ser->>Ser: Avroでserialize/deserialize（keyType/valueType）
+
+    Ser->>Msg: バイト列(keyBytes, valueBytes)送信
+    Msg->>Kafka: publish/consume（トピック単位）
+```
+■ サンプルコード（C#擬似例）
+
+```
+// 1. PropertyMetaの取得とMapping登録
+var keyMeta = queryProvider.GetKeyProperties(typeof(User));
+var valueMeta = queryProvider.GetValueProperties(typeof(User));
+mappingManager.RegisterMapping(typeof(User), keyMeta, valueMeta);
+
+// 2. POCO → key/value 型への分割
+var mapping = mappingManager.GetMapping(typeof(User));
+var keyInstance = mapping.ExtractKey(userPoco);   // keyPropertyMeta[]を元にKeyTypeへ変換
+var valueInstance = mapping.ExtractValue(userPoco);
+
+// 3. Avroでシリアライズ/デシリアライズ
+var keyBytes = avroSerializer.Serialize(keyInstance, mapping.KeyType);
+var valueBytes = avroSerializer.Serialize(valueInstance, mapping.ValueType);
+
+var restoredKey = avroSerializer.Deserialize(keyBytes, mapping.KeyType);
+var restoredValue = avroSerializer.Deserialize(valueBytes, mapping.ValueType);
+
+// 4. Messaging経由で送受信
+await messagingProducer.PublishAsync(keyBytes, valueBytes, topic);
+// 受信例
+var (recvKeyBytes, recvValueBytes) = await messagingConsumer.ConsumeAsync(topic);
+// POCO復元（必要に応じてCombineFromKeyValueで統合）
+```
+■ ポイント
+設計フロー・サンプルコードとも「PropertyMeta管理→Mapping→型生成→Avro変換→Messaging」の流れが“一本化”
+
+すべての型情報・設計情報はMappingで一元管理／Messagingは型意識せずバイト列のみ扱う
+
+
+
+ドキュメント・設計書にも「型情報・設計情報の一元管理＝Mapping」ルールを明記すること。
