@@ -236,7 +236,8 @@ NAME_MISMATCH等のエラー時は手動で該当subject削除後に再実行
 |--|--|
 | `docs/docs_advanced_rules.md` | [運用設計上の制約、設計判断の背景と意図](./docs/docs_advanced_rules.md) |
 | `docs/docs_configuration_reference.md` | [appsettings.json などの構成ファイルとマッピング解説](.docs/docs_configuration_reference.md) |
-| `docs/architecture_overview.md` | [全体アーキテクチャ構造と各層の責務定義] (./docs/architecture_overview.md)|
+| `docs/architecture_overview.md` | [全体アーキテクチャ構造と各層の責務定義](./docs/architecture_overview.md) |
+| `docs/architecture/query_ksql_mapping_flow.md` | [Query→KsqlContext→Mapping/Serialization 連携仕様](./docs/architecture/query_ksql_mapping_flow.md) |
 | `docs/test_guidelines.md` | [ksqlDB仕様準拠のテストガイドライン](./docs/test_guidelines.md) |
 | `docs/poco_design_policy.md` | [POCO設計・PK運用・シリアライズ方針](./docs/poco_design_policy.md) |
 - ドキュメントの重複・矛盾チェック結果は [docs/duplication_check_20250729.md](./docs/duplication_check_20250729.md) を参照
