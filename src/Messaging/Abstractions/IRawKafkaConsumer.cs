@@ -12,4 +12,9 @@ public interface IRawKafkaConsumer
     /// Consume a single record from the specified topic.
     /// </summary>
     Task<(byte[]? keyBytes, byte[]? valueBytes)> ConsumeAsync(string topic, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Commit current offsets.
+    /// </summary>
+    Task CommitAsync();
 }

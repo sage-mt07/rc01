@@ -18,11 +18,17 @@ public sealed class RawKafkaConsumer : IRawKafkaConsumer, IDisposable
         _consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
     }
 
-    public Task<(byte[]? keyBytes, byte[]? valueBytes)> ConsumeAsync(string topic, CancellationToken cancellationToken = default)
+    public async Task<(byte[]? keyBytes, byte[]? valueBytes)> ConsumeAsync(string topic, CancellationToken cancellationToken = default)
     {
-        _consumer.Subscribe(topic);
         var result = _consumer.Consume(cancellationToken);
-        return Task.FromResult((result.Message.Key, result.Message.Value));
+        await Task.Delay(1, cancellationToken);
+        return (result.Message.Key, result.Message.Value);
+    }
+
+    public async Task CommitAsync()
+    {
+        _consumer.Commit();
+        await Task.Delay(1);
     }
 
     public void Dispose() => _consumer.Dispose();
