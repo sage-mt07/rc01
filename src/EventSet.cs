@@ -1,6 +1,5 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Extensions;
-using Kafka.Ksql.Linq.Messaging.Contracts;
 using Kafka.Ksql.Linq.Messaging.Internal;
 using System;
 using System.Collections.Generic;

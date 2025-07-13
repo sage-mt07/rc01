@@ -3,6 +3,7 @@ using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Context;
 using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Messaging.Producers;
+using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Application;
 using System;
 using Xunit;

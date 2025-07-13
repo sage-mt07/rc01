@@ -9,6 +9,7 @@ using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Consumers.Core;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
+using Kafka.Ksql.Linq.Core.Dlq;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -70,7 +71,8 @@ public class KafkaConsumerMessageCreationTests
             CreateModel(),
             DeserializationErrorPolicy.Skip,
             "dlq",
-            dlq,
+            (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+                dlq.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
             new NullLoggerFactory());
     }
 

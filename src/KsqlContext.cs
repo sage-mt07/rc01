@@ -4,6 +4,7 @@ using Kafka.Ksql.Linq.Core.Context;
 using Kafka.Ksql.Linq.Infrastructure.Admin;
 using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Messaging.Producers;
+using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.Serialization.Abstractions;
 using Kafka.Ksql.Linq.StateStore;
@@ -71,7 +72,8 @@ public abstract class KsqlContext : KafkaContextCore
 
             _consumerManager = new KafkaConsumerManager(
                 Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                _dlqProducer,
+                (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+                    _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
                 null);
 
             InitializeStateStoreIntegration();
@@ -112,7 +114,8 @@ public abstract class KsqlContext : KafkaContextCore
 
             _consumerManager = new KafkaConsumerManager(
                 Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                _dlqProducer,
+                (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+                    _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
                 null);
 
             InitializeStateStoreIntegration();
