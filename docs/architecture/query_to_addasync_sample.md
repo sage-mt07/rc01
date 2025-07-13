@@ -22,8 +22,11 @@ var schema = result.Schema!;
 
 // key/value 抽出と送信
 var order = new Order { OrderId = 1, UserId = 10, ProductId = 5, Quantity = 2 };
-var (key, value) = mapping.ExtractKeyValue(order);
+var parts = mapping.ExtractKeyParts(order);
+var key = KeyExtractor.BuildTypedKey(parts);
 await ctx.Set<Order>().AddAsync(order);
 ```
+
+`ExtractKeyParts` で取得した複合キーは Type 情報を保持するため、安全に `BuildTypedKey` で変換できます。
 
 この流れにより、クエリ定義からメッセージ送信までを DI コンテナ上のサービスで完結させることができます。

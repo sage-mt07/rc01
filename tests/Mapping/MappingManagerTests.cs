@@ -140,4 +140,23 @@ public class MappingManagerTests
         var dict = Assert.IsType<Dictionary<string, object>>(result.Key);
         Assert.Equal(string.Empty, dict[nameof(NullComposite.Code)]);
     }
+
+    [Fact]
+    public void ExtractKeyParts_ReturnsTuples()
+    {
+        var builder = new ModelBuilder();
+        builder.Entity<CompositeSample>()
+            .WithTopic("composite")
+            .HasKey(e => new { e.Id, e.Code });
+        var model = builder.GetEntityModel<CompositeSample>()!;
+
+        var manager = new MappingManager();
+        manager.Register<CompositeSample>(model);
+
+        var entity = new CompositeSample { Id = 3, Code = "z" };
+        var parts = manager.ExtractKeyParts(entity);
+        Assert.Equal(2, parts.Count);
+        Assert.Equal("Id", parts[0].KeyName);
+        Assert.Equal("3", parts[0].Value);
+    }
 }

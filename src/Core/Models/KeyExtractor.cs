@@ -1,6 +1,7 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Serialization.Abstractions;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,6 +43,71 @@ internal static class KeyExtractor
     }
 
     /// <summary>
+    /// エンティティインスタンスから複合キー要素を抽出（新方式）
+    /// </summary>
+    internal static List<CompositeKeyPart> ExtractKeyParts<T>(T entity, EntityModel entityModel) where T : class
+    {
+        if (entity == null)
+            throw new ArgumentNullException(nameof(entity));
+
+        var parts = new List<CompositeKeyPart>();
+
+        if (entityModel?.KeyProperties == null || entityModel.KeyProperties.Length == 0)
+            return parts;
+
+        foreach (var property in entityModel.GetOrderedKeyProperties())
+        {
+            var valueObj = property.GetValue(entity);
+            var valueStr = valueObj?.ToString() ?? string.Empty;
+            parts.Add(new CompositeKeyPart(property.Name, property.PropertyType, valueStr));
+        }
+
+        return parts;
+    }
+
+    private static object? ConvertStringToType(string value, Type type, ILogger? logger)
+    {
+        try
+        {
+            var underlying = Nullable.GetUnderlyingType(type) ?? type;
+
+            if (underlying == typeof(string))
+                return value;
+            if (underlying == typeof(int))
+                return string.IsNullOrEmpty(value) ? 0 : int.Parse(value);
+            if (underlying == typeof(long))
+                return string.IsNullOrEmpty(value) ? 0L : long.Parse(value);
+            if (underlying == typeof(Guid))
+                return string.IsNullOrEmpty(value) ? Guid.Empty : Guid.Parse(value);
+
+            return Convert.ChangeType(value, underlying);
+        }
+        catch (Exception ex)
+        {
+            logger?.LogError(ex, "Failed to convert key value '{Value}' to {Type}", value, type.Name);
+            throw;
+        }
+    }
+
+    internal static object BuildTypedKey(IList<CompositeKeyPart> parts, ILogger? logger = null)
+    {
+        if (parts.Count == 0)
+            return Guid.NewGuid();
+
+        if (parts.Count == 1)
+        {
+            return ConvertStringToType(parts[0].Value, parts[0].KeyType, logger) ?? string.Empty;
+        }
+
+        var dict = new Dictionary<string, object>();
+        foreach (var part in parts)
+        {
+            dict[part.KeyName] = ConvertStringToType(part.Value, part.KeyType, logger) ?? string.Empty;
+        }
+        return dict;
+    }
+
+    /// <summary>
     /// 定義順に基づき先頭 count 個のプロパティを抽出
     /// </summary>
     internal static PropertyInfo[] ExtractKeyProperties(Type entityType, int count)
@@ -59,29 +125,10 @@ internal static class KeyExtractor
     /// <summary>
     /// エンティティインスタンスからキー値を抽出
     /// </summary>
-    internal static object ExtractKeyValue<T>(T entity, EntityModel entityModel) where T : class
+    internal static object ExtractKeyValue<T>(T entity, EntityModel entityModel, ILogger? logger = null) where T : class
     {
-        if (entity == null)
-            throw new ArgumentNullException(nameof(entity));
-
-        if (entityModel?.KeyProperties == null || entityModel.KeyProperties.Length == 0)
-            return Guid.NewGuid();
-
-        if (entityModel.KeyProperties.Length == 1)
-        {
-            var keyProperty = entityModel.KeyProperties[0];
-            return keyProperty.GetValue(entity) ?? string.Empty;
-        }
-
-        // 複合キー
-        var keyValues = new Dictionary<string, object>();
-        foreach (var property in entityModel.GetOrderedKeyProperties())
-        {
-            var value = property.GetValue(entity);
-            keyValues[property.Name] = value ?? string.Empty;
-        }
-
-        return keyValues;
+        var parts = ExtractKeyParts(entity, entityModel);
+        return BuildTypedKey(parts, logger);
     }
 
     /// <summary>
@@ -98,6 +145,12 @@ internal static class KeyExtractor
         if (keyValue is Dictionary<string, object> dict)
         {
             var keyPairs = dict.Select(kvp => $"{kvp.Key}={kvp.Value}");
+            return string.Join("|", keyPairs);
+        }
+
+        if (keyValue is IList<CompositeKeyPart> parts)
+        {
+            var keyPairs = parts.Select(p => $"{p.KeyName}={p.Value}");
             return string.Join("|", keyPairs);
         }
 
