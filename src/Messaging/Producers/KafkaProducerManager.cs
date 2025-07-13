@@ -7,6 +7,7 @@ using Kafka.Ksql.Linq.Messaging.Configuration;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
 using Kafka.Ksql.Linq.Serialization;
 using Kafka.Ksql.Linq.Serialization.Abstractions;
+using Kafka.Ksql.Linq.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -51,13 +52,13 @@ internal class KafkaProducerManager : IDisposable
     /// <summary>
     /// 型安全Producer取得 - 事前確定・キャッシュ
     /// </summary>
-    public async Task<IKafkaProducer<T>> GetProducerAsync<T>() where T : class
+    public Task<IKafkaProducer<T>> GetProducerAsync<T>() where T : class
     {
         var entityType = typeof(T);
 
         if (_producers.TryGetValue(entityType, out var cachedProducer))
         {
-            return (IKafkaProducer<T>)cachedProducer;
+            return Task.FromResult((IKafkaProducer<T>)cachedProducer);
         }
 
         try
@@ -73,10 +74,12 @@ internal class KafkaProducerManager : IDisposable
             var keyType = KeyExtractor.DetermineKeyType(entityModel);
             var keySerializer = CreateKeySerializer(keyType);
 
+            var valueSerializer = SerializerAdapter.Create(_serializerFactory.CreateSerializer<T>());
+
             var producer = new KafkaProducer<T>(
                 rawProducer,
                 keySerializer,
-                _serializerFactory.CreateSerializer<T>(),
+                valueSerializer,
                 topicName,
                 entityModel,
                 _loggerFactory);
@@ -84,7 +87,7 @@ internal class KafkaProducerManager : IDisposable
             _producers.TryAdd(entityType, producer);
 
             _logger?.LogDebug("Producer created: {EntityType} -> {TopicName}", entityType.Name, topicName);
-            return producer;
+            return Task.FromResult<IKafkaProducer<T>>(producer);
         }
         catch (Exception ex)
         {
@@ -93,12 +96,12 @@ internal class KafkaProducerManager : IDisposable
         }
     }
 
-    private async Task<IKafkaProducer<T>> GetProducerAsync<T>(string topicName) where T : class
+    private Task<IKafkaProducer<T>> GetProducerAsync<T>(string topicName) where T : class
     {
         var key = (typeof(T), topicName);
         if (_topicProducers.TryGetValue(key, out var existing))
         {
-            return (IKafkaProducer<T>)existing;
+            return Task.FromResult((IKafkaProducer<T>)existing);
         }
 
         var entityModel = GetEntityModel<T>();
@@ -109,16 +112,18 @@ internal class KafkaProducerManager : IDisposable
         var keyType = KeyExtractor.DetermineKeyType(entityModel);
         var keySerializer = CreateKeySerializer(keyType);
 
+        var valueSerializer = SerializerAdapter.Create(_serializerFactory.CreateSerializer<T>());
+
         var producer = new KafkaProducer<T>(
             rawProducer,
             keySerializer,
-            _serializerFactory.CreateSerializer<T>(),
+            valueSerializer,
             topicName,
             entityModel,
             _loggerFactory);
 
         _topicProducers.TryAdd(key, producer);
-        return producer;
+        return Task.FromResult<IKafkaProducer<T>>(producer);
     }
     /// <summary>
     /// Producer設定構築

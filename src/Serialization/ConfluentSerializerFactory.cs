@@ -4,6 +4,7 @@ using Confluent.Kafka;
 using Confluent.SchemaRegistry;
 using Confluent.SchemaRegistry.Serdes;
 using Kafka.Ksql.Linq.Serialization.Abstractions;
+using Confluent.Kafka.SyncOverAsync;
 using System;
 
 /// <summary>
@@ -28,12 +29,12 @@ public class ConfluentSerializerFactory : ISerializerFactory, IDeserializerFacto
     /// <inheritdoc />
     public ISerializer<T> CreateSerializer<T>()
     {
-        return new AvroSerializer<T>(_client, _serializerConfig);
+        return new AvroSerializer<T>(_client, _serializerConfig).AsSyncOverAsync();
     }
 
     /// <inheritdoc />
     public IDeserializer<T> CreateDeserializer<T>()
     {
-        return new AvroDeserializer<T>(_client, _deserializerConfig);
+        return new AvroDeserializer<T>(_client, _deserializerConfig).AsSyncOverAsync();
     }
 }

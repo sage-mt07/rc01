@@ -38,3 +38,4 @@ var valSer = factory.CreateSerializer<MyEntity>();
 - Updated consumer and producer managers to use new namespace
 
 - Removed unit tests for deleted Avro components
+\n### 2025-07-13 Cleanup follow-up\n- Removed AvroEntityConfiguration integration from KsqlContext and helpers\n- Deleted AvroSchemaInfoExtensions and related project references\n- ConfluentSerializerFactory now returns sync-over-async serializers\n

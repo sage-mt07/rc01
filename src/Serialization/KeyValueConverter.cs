@@ -1,5 +1,6 @@
 namespace Kafka.Ksql.Linq.Serialization;
 
+using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Models;
 using System;
 

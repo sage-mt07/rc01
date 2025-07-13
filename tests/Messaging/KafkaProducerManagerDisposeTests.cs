@@ -13,7 +13,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.SchemaRegistry;
-using Kafka.Ksql.Linq.Tests.Serialization;
 using Xunit;
 
 namespace Kafka.Ksql.Linq.Tests.Messaging;
@@ -59,10 +58,6 @@ public class KafkaProducerManagerDisposeTests
             .GetField("_topicProducers", BindingFlags.NonPublic | BindingFlags.Instance)!
             .GetValue(manager)!;
 
-    private static ConcurrentDictionary<Type, object> GetSerializationDict(KafkaProducerManager manager)
-        => (ConcurrentDictionary<Type, object>)typeof(KafkaProducerManager)
-            .GetField("_serializationManagers", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .GetValue(manager)!;
 
     private static Lazy<Confluent.SchemaRegistry.ISchemaRegistryClient> GetSchemaLazy(KafkaProducerManager manager)
         => (Lazy<Confluent.SchemaRegistry.ISchemaRegistryClient>)typeof(KafkaProducerManager)
@@ -83,7 +78,6 @@ public class KafkaProducerManagerDisposeTests
         Assert.True(GetDisposedFlag(manager));
         Assert.Empty(GetProducerDict(manager));
         Assert.Empty(GetTopicProducerDict(manager));
-        Assert.Empty(GetSerializationDict(manager));
         Assert.False(GetSchemaLazy(manager).IsValueCreated);
     }
 
@@ -93,28 +87,22 @@ public class KafkaProducerManagerDisposeTests
         var manager = new KafkaProducerManager(Options.Create(new KsqlDslOptions()), new NullLoggerFactory());
         var producers = GetProducerDict(manager);
         var topics = GetTopicProducerDict(manager);
-        var serials = GetSerializationDict(manager);
         var schemaLazyField = typeof(KafkaProducerManager).GetField("_schemaRegistryClient", BindingFlags.NonPublic | BindingFlags.Instance)!;
-        var proxy = DispatchProxy.Create<ISchemaRegistryClient, FakeSchemaRegistryClient>();
-        var schemaStub = (FakeSchemaRegistryClient)proxy!;
-        schemaLazyField.SetValue(manager, new Lazy<ISchemaRegistryClient>(() => proxy));
+        schemaLazyField.SetValue(manager, new Lazy<ISchemaRegistryClient>(() => new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = "http://localhost" })));
 
         var p1 = new StubProducer<Sample>();
         var p2 = new StubProducer<Sample>();
         producers[typeof(Sample)] = p1;
         topics[(typeof(Sample), "t")] = p2;
         var ser = new StubDisposable();
-        serials[typeof(Sample)] = ser;
 
         manager.Dispose();
 
         Assert.True(p1.Disposed);
         Assert.True(p2.Disposed);
         Assert.True(ser.Disposed);
-        Assert.False(schemaStub.Disposed);
         Assert.Empty(producers);
         Assert.Empty(topics);
-        Assert.Empty(serials);
         Assert.True(GetDisposedFlag(manager));
     }
 

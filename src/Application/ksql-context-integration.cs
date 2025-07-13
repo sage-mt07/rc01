@@ -1,6 +1,5 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Query.Schema;
-using Kafka.Ksql.Linq.Serialization.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,33 +45,18 @@ public static class KsqlContextQueryExtensions
     }
 
     /// <summary>
-    /// QuerySchemaからAvroEntityConfigurationを生成
-    /// </summary>
-    public static AvroEntityConfiguration CreateAvroConfiguration<T>(this QuerySchema schema) where T : class
-    {
-        var config = new AvroEntityConfiguration(typeof(T))
-        {
-            TopicName = schema.TopicName,
-            KeyProperties = schema.KeyProperties,
-            EnableCaching = schema.GetStreamTableType() == "Table"
-        };
-
-        return config;
-    }
-
-    /// <summary>
     /// クエリベースエンティティの自動登録
     /// </summary>
     public static void RegisterQuerySchemas(this KsqlContext context)
     {
         var querySchemas = context.GetAllQuerySchemas();
-        
-        foreach (var (entityType, schema) in querySchemas)
+
+        foreach (var (_, schema) in querySchemas)
         {
             if (schema.IsValid)
             {
-                // シリアライザファクトリにスキーマ情報を登録
-                RegisterWithSerializationManager(entityType, schema);
+                // 登録処理は廃止されたため、ここでは検証のみ行う
+                QuerySchemaHelper.ValidateQuerySchema(schema, out _);
             }
         }
     }
@@ -121,24 +105,6 @@ public static class KsqlContextQueryExtensions
         }
     }
 
-    /// <summary>
-    /// シリアライゼーションマネージャーへの登録
-    /// </summary>
-    private static void RegisterWithSerializationManager(Type entityType, QuerySchema schema)
-    {
-        // AvroEntityConfigurationを生成
-        var config = new AvroEntityConfiguration(entityType)
-        {
-            TopicName = schema.TopicName,
-            KeyProperties = schema.KeyProperties,
-            EnableCaching = schema.GetStreamTableType() == "Table"
-        };
-
-        // 既存のシリアライゼーション設定に追加
-        // （実際の登録処理は既存のスキーマ登録サービスを利用）
-        Console.WriteLine($"[QuerySchema] Registered {entityType.Name} → {schema.TopicName} " +
-                         $"({schema.GetStreamTableType()}, Keys: {schema.KeyProperties.Length})");
-    }
 }
 
 /// <summary>

@@ -170,20 +170,4 @@ internal static class KeyExtractor
                underlyingType == typeof(Guid);
     }
 
-    /// <summary>
-    /// EntityModelからAvroEntityConfigurationを作成
-    /// </summary>
-    internal static AvroEntityConfiguration ToAvroEntityConfiguration(EntityModel entityModel)
-    {
-        if (entityModel == null)
-            throw new ArgumentNullException(nameof(entityModel));
-
-        var config = new AvroEntityConfiguration(entityModel.EntityType)
-        {
-            TopicName = entityModel.TopicName,
-            KeyProperties = entityModel.KeyProperties
-        };
-
-        return config;
-    }
 }

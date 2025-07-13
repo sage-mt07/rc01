@@ -9,6 +9,7 @@ using Kafka.Ksql.Linq.Messaging.Consumers.Core;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Serialization;
 using Kafka.Ksql.Linq.Serialization.Abstractions;
+using Kafka.Ksql.Linq.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -58,13 +59,13 @@ internal class KafkaConsumerManager : IDisposable
     /// <summary>
     /// 型安全Consumer取得 - 事前確定・キャッシュ
     /// </summary>
-    public async Task<IKafkaConsumer<T, object>> GetConsumerAsync<T>(KafkaSubscriptionOptions? options = null) where T : class
+    public Task<IKafkaConsumer<T, object>> GetConsumerAsync<T>(KafkaSubscriptionOptions? options = null) where T : class
     {
         var entityType = typeof(T);
 
         if (_consumers.TryGetValue(entityType, out var cachedConsumer))
         {
-            return (IKafkaConsumer<T, object>)cachedConsumer;
+            return Task.FromResult((IKafkaConsumer<T, object>)cachedConsumer);
         }
 
         try
@@ -79,7 +80,7 @@ internal class KafkaConsumerManager : IDisposable
             // Create deserializers via Confluent factory
             var keyType = KeyExtractor.DetermineKeyType(entityModel);
             var keyDeserializer = CreateKeyDeserializer(keyType);
-            var valueDeserializer = _serializerFactory.CreateDeserializer<T>();
+            var valueDeserializer = DeserializerAdapter.Create(_serializerFactory.CreateDeserializer<T>());
 
             // Build consumer
             var policy = entityModel.DeserializationErrorPolicy == default
@@ -100,7 +101,7 @@ internal class KafkaConsumerManager : IDisposable
             _consumers.TryAdd(entityType, consumer);
 
             _logger?.LogDebug("Consumer created: {EntityType} -> {TopicName}", entityType.Name, topicName);
-            return consumer;
+            return Task.FromResult<IKafkaConsumer<T, object>>(consumer);
         }
         catch (Exception ex)
         {
