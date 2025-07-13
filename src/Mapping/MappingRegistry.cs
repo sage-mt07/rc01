@@ -2,6 +2,7 @@ using Kafka.Ksql.Linq.Core.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Linq;
 using System.Reflection.Emit;
 
 namespace Kafka.Ksql.Linq.Mapping;
@@ -33,12 +34,21 @@ public class MappingRegistry
         var keyType = CreateType(ns, $"{baseName}-key", keyProperties);
         var valueType = CreateType(ns, $"{baseName}-value", valueProperties);
 
+        var keyTypeProps = keyProperties
+            .Select(p => keyType.GetProperty(p.Name)!)
+            .ToArray();
+        var valueTypeProps = valueProperties
+            .Select(p => valueType.GetProperty(p.Name)!)
+            .ToArray();
+
         var mapping = new KeyValueTypeMapping
         {
             KeyType = keyType,
             KeyProperties = keyProperties,
+            KeyTypeProperties = keyTypeProps,
             ValueType = valueType,
-            ValueProperties = valueProperties
+            ValueProperties = valueProperties,
+            ValueTypeProperties = valueTypeProps
         };
         _mappings[pocoType] = mapping;
         return mapping;

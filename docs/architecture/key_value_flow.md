@@ -163,6 +163,7 @@ await ctx.AddAsync(entity);
 ### 8.3 Serialization/Deserializationの流れ
 - シリアライズ/デシリアライズ時はMappingからkey/value型＋PropertyMeta[]を取得し、Confluent.Avro公式ライブラリで変換処理を行う。
 - POCO⇄key/value⇄バイト列の流れで、型安全・設計一貫性を担保。
+- POCO⇄key/valueの分割・統合は`KeyValueTypeMapping`に備わるAPIを通じて行い、POCO型へのリフレクションや独自プロパティ探索は行わない。
 
 ### 8.4 Messaging層の責務純化
 - Messagingは型や属性・設計情報を一切保持せず、keyBytes/valueBytes/トピック名の送受信に専念する。
