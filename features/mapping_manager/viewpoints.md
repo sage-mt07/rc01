@@ -51,3 +51,15 @@
 - Key 型制約 (`int`,`long`,`string`,`Guid`) を逸脱するとシリアライズ時に失敗する。
 - `EntityModel` でキー未定義のまま登録するとテストで意図しない `Guid` が生成される。
 
+
+## 6. API/例外設計チェック結果
+- `Register<TEntity>` は `null` 引数に `ArgumentNullException` を送出し、同一型は上書き登録される。
+- `ExtractKeyValue` は未登録モデルに `InvalidOperationException`、`null` 引数に `ArgumentNullException` を送出する。
+- 抽出したキーが `Dictionary<string, object>` 以外で `IsSupportedKeyType` が `false` の場合 `NotSupportedException`。
+- `KeyExtractor` からの `ArgumentException` `InvalidCastException` `FormatException` は `InvalidOperationException` にラップされる。
+- 複合キーは定義順を維持した `Dictionary` として返却され、`null` 値は空文字列に変換される。
+
+## 7. テスト実行概要 (2025-07-13 JST)
+- `MappingManagerTests` と `KeyExtractorTests` を実行し、複合キー処理と型変換ロジックを確認。
+- 結果: **Passed 591 / Failed 0 / Skipped 10**。
+
