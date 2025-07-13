@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
+using Kafka.Ksql.Linq.Core.Models;
 
 namespace Kafka.Ksql.Linq.Query.Schema;
 
@@ -11,7 +13,7 @@ public class KeyValueSchemaInfo
 {
     public string ClassName { get; set; } = string.Empty;
     public string Namespace { get; set; } = string.Empty;
-    public PropertyInfo[] Properties { get; set; } = Array.Empty<PropertyInfo>();
+    public PropertyMeta[] Properties { get; set; } = Array.Empty<PropertyMeta>();
     public string SchemaVersion { get; set; } = "1";
     public string Compatibility { get; set; } = string.Empty;
 }
@@ -26,13 +28,13 @@ public class QuerySchema
     public bool IsValid { get; set; }
     public List<string> Errors { get; set; } = new();
 
-    public PropertyInfo[] KeyProperties
+    public PropertyMeta[] KeyProperties
     {
         get => KeyInfo.Properties;
         set => KeyInfo.Properties = value;
     }
 
-    public PropertyInfo[] ValueProperties
+    public PropertyMeta[] ValueProperties
     {
         get => ValueInfo.Properties;
         set => ValueInfo.Properties = value;

@@ -1,5 +1,6 @@
 using Kafka.Ksql.Linq.Mapping;
 using Kafka.Ksql.Linq.Query.Schema;
+using Kafka.Ksql.Linq.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,8 +42,12 @@ public class PocoMapperTests
             TargetType = typeof(T),
             TopicName = typeof(T).Name.ToLowerInvariant(),
             IsValid = true,
-            KeyProperties = keyProps.Select(p => typeof(T).GetProperty(p)!).ToArray(),
+            KeyProperties = keyProps
+                .Select(p => PropertyMeta.FromProperty(typeof(T).GetProperty(p)!))
+                .ToArray(),
             ValueProperties = typeof(T).GetProperties()
+                .Select(p => PropertyMeta.FromProperty(p))
+                .ToArray()
         };
         schema.KeyInfo.ClassName = typeof(T).Name + "Key";
         schema.KeyInfo.Namespace = typeof(T).Namespace ?? string.Empty;

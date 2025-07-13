@@ -1,5 +1,6 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Query.Schema;
+using Kafka.Ksql.Linq.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,18 @@ public static class KsqlContextQueryExtensions
     {
         var entityModels = context.GetEntityModels();
         if (!entityModels.TryGetValue(typeof(T), out var entityModel))
+            return null;
+
+        return ExtractQuerySchemaFromEntityModel(entityModel);
+    }
+
+    /// <summary>
+    /// EntityModelからQuerySchemaを抽出（非ジェネリック版）
+    /// </summary>
+    public static QuerySchema? GetQuerySchema(this KsqlContext context, Type pocoType)
+    {
+        var entityModels = context.GetEntityModels();
+        if (!entityModels.TryGetValue(pocoType, out var entityModel))
             return null;
 
         return ExtractQuerySchemaFromEntityModel(entityModel);
@@ -102,8 +115,13 @@ public static class KsqlContextQueryExtensions
             schema.KeyInfo.Namespace = keyNs;
             schema.ValueInfo.ClassName = valueClass;
             schema.ValueInfo.Namespace = valueNs;
-            schema.KeyProperties = entityModel.KeyProperties.Take(keyCount).ToArray();
-            schema.ValueProperties = entityModel.AllProperties;
+            schema.KeyProperties = entityModel.KeyProperties
+                .Take(keyCount)
+                .Select(p => PropertyMeta.FromProperty(p))
+                .ToArray();
+            schema.ValueProperties = entityModel.AllProperties
+                .Select(p => PropertyMeta.FromProperty(p))
+                .ToArray();
 
             return schema;
         }

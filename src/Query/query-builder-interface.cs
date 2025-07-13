@@ -87,7 +87,7 @@ internal class QueryBuilder<T> : IQueryBuilder<T> where T : class
             .GetMethod(nameof(Analysis.QueryAnalyzer.AnalyzeQuery))
             ?.MakeGenericMethod(_sourceType, typeof(T));
 
-        if (analyzeMethod?.Invoke(null, new object[] { _queryExpression }) is QuerySchemaResult result)
+        if (analyzeMethod?.Invoke(null, new object[] { _queryExpression, _autoKeyExtraction }) is QuerySchemaResult result)
         {
             if (result.Success && result.Schema != null)
             {

@@ -3,7 +3,9 @@ using Kafka.Ksql.Linq.Entities.Samples.Models;
 using SampleOrder = Kafka.Ksql.Linq.Entities.Samples.Models.Order;
 using Kafka.Ksql.Linq.Mapping;
 using Kafka.Ksql.Linq.Query.Schema;
+using Kafka.Ksql.Linq.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 using Xunit;
 using System.Collections.Generic;
 
@@ -27,10 +29,12 @@ public class FluentSampleIntegrationTests
             IsValid = true,
             KeyProperties = new[]
             {
-                typeof(SampleOrder).GetProperty(nameof(SampleOrder.OrderId))!,
-                typeof(SampleOrder).GetProperty(nameof(SampleOrder.UserId))!
+                PropertyMeta.FromProperty(typeof(SampleOrder).GetProperty(nameof(SampleOrder.OrderId))!),
+                PropertyMeta.FromProperty(typeof(SampleOrder).GetProperty(nameof(SampleOrder.UserId))!)
             },
             ValueProperties = typeof(SampleOrder).GetProperties()
+                .Select(p => PropertyMeta.FromProperty(p))
+                .ToArray()
         };
         schema.KeyInfo.ClassName = "OrderKey";
         schema.KeyInfo.Namespace = typeof(SampleOrder).Namespace ?? string.Empty;
