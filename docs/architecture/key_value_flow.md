@@ -75,6 +75,26 @@ yaml
 
 LINQ クエリをどのように `Kafka` 配信までつなぐかを示すため、代表的なシーケンスとコード例を以下にまとめる。
 
+## 7. 運用フロー詳細
+
+1. POCO定義・LINQ式生成
+    - Query namespaceでPOCO（およびLINQ式）を受け付け、key/valueプロパティ配列を取得。
+    - keyが未指定の場合は、Query層でGuidを自動割当。
+1. Mapping登録処理
+    - KsqlContextが、POCO＋key/value情報をMappingに一括登録。
+    - DLQ POCOもCore namespaceから登録（produce専用）。
+1. KSQLクラス名生成
+    - POCOのnamespace＋クラス名から一意なKSQL schema名を生成。
+    - スキーマ登録時と必ず一致する仕様で統一。
+1. スキーマ登録
+    - schema registryに対し、KSQLクラス名でスキーマを登録。
+1. インスタンス生成
+    - POCO単位でMessaging/Serializationインスタンスを生成。
+    - OnModelCreating直後に必ず上記一連の処理を実施。
+
+
+
+
 ### シーケンス図
 
 ```mermaid
