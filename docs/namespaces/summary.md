@@ -12,6 +12,7 @@
 | **Serialization** | Avroスキーマ生成・シリアライズ/デシリアライズ、Schema Registry連携   |
 | **StateStore**    | ストリーム処理の状態管理（RocksDB等）、ウィンドウ確定データ永続化    |
 | **Window**        | 時間窓（Window）処理と集約・ウィンドウ確定の全体管理                 |
+| **Mapping**       | POCO ⇄ key/value 変換専用ユーティリティ                         |
 | **Application**   | KsqlContext構築・上位層統合（Builderパターンによる初期化・設定管理） |
 
 ---
