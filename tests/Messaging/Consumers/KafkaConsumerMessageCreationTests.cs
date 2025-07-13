@@ -71,7 +71,8 @@ public class KafkaConsumerMessageCreationTests
             CreateModel(),
             DeserializationErrorPolicy.Skip,
             "dlq",
-            dlq,
+            (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+                dlq.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
             new NullLoggerFactory());
     }
 

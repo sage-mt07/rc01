@@ -72,7 +72,8 @@ public abstract class KsqlContext : KafkaContextCore
 
             _consumerManager = new KafkaConsumerManager(
                 Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                _dlqProducer,
+                (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+                    _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
                 null);
 
             InitializeStateStoreIntegration();
@@ -113,7 +114,8 @@ public abstract class KsqlContext : KafkaContextCore
 
             _consumerManager = new KafkaConsumerManager(
                 Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                _dlqProducer,
+                (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+                    _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
                 null);
 
             InitializeStateStoreIntegration();

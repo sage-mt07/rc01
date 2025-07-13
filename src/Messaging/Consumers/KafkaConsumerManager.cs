@@ -6,8 +6,6 @@ using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Configuration;
 using Kafka.Ksql.Linq.Messaging.Consumers.Core;
-using Kafka.Ksql.Linq.Messaging.Producers;
-using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Serialization;
 using Kafka.Ksql.Linq.Serialization.Abstractions;
 using Kafka.Ksql.Linq.Core.Models;
@@ -37,15 +35,15 @@ internal class KafkaConsumerManager : IDisposable
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
     private bool _disposed = false;
 
-    private readonly DlqProducer _dlqProducer;
+    private readonly Action<byte[]?, Exception, string, int, long, DateTime, Headers?, string, string> _sendToDlq;
 
     public KafkaConsumerManager(
         IOptions<KsqlDslOptions> options,
-        DlqProducer dlqProducer,
+        Action<byte[]?, Exception, string, int, long, DateTime, Headers?, string, string> sendToDlq,
         ILoggerFactory? loggerFactory = null)
     {
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-        _dlqProducer = dlqProducer ?? throw new ArgumentNullException(nameof(dlqProducer));
+        _sendToDlq = sendToDlq ?? throw new ArgumentNullException(nameof(sendToDlq));
         _logger = loggerFactory.CreateLoggerOrNull<KafkaConsumerManager>();
         _loggerFactory = loggerFactory;
 
@@ -96,7 +94,7 @@ internal class KafkaConsumerManager : IDisposable
                 entityModel,
                 policy,
                 _options.DlqTopicName,
-                _dlqProducer,
+                _sendToDlq,
                 _loggerFactory);
 
             _consumers.TryAdd(entityType, consumer);

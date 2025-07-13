@@ -4,11 +4,9 @@ using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Core.Models;  // ✅ 追加：KeyMerger用
 using Kafka.Ksql.Linq.Messaging.Abstractions;
-using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
-using Kafka.Ksql.Linq.Core.Dlq;
-using Microsoft.Extensions.Logging;
 using System;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -33,7 +31,7 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
     private readonly ILogger? _logger;
     private readonly DeserializationErrorPolicy _deserializationPolicy;
     private readonly string _dlqTopicName;
-    private readonly DlqProducer _dlqProducer;
+    private readonly Action<byte[]?, Exception, string, int, long, DateTime, Headers?, string, string> _sendToDlq;
     private bool _subscribed = false;
     private bool _disposed = false;
 
@@ -47,7 +45,7 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
         EntityModel entityModel,
         DeserializationErrorPolicy deserializationPolicy,
         string dlqTopicName,
-        DlqProducer dlqProducer,
+        Action<byte[]?, Exception, string, int, long, DateTime, Headers?, string, string> sendToDlq,
         ILoggerFactory? loggerFactory = null)
     {
         _consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
@@ -57,7 +55,7 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
         _entityModel = entityModel ?? throw new ArgumentNullException(nameof(entityModel));
         _deserializationPolicy = deserializationPolicy;
         _dlqTopicName = dlqTopicName ?? throw new ArgumentNullException(nameof(dlqTopicName));
-        _dlqProducer = dlqProducer ?? throw new ArgumentNullException(nameof(dlqProducer));
+        _sendToDlq = sendToDlq ?? throw new ArgumentNullException(nameof(sendToDlq));
         _logger = loggerFactory.CreateLoggerOrNull<KafkaConsumer<TValue, TKey>>();
 
         EnsureSubscribed();
@@ -332,7 +330,7 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
         {
             try
             {
-                _dlqProducer.SendAsync(
+                _sendToDlq(
                     data,
                     ex,
                     result.Topic,
@@ -341,8 +339,7 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
                     result.Message.Timestamp.UtcDateTime,
                     result.Message.Headers,
                     typeof(TKey).FullName ?? string.Empty,
-                    typeof(TValue).FullName ?? string.Empty)
-                    .GetAwaiter().GetResult();
+                    typeof(TValue).FullName ?? string.Empty);
             }
             catch (Exception dlqEx)
             {

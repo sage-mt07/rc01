@@ -73,7 +73,17 @@ public class KafkaConsumerBatchTests
         var options = Options.Create(new KsqlDslOptions());
         var prodMgr = new KafkaProducerManager(options, new NullLoggerFactory());
         var dlq = new DlqProducer(prodMgr, new DlqOptions());
-        return new KafkaConsumer<TestEntity, int>((IConsumer<object, object>)fake, keyDeser, valDeser, "t", CreateModel(), DeserializationErrorPolicy.Skip, "dlq", dlq, new NullLoggerFactory());
+        return new KafkaConsumer<TestEntity, int>(
+            (IConsumer<object, object>)fake,
+            keyDeser,
+            valDeser,
+            "t",
+            CreateModel(),
+            DeserializationErrorPolicy.Skip,
+            "dlq",
+            (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+                dlq.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
+            new NullLoggerFactory());
     }
 
     [Fact]
