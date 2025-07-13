@@ -30,3 +30,13 @@ MappingManager の登録処理は KsqlContext 初期化と同時にまとめて�
 | テスト環境 | 高 | 詩音と協力し、Kafkaブローカーの模擬環境を常に整備 |
 
 全体の進捗と課題は `docs/changes/` に記録し、週次でレビューします。
+
+## 型情報管理とMessagingの分離
+
+shared版で追加された [型情報・設計情報管理フロー](../shared/key_value_flow.md#8-%E5%9E%8B%E6%83%85%E5%A0%B1%E3%83%BB%E8%A8%AD%E8%A8%88%E6%83%85%E5%A0%B1%E7%AE%A1%E7%90%86%E3%83%95%E3%83%AD%E3%83%BC) を踏まえ、PM視点では次の点を管理指針とします。
+
+1. **PropertyMeta集中管理**: Fluent APIで確定した型情報を `PropertyMeta` として集約し、変更時はMappingManager経由でのみ更新する。
+2. **Messaging責務の純化**: key/valueのバイト列送受信に専念させ、設計変更の波及を避ける。
+3. **設計進化時の通知**: 新規POCO追加や属性変更はMapping登録フローの更新を必須とし、進捗ログに記録する。
+
+この方針に沿って進捗管理・レビューを行います。

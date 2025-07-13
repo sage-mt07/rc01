@@ -37,3 +37,8 @@
 - QueryBuilder が MappingManager の内部辞書へ直接アクセスするとテストが困難になる。インターフェース越しの連携に留めること。
 - KsqlContextBuilder が QueryBuilder の状態を変更すると Builder の再利用性が下がるため、設定オブジェクトを明確に分離する。
 - 各層で Fail-Fast ポリシーを徹底し、未登録モデル利用時は即例外を投げる。
+
+### 型情報管理レビュー
+- `PropertyMeta` による型情報の集中管理を正式ルールとし、Mapping 以外の層で型定義を持たないことを確認。
+- Messaging 層はバイト列処理のみを担当し、Mapping 更新時の影響範囲を最小化する構造を維持する。
+- 新しい POCO 追加時は必ず MappingManager 登録フローが実行されているかを監査ポイントとする。

@@ -36,4 +36,10 @@
 - `KsqlContext` との連携で key/value 抽出後に Kafka へ送信できる
 - Mapping 定義のない型を使用した場合にパイプライン全体で失敗を検知できる
 
+## Mappingテスト追加方針
+sharedの新セクションで定義された型情報管理フローを踏まえ、以下を重点的に検証します。
+1. `PropertyMeta` から生成される KeyType/ValueType が期待どおりか。
+2. MappingManager 更新時に Messaging 層への影響がないことを統合テストで保証。
+3. 新規POCO追加時に登録漏れが発生した場合のFail-Fast動作。
+
 エッジケースおよび失敗系は `tests/Mapping/MappingManager_viewpoints.md` に詳しく記述します。
