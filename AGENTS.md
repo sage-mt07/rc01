@@ -2,7 +2,17 @@
 
 【1. 記録ルール】
 本ファイルは進捗・設計・課題などの「日付別・時系列ログ」を全員分まとめて記録します
+**【重要】進捗・作業指示・レポートの日時記載は、必ず「OSから現在日時（JST推奨）」を取得し、タイムゾーンを明記してください。  
+各担当は自端末/サーバーのコマンドや言語APIで取得した“実行時刻”をそのまま記載します。  
+例：2025-07-12 15:54 JST**
 
+（取得例）  
+- Windows: `echo %date% %time%`  
+- Linux/Mac: `date '+%Y-%m-%d %H:%M:%S %Z'`  
+- C#: `DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " JST"`  
+- Python: `datetime.now(timezone(timedelta(hours=9))).strftime('%Y-%m-%d %H:%M:%S JST')`
+
+各AIも人間も共通でこのルールに従ってください。
 各エントリは日時（JST）＋担当（AI名/人名）＋内容のセットで記録
 
 1日に複数回でも追記OK／時系列でどんどん追加してください
