@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Kafka.Ksql.Linq.Messaging.Models;
+namespace Kafka.Ksql.Linq.Core.Models;
 
 public class DlqEnvelope
 {

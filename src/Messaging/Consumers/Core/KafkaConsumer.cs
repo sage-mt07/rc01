@@ -6,6 +6,7 @@ using Kafka.Ksql.Linq.Core.Models;  // ✅ 追加：KeyMerger用
 using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
+using Kafka.Ksql.Linq.Core.Dlq;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;

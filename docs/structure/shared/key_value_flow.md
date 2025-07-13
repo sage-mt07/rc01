@@ -166,8 +166,11 @@ await ctx.AddAsync(entity);
 - POCO⇄key/valueの変換は`KeyValueTypeMapping`提供のAPIを用い、POCO型へのリフレクションや独自探索を行わない。
 
 ### 8.4 Messaging層の責務純化
-- Messagingは型や属性・設計情報を一切保持せず、keyBytes/valueBytes/トピック名の送受信に専念する。
-- 型進化や属性追加はMapping更新だけで全体へ即反映され、Messaging層の実装・運用は完全不変となる。
+- Messaging は **バイト列 (keyBytes, valueBytes) とトピック名のみ** を扱う。POCO 型や PropertyMeta など設計情報への参照は一切持たない。
+- DLQ (Dead Letter Queue) も単なる送信先トピックとして扱い、特別な型やロジックを Messaging 層で実装しない。
+- DLQ 管理機能は Core 層で担い、Messaging 層はバイト列送受信のみを行う。
+- 型情報やスキーマ管理は Mapping/Serialization 層で完結させ、Messaging 層の API は `PublishAsync(byte[] keyBytes, byte[] valueBytes, string topic)` / `ConsumeAsync(string topic)` が基本形となる。
+- 型進化や属性追加は Mapping 更新だけで全体へ即反映され、Messaging 層の実装・運用は完全不変となる。
 
 ### 8.5 設計進化時の運用ポイント
 - 新しいPOCOや属性、精度/フォーマットの追加もMappingへの登録・PropertyMeta反映だけでOK。

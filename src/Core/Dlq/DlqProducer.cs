@@ -1,13 +1,12 @@
 using Confluent.Kafka;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Attributes;
-using Kafka.Ksql.Linq.Messaging.Contracts;
-using Kafka.Ksql.Linq.Messaging.Models;
+using Kafka.Ksql.Linq.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Kafka.Ksql.Linq.Messaging.Producers;
+namespace Kafka.Ksql.Linq.Core.Dlq;
 
 internal class DlqProducer : IErrorSink, IDisposable
 {
@@ -275,13 +274,3 @@ public class DlqMetrics
     public DateTime ProcessedAt { get; set; }
 }
 
-/// <summary>
-/// DLQ例外情報
-/// </summary>
-public class DlqExceptionInfo
-{
-    public string Type { get; set; } = string.Empty;
-    public string Message { get; set; } = string.Empty;
-    public string? StackTrace { get; set; }
-    public string? InnerException { get; set; }
-}
