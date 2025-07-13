@@ -8,10 +8,9 @@
 
 | レイヤー        | 対象クラス例                  | 主なテスト内容 |
 |-----------------|------------------------------|----------------|
-| Query           | `EntitySet<T>`               | LINQ式からのKey生成の妥当性 |
-| POCO-Query Mapping | `MappingManager`             | クエリとPOCOのマッピング定義検証 |
-| Context         | `KsqlContext`, `KsqlContextBuilder` | オプション設定と依存注入の組み合わせ |
+| Query           | `EntitySet<T>`               | LINQ式からのKey生成の妥当性 || Context         | `KsqlContext`, `KsqlContextBuilder` | オプション設定と依存注入の組み合わせ |
 | Messaging       | `KafkaProducer`, `KafkaConsumer` | トピック送受信時の例外処理とリトライ確認 |
+| Application  | Consumer Handler       | ハンドラ呼び出しと後処理の検証 |
 | Serialization   | `AvroSerializer`, `AvroDeserializer` | スキーマ互換性とエラー時の挙動 |
 | Kafka           | テストブローカー             | 実際の配信確認（統合試験） |
 

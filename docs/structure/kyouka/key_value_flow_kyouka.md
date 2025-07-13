@@ -5,8 +5,7 @@
 ## 構造上のポイント
 
 - **責務集中**: `KsqlContext` がProduce/Consumeを統括する一方、シリアライズ処理は `AvroSerializer` に限定されています。役割の境界が明確で、拡張や差し替えが容易です。
-- **マッピング層**: `MappingManager` を中心とした POCO-Query Mapping Layer が新設され、POCO と KSQL の対応を一元管理します。
-- **依存順序**: Query → POCO-Query Mapping → Context → Messaging → Serialization → Kafka の一方向依存になっており、逆方向参照はありません。
+- **依存順序**: Query → Context → Messaging → Serialization → Kafka の一方向依存で、逆参照はありません。
 - **結合度**: Messaging と Serialization はインターフェース経由で連携し、具象実装を隠蔽しています。
 
 ## 再整理に向けたコメント
