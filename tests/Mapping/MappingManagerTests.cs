@@ -20,6 +20,17 @@ public class MappingManagerTests
         public string Code { get; set; } = string.Empty;
     }
 
+    private class UnsupportedSample
+    {
+        public decimal Id { get; set; }
+    }
+
+    private class NullComposite
+    {
+        public int Id { get; set; }
+        public string? Code { get; set; }
+    }
+
     [Fact]
     public void ExtractKeyValue_ReturnsRegisteredKey()
     {
@@ -93,5 +104,40 @@ public class MappingManagerTests
         var entity = new Sample { Id = 1, Name = "B" };
         var result = manager.ExtractKeyValue(entity);
         Assert.Equal("B", result.Key);
+    }
+
+    [Fact]
+    public void ExtractKeyValue_UnsupportedKeyType_Throws()
+    {
+        var builder = new ModelBuilder();
+        builder.Entity<UnsupportedSample>()
+            .WithTopic("unsupported")
+            .HasKey(e => e.Id);
+        var model = builder.GetEntityModel<UnsupportedSample>()!;
+
+        var manager = new MappingManager();
+        manager.Register<UnsupportedSample>(model);
+
+        var entity = new UnsupportedSample { Id = 1m };
+
+        Assert.Throws<NotSupportedException>(() => manager.ExtractKeyValue(entity));
+    }
+
+    [Fact]
+    public void ExtractKeyValue_NullCompositeKeyValue_ReturnsEmptyString()
+    {
+        var builder = new ModelBuilder();
+        builder.Entity<NullComposite>()
+            .WithTopic("null-composite")
+            .HasKey(e => new { e.Id, e.Code });
+        var model = builder.GetEntityModel<NullComposite>()!;
+
+        var manager = new MappingManager();
+        manager.Register<NullComposite>(model);
+
+        var entity = new NullComposite { Id = 5, Code = null };
+        var result = manager.ExtractKeyValue(entity);
+        var dict = Assert.IsType<Dictionary<string, object>>(result.Key);
+        Assert.Equal(string.Empty, dict[nameof(NullComposite.Code)]);
     }
 }
