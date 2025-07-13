@@ -50,7 +50,8 @@ internal class KafkaProducer<T> : IKafkaProducer<T> where T : class
 
         try
         {
-            var keyValue = KeyExtractor.ExtractKeyValue(message, _entityModel);
+            var parts = KeyExtractor.ExtractKeyParts(message, _entityModel);
+            var keyValue = KeyExtractor.BuildTypedKey(parts, _logger);
 
             var kafkaMessage = new Message<object, object>
             {

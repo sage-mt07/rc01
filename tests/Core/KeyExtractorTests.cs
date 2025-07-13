@@ -127,4 +127,38 @@ public class KeyExtractorTests
         Assert.Equal("sample-topic", config.TopicName);
         Assert.Equal(2, config.KeyProperties.Length);
     }
+
+    [Fact]
+    public void ExtractKeyParts_WithCompositeKey_ReturnsParts()
+    {
+        var entity = new SampleEntity { Id = 1, Name = "A" };
+        var model = CreateModel();
+        var parts = KeyExtractor.ExtractKeyParts(entity, model);
+        Assert.Equal(2, parts.Count);
+        Assert.Equal("Id", parts[0].KeyName);
+        Assert.Equal(typeof(int), parts[0].KeyType);
+        Assert.Equal("1", parts[0].Value);
+        Assert.Equal("Name", parts[1].KeyName);
+        Assert.Equal(typeof(string), parts[1].KeyType);
+        Assert.Equal("A", parts[1].Value);
+    }
+
+    [Fact]
+    public void BuildTypedKey_RoundTrip_Works()
+    {
+        var entity = new SampleEntity { Id = 2, Name = "B" };
+        var model = CreateModel();
+        var parts = KeyExtractor.ExtractKeyParts(entity, model);
+        var obj = KeyExtractor.BuildTypedKey(parts);
+        var dict = Assert.IsType<Dictionary<string, object>>(obj);
+        Assert.Equal(2, dict["Id"]);
+        Assert.Equal("B", dict["Name"]);
+    }
+
+    [Fact]
+    public void BuildTypedKey_InvalidValue_Throws()
+    {
+        var parts = new List<CompositeKeyPart> { new("Id", typeof(int), "abc") };
+        Assert.ThrowsAny<Exception>(() => KeyExtractor.BuildTypedKey(parts));
+    }
 }

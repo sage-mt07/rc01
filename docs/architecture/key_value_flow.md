@@ -104,9 +104,12 @@ var mapping = ctx.MappingManager;
 
 var ksql = builder.Build(query);
 var entity = new User { Id = 1, Name = "Alice" };
-var (key, value) = mapping.ExtractKeyValue(entity);
+var parts = mapping.ExtractKeyParts(entity);
+var key = KeyExtractor.BuildTypedKey(parts);
 await ctx.AddAsync(entity);
 ```
+
+複合キーは `List<(string KeyName, Type KeyType, string Value)>` として抽出し、送信時に `BuildTypedKey` で型変換する方式へ移行しました。既存の `ExtractKeyValue` は互換APIとして残ります。
 
 ### ベストプラクティス
 

@@ -16,6 +16,17 @@ public class MappingManager : IMappingManager
         _models[typeof(TEntity)] = model;
     }
 
+    public List<CompositeKeyPart> ExtractKeyParts<TEntity>(TEntity entity) where TEntity : class
+    {
+        if (entity == null)
+            throw new ArgumentNullException(nameof(entity));
+
+        if (!_models.TryGetValue(typeof(TEntity), out var model))
+            throw new InvalidOperationException($"Model for {typeof(TEntity).Name} is not registered.");
+
+        return KeyExtractor.ExtractKeyParts(entity, model);
+    }
+
     public (object Key, TEntity Value) ExtractKeyValue<TEntity>(TEntity entity) where TEntity : class
     {
         if (entity == null)
@@ -26,7 +37,8 @@ public class MappingManager : IMappingManager
 
         try
         {
-            var key = KeyExtractor.ExtractKeyValue(entity, model);
+            var parts = KeyExtractor.ExtractKeyParts(entity, model);
+            var key = KeyExtractor.BuildTypedKey(parts);
 
             if (key != null && key is not Dictionary<string, object> && !KeyExtractor.IsSupportedKeyType(key.GetType()))
             {

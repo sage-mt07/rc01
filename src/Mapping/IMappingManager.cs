@@ -1,6 +1,8 @@
 namespace Kafka.Ksql.Linq.Mapping;
 
 using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Models;
+using System.Collections.Generic;
 
 public interface IMappingManager
 {
@@ -13,4 +15,9 @@ public interface IMappingManager
     /// Extracts key/value pair from the entity according to its model.
     /// </summary>
     (object Key, TEntity Value) ExtractKeyValue<TEntity>(TEntity entity) where TEntity : class;
+
+    /// <summary>
+    /// Extracts composite key parts from the entity (new recommended API).
+    /// </summary>
+    List<CompositeKeyPart> ExtractKeyParts<TEntity>(TEntity entity) where TEntity : class;
 }
