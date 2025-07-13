@@ -24,13 +24,6 @@ public interface IKafkaProducer<T> : IDisposable where T : class
     Task<KafkaDeliveryResult> SendAsync(T message, KafkaMessageContext? context = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// バッチメッセージ送信
-    /// </summary>
-    Task<KafkaBatchDeliveryResult> SendBatchAsync(IEnumerable<T> messages, KafkaMessageContext? context = null, CancellationToken cancellationToken = default);
-
-
-
-    /// <summary>
     /// 保留中メッセージのフラッシュ
     /// </summary>
     Task FlushAsync(TimeSpan timeout);

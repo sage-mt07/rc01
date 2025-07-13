@@ -27,7 +27,6 @@ Kafka メッセージング機能の型安全な抽象化層を提供する name
 
 #### 送信結果
 - **`KafkaDeliveryResult`**: 単一メッセージ送信結果
-- **`KafkaBatchDeliveryResult`**: バッチ送信結果
 
 #### DLQ（Dead Letter Queue）
 - **`DlqProducer`**: デシリアライズ失敗データの DLQ 送信
@@ -66,7 +65,6 @@ Kafka メッセージング機能の型安全な抽象化層を提供する name
 - **`KafkaConsumerManagerException`**: Consumer 管理例外
 - **`KafkaProducerManagerException`**: Producer 管理例外  
 - **`KafkaTopicConflictException`**: トピック設定競合例外
-- **`KafkaBatchSendException`**: バッチ送信例外
 
 ## アーキテクチャ特徴
 

@@ -8,13 +8,6 @@ namespace Kafka.Ksql.Linq.Tests.Messaging;
 public class MessagingPropertyTests
 {
     [Fact]
-    public void KafkaBatchDeliveryResult_AllSuccessful_WhenNoErrors()
-    {
-        var result = new KafkaBatchDeliveryResult { FailedCount = 0 };
-        Assert.True(result.AllSuccessful);
-    }
-
-    [Fact]
     public void KafkaDeliveryResult_Properties_RoundTrip()
     {
         var now = DateTime.UtcNow;
