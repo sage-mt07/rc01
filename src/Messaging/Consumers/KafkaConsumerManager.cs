@@ -7,6 +7,7 @@ using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Configuration;
 using Kafka.Ksql.Linq.Messaging.Consumers.Core;
 using Kafka.Ksql.Linq.Messaging.Producers;
+using Kafka.Ksql.Linq.Serialization;
 using Kafka.Ksql.Linq.Serialization.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -30,7 +31,7 @@ internal class KafkaConsumerManager : IDisposable
     private readonly ILogger? _logger;
     private readonly ILoggerFactory? _loggerFactory;
     private readonly ConcurrentDictionary<Type, object> _consumers = new();
-    private readonly ConcurrentDictionary<Type, object> _serializationManagers = new();
+    private readonly ConfluentSerializerFactory _serializerFactory;
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
     private bool _disposed = false;
 
@@ -48,6 +49,8 @@ internal class KafkaConsumerManager : IDisposable
 
         // SchemaRegistryClientの遅延初期化
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
+
+        _serializerFactory = new ConfluentSerializerFactory(_schemaRegistryClient.Value);
 
         _logger?.LogInformation("Type-safe KafkaConsumerManager initialized");
     }
@@ -73,19 +76,20 @@ internal class KafkaConsumerManager : IDisposable
             var config = BuildConsumerConfig(topicName, options);
             var rawConsumer = new ConsumerBuilder<object, object>(config).Build();
 
-            // 型安全なシリアライゼーションマネージャー取得
-            var serializationManager = GetOrCreateSerializationManager<T>();
-            var deserializerPair = await serializationManager.GetDeserializersAsync();
+            // Create deserializers via Confluent factory
+            var keyType = KeyExtractor.DetermineKeyType(entityModel);
+            var keyDeserializer = CreateKeyDeserializer(keyType);
+            var valueDeserializer = _serializerFactory.CreateDeserializer<T>();
 
-            // 統合Consumer作成
+            // Build consumer
             var policy = entityModel.DeserializationErrorPolicy == default
                 ? _options.DeserializationErrorPolicy
                 : entityModel.DeserializationErrorPolicy;
 
             var consumer = new KafkaConsumer<T, object>(
                 rawConsumer,
-                deserializerPair.KeyDeserializer,
-                deserializerPair.ValueDeserializer,
+                keyDeserializer,
+                valueDeserializer,
                 topicName,
                 entityModel,
                 policy,
@@ -182,24 +186,6 @@ internal class KafkaConsumerManager : IDisposable
         }, cancellationToken);
     }
 
-    /// <summary>
-    /// 型安全なシリアライゼーションマネージャー取得
-    /// </summary>
-    private IAvroSerializationManager<T> GetOrCreateSerializationManager<T>() where T : class
-    {
-        var entityType = typeof(T);
-
-        if (_serializationManagers.TryGetValue(entityType, out var existingManager))
-        {
-            return (IAvroSerializationManager<T>)existingManager;
-        }
-
-        var newManager = new AvroSerializationManager<T>(_schemaRegistryClient.Value, _loggerFactory);
-        _serializationManagers.TryAdd(entityType, newManager);
-
-        _logger?.LogDebug("Created SerializationManager for {EntityType}", entityType.Name);
-        return newManager;
-    }
 
     /// <summary>
     /// SchemaRegistryClient作成
@@ -254,6 +240,14 @@ internal class KafkaConsumerManager : IDisposable
             KeyProperties = keyProperties,
             AllProperties = allProperties
         };
+    }
+
+    private IDeserializer<object> CreateKeyDeserializer(Type keyType)
+    {
+        var method = typeof(IDeserializerFactory).GetMethod("CreateDeserializer")!.MakeGenericMethod(keyType);
+        var typed = method.Invoke(_serializerFactory, null);
+        var adapterMethod = typeof(DeserializerAdapter).GetMethod("Create")!.MakeGenericMethod(keyType);
+        return (IDeserializer<object>)adapterMethod.Invoke(null, new[] { typed! })!;
     }
 
     /// <summary>
@@ -341,16 +335,6 @@ internal class KafkaConsumerManager : IDisposable
                 }
             }
             _consumers.Clear();
-
-            // SerializationManagerの解放
-            foreach (var manager in _serializationManagers.Values)
-            {
-                if (manager is IDisposable disposable)
-                {
-                    disposable.Dispose();
-                }
-            }
-            _serializationManagers.Clear();
 
             // SchemaRegistryClientの解放
             if (_schemaRegistryClient.IsValueCreated)
