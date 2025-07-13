@@ -8,8 +8,13 @@ using Confluent.Kafka;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
+using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Configuration.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Consumers;
+using Kafka.Ksql.Linq.Messaging.Producers;
+using Kafka.Ksql.Linq.Messaging.Configuration;
+using Microsoft.Extensions.Options;
+using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -44,21 +49,17 @@ public class KafkaConsumerManagerTests
 
     private static KafkaConsumerManager CreateManager(IKafkaConsumer<SampleEntity, object> consumer, ILogger? logger)
     {
-        var manager = (KafkaConsumerManager)RuntimeHelpers.GetUninitializedObject(typeof(KafkaConsumerManager));
-        typeof(KafkaConsumerManager).GetField("_consumers", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+        var options = Options.Create(new KsqlDslOptions());
+        var producerManager = new KafkaProducerManager(options, new NullLoggerFactory());
+        var dlqProducer = new DlqProducer(producerManager, new DlqOptions { TopicName = options.Value.DlqTopicName });
+        var manager = new KafkaConsumerManager(options, dlqProducer, new NullLoggerFactory());
+
+        // inject stub consumer via reflection
+        typeof(KafkaConsumerManager).GetField("_consumers", BindingFlags.Instance | BindingFlags.NonPublic)!
             .SetValue(manager, new ConcurrentDictionary<Type, object>(new[] { new KeyValuePair<Type, object>(typeof(SampleEntity), consumer) }));
-        typeof(KafkaConsumerManager).GetField("_serializationManagers", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .SetValue(manager, new ConcurrentDictionary<Type, object>());
-        typeof(KafkaConsumerManager).GetField("_logger", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+        typeof(KafkaConsumerManager).GetField("_logger", BindingFlags.Instance | BindingFlags.NonPublic)!
             .SetValue(manager, logger);
-        typeof(KafkaConsumerManager).GetField("_loggerFactory", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .SetValue(manager, new NullLoggerFactory());
-        typeof(KafkaConsumerManager).GetField("_options", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .SetValue(manager, new Kafka.Ksql.Linq.Configuration.KsqlDslOptions());
-        typeof(KafkaConsumerManager).GetField("_dlqProducer", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .SetValue(manager, RuntimeHelpers.GetUninitializedObject(typeof(Kafka.Ksql.Linq.Messaging.Producers.DlqProducer)));
-        typeof(KafkaConsumerManager).GetField("_schemaRegistryClient", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .SetValue(manager, new Lazy<Confluent.SchemaRegistry.ISchemaRegistryClient>(() => new Mock<Confluent.SchemaRegistry.ISchemaRegistryClient>().Object));
+
         return manager;
     }
 

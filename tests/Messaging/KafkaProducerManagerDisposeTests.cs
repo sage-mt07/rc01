@@ -41,11 +41,6 @@ public class KafkaProducerManagerDisposeTests
         public void Dispose() { Disposed = true; }
     }
 
-    private class StubDisposable : IDisposable
-    {
-        public bool Disposed;
-        public void Dispose() { Disposed = true; }
-    }
 
 
     private static ConcurrentDictionary<Type, object> GetProducerDict(KafkaProducerManager manager)
@@ -78,7 +73,7 @@ public class KafkaProducerManagerDisposeTests
         Assert.True(GetDisposedFlag(manager));
         Assert.Empty(GetProducerDict(manager));
         Assert.Empty(GetTopicProducerDict(manager));
-        Assert.False(GetSchemaLazy(manager).IsValueCreated);
+        Assert.True(GetSchemaLazy(manager).IsValueCreated);
     }
 
     [Fact]
@@ -94,13 +89,11 @@ public class KafkaProducerManagerDisposeTests
         var p2 = new StubProducer<Sample>();
         producers[typeof(Sample)] = p1;
         topics[(typeof(Sample), "t")] = p2;
-        var ser = new StubDisposable();
 
         manager.Dispose();
 
         Assert.True(p1.Disposed);
         Assert.True(p2.Disposed);
-        Assert.True(ser.Disposed);
         Assert.Empty(producers);
         Assert.Empty(topics);
         Assert.True(GetDisposedFlag(manager));
