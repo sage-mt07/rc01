@@ -121,6 +121,6 @@ await ctx.AddAsync(entity);
 
 ### 異常系の流れ
 
-1. `MappingManager` に登録されていないエンティティを渡した場合、`KeyNotFoundException` が発生する。
+1. `MappingManager` に登録されていないエンティティを渡した場合、`InvalidOperationException` が発生する。
 2. `KsqlContext` との接続に失敗した場合は `KafkaException` を上位へ伝搬する。
 
