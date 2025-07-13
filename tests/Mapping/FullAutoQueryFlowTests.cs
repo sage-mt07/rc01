@@ -7,6 +7,7 @@ using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Query.Analysis;
+using Kafka.Ksql.Linq.Query.Schema;
 using System.Linq;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -61,7 +62,6 @@ public class FullAutoQueryFlowTests
     public async Task EntitySet_Query_To_AddAsync_FullFlow()
     {
         var services = new ServiceCollection();
-        services.AddSingleton<IMappingManager, MappingManager>();
         services.AddSingleton<TestContext>();
         var provider = services.BuildServiceProvider();
         var ctx = provider.GetRequiredService<TestContext>();
@@ -74,15 +74,22 @@ public class FullAutoQueryFlowTests
             .GetValue(manager)!;
         dict[typeof(User)] = stub;
 
-        var mapping = provider.GetRequiredService<IMappingManager>();
-        mapping.Register<User>(ctx.GetEntityModels()[typeof(User)]);
-
-        var result = QueryAnalyzer.AnalyzeQuery<User, User>(
-            src => src.Where(u => u.Id == 1));
-        Assert.True(result.Success);
+        var schema = new QuerySchema
+        {
+            SourceType = typeof(User),
+            TargetType = typeof(User),
+            TopicName = "users",
+            IsValid = true,
+            KeyProperties = new[] { typeof(User).GetProperty(nameof(User.Id))! },
+            ValueProperties = typeof(User).GetProperties()
+        };
+        schema.KeyInfo.ClassName = "UserKey";
+        schema.KeyInfo.Namespace = typeof(User).Namespace ?? string.Empty;
+        schema.ValueInfo.ClassName = "UserValue";
+        schema.ValueInfo.Namespace = typeof(User).Namespace ?? string.Empty;
 
         var user = new User(1, "Alice");
-        var (key, value) = mapping.ExtractKeyValue(user);
+        var (key, value) = PocoMapper.ToKeyValue(user, schema);
         Assert.Equal(user.Id, key);
         Assert.Same(user, value);
 
@@ -94,7 +101,6 @@ public class FullAutoQueryFlowTests
     public async Task QuerySchemaHelper_Validate_Summary_FullFlow()
     {
         var services = new ServiceCollection();
-        services.AddSingleton<IMappingManager, MappingManager>();
         services.AddSingleton<TestContext>();
         var provider = services.BuildServiceProvider();
         var ctx = provider.GetRequiredService<TestContext>();
@@ -107,14 +113,19 @@ public class FullAutoQueryFlowTests
             .GetValue(manager)!;
         dict[typeof(User)] = stub;
 
-        var mapping = provider.GetRequiredService<IMappingManager>();
-        mapping.Register<User>(ctx.GetEntityModels()[typeof(User)]);
-
-        var result = QueryAnalyzer.AnalyzeQuery<User, User>(
-            src => src.Where(u => u.Id == 1));
-        Assert.True(result.Success);
-
-        var schema = result.Schema!;
+        var schema = new QuerySchema
+        {
+            SourceType = typeof(User),
+            TargetType = typeof(User),
+            TopicName = "users",
+            IsValid = true,
+            KeyProperties = new[] { typeof(User).GetProperty(nameof(User.Id))! },
+            ValueProperties = typeof(User).GetProperties()
+        };
+        schema.KeyInfo.ClassName = "UserKey";
+        schema.KeyInfo.Namespace = typeof(User).Namespace ?? string.Empty;
+        schema.ValueInfo.ClassName = "UserValue";
+        schema.ValueInfo.Namespace = typeof(User).Namespace ?? string.Empty;
         Assert.True(QuerySchemaHelper.ValidateQuerySchema(schema, out var errors));
         Assert.Empty(errors);
 

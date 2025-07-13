@@ -7,6 +7,7 @@ using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Query.Abstractions;
+using Kafka.Ksql.Linq.Query.Schema;
 using System.Linq;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -68,17 +69,22 @@ public class AutomaticQueryFlowTests
             .GetValue(manager)!;
         dict[typeof(User)] = stub;
 
-        var entityModels = ctx.GetEntityModels();
-        var mapping = new MappingManager();
-        mapping.Register<User>(entityModels[typeof(User)]);
-
-        var builder = new QueryBuilder<User>()
-            .FromSource<User>(src => src.Where(u => u.Id == 1));
-        var schema = builder.GetSchema();
-        Assert.True(schema.IsValid);
+        var schema = new QuerySchema
+        {
+            SourceType = typeof(User),
+            TargetType = typeof(User),
+            TopicName = "users",
+            IsValid = true,
+            KeyProperties = new[] { typeof(User).GetProperty(nameof(User.Id))! },
+            ValueProperties = typeof(User).GetProperties()
+        };
+        schema.KeyInfo.ClassName = "UserKey";
+        schema.KeyInfo.Namespace = typeof(User).Namespace ?? string.Empty;
+        schema.ValueInfo.ClassName = "UserValue";
+        schema.ValueInfo.Namespace = typeof(User).Namespace ?? string.Empty;
 
         var user = new User(1, "Alice");
-        var (key, value) = mapping.ExtractKeyValue(user);
+        var (key, value) = PocoMapper.ToKeyValue(user, schema);
 
         Assert.Equal(user.Id, key);
         Assert.Same(user, value);

@@ -5,6 +5,7 @@ using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Entities.Samples.Models;
+using Kafka.Ksql.Linq.Query.Schema;
 using SampleOrder = Kafka.Ksql.Linq.Entities.Samples.Models.Order;
 using Kafka.Ksql.Linq.Entities.Samples;
 using Microsoft.Extensions.DependencyInjection;
@@ -62,7 +63,6 @@ public class AddAsyncSampleFlowTests
         services.AddSingleton<TestContext>();
         var provider = services.BuildServiceProvider();
         var ctx = provider.GetRequiredService<TestContext>();
-        var mapping = provider.GetRequiredService<IMappingManager>();
 
         var manager = new KafkaProducerManager(Options.Create(new KsqlDslOptions()), null);
         ctx.SetProducerManager(manager);
@@ -73,7 +73,25 @@ public class AddAsyncSampleFlowTests
         dict[typeof(SampleOrder)] = stub;
 
         var order = new SampleOrder { OrderId = 1, UserId = 10, ProductId = 5, Quantity = 2 };
-        var (key, value) = mapping.ExtractKeyValue(order);
+        var schema = new QuerySchema
+        {
+            SourceType = typeof(SampleOrder),
+            TargetType = typeof(SampleOrder),
+            TopicName = "orders",
+            IsValid = true,
+            KeyProperties = new[]
+            {
+                typeof(SampleOrder).GetProperty(nameof(SampleOrder.OrderId))!,
+                typeof(SampleOrder).GetProperty(nameof(SampleOrder.UserId))!
+            },
+            ValueProperties = typeof(SampleOrder).GetProperties()
+        };
+        schema.KeyInfo.ClassName = "OrderKey";
+        schema.KeyInfo.Namespace = typeof(SampleOrder).Namespace ?? string.Empty;
+        schema.ValueInfo.ClassName = "OrderValue";
+        schema.ValueInfo.Namespace = typeof(SampleOrder).Namespace ?? string.Empty;
+
+        var (key, value) = PocoMapper.ToKeyValue(order, schema);
         Assert.IsType<Dictionary<string, object>>(key);
 
         await ctx.Set<SampleOrder>().AddAsync(order);

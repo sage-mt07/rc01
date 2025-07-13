@@ -10,7 +10,7 @@
 
 ## 1. 事前準備
 
-1. `MappingManager` へモデルを登録する
+1. `QueryAnalyzer` で取得した `QuerySchema` を `PocoMapper` に渡す
 2. `KsqlContext` を DI コンテナで管理する
 3. `IKafkaProducer<T>` を `Messaging` 層から取得する
 
@@ -34,7 +34,6 @@ class PaymentContext : KsqlContext
 }
 
 var services = new ServiceCollection();
-services.AddSingleton<IMappingManager, MappingManager>();
 services.AddKsqlContext<PaymentContext>();
 services.AddKafkaMessaging();
 
@@ -49,7 +48,7 @@ await foreach (var (key, value) in ctx.EntitySet<Payment>().Select(p => p))
 
 ## 3. ベストプラクティス
 
-- `MappingManager` への登録はアプリ起動時に一括で行う
+ - `QueryAnalyzer` から得たスキーマを `PocoMapper` で利用する
 - `KsqlContext` はスコープライフサイクルを推奨し、使い回しを避ける
 - 送信前に `QueryBuilder` が生成した KSQL 文をログで確認する
 - `Messaging` の `AddAsync` は失敗時に DLQ へ送る設定を有効にする
