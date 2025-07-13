@@ -73,3 +73,9 @@ await context.AddAsync(entity);
 - `MappingManager` へ登録するモデルは `OnModelCreating` で一括定義する。
 - `QueryBuilder` から返される KSQL 文はデバッグログで確認しておく。
 - `KsqlContext` のライフサイクルは DI コンテナに任せ、使い回しを避ける。
+
+## Mapping拡張の実装ポイント
+sharedドキュメントの型情報管理フローを受け、実装担当として以下を意識します。
+1. `PropertyMeta` 定義は Fluent API で決定し、クラス属性には依存しない。
+2. `MappingManager` で自動生成される KeyType/ValueType を中心に型情報をやり取りする。
+3. Messaging 層には型を渡さず、バイト列のみでやり取りすることで実装の安定度を高める。
