@@ -1,7 +1,7 @@
 # Fluent API 初期設計ガイド
 
-🗕 2025年7月22日（JST）
-🧐 作業者: 鳴瀬
+🗕 2025年7月13日（JST）
+🧐 作業者: 広夢・楠木
 
 本ドキュメントでは、POCO モデルを Fluent API で構成する際の設計ガイドラインと、移行フローの一例をまとめる。コア属性廃止後の推奨記述例や MappingManager 連携パターンも示す。
 
@@ -60,3 +60,8 @@ await ctx.AddAsync(entity);
 - `AddSampleModels` 拡張で `MappingManager` への登録をまとめると漏れ防止になる。
 - 複合キーは `Dictionary<string, object>` として抽出されるため、型安全ラッパーの検討余地あり。
 - 複数エンティティを登録するヘルパーがあると `OnModelCreating` の記述量を抑えられる。
+
+## 7. AddAsync 統一に伴うポイント
+- メッセージ送信 API は `AddAsync` に一本化した。旧 `ProduceAsync` は廃止予定。
+- LINQ クエリ解析から `MappingManager.ExtractKeyValue()` を経由し `AddAsync` を呼び出す流れをサンプル化。
+- 詳細なコード例は [architecture/query_to_addasync_sample.md](architecture/query_to_addasync_sample.md) を参照。

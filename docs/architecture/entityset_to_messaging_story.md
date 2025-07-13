@@ -1,6 +1,6 @@
 # EntitySet から Messaging までの利用ストーリー
 
-🗕 2025年7月22日（JST）
+🗕 2025年7月13日（JST）
 🧐 作成者: 広夢・楠木
 
 本ドキュメントでは、新アーキテクチャに基づく基本的な利用フローを示します。
@@ -59,4 +59,9 @@ await foreach (var (key, value) in ctx.EntitySet<Payment>().Select(p => p))
 
 - [key_value_flow.md](./key_value_flow.md) – 各レイヤーの責務概要
 - [fluent_api_initial_design.md](../fluent_api_initial_design.md)
+
+## 5. 最新更新 (2025-07-13)
+AddAsync API 統一に合わせ、QueryAnalyzer を用いた自動フローを
+`query_to_addasync_sample.md` にまとめました。LINQ クエリ解析から
+`AddAsync` までの流れを確認する際に参照してください。
 
