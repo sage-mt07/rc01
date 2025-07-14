@@ -91,31 +91,7 @@ public abstract class KsqlContext : KafkaContextCore
                     }
                 };
 
-                _dlqProducer.HandleErrorAsync(errorContext, messageContext);
-            };
-
-            _producerManager.ProduceError += (msg, ctx, ex) =>
-            {
-                var errorContext = new ErrorContext
-                {
-                    Exception = ex,
-                    OriginalMessage = msg,
-                    AttemptCount = 1,
-                    FirstAttemptTime = DateTime.UtcNow,
-                    LastAttemptTime = DateTime.UtcNow,
-                    ErrorPhase = "Producer"
-                };
-
-                var messageContext = ctx ?? new KafkaMessageContext
-                {
-                    MessageId = Guid.NewGuid().ToString(),
-                    Tags = new System.Collections.Generic.Dictionary<string, object>
-                    {
-                        ["original_topic"] = ctx?.Tags.GetValueOrDefault("topic")?.ToString() ?? string.Empty
-                    }
-                };
-
-                _dlqProducer.HandleErrorAsync(errorContext, messageContext);
+                return _dlqProducer.HandleErrorAsync(errorContext, messageContext);
             };
 
             _consumerManager = new KafkaConsumerManager(
