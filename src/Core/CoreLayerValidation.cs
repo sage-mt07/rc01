@@ -19,7 +19,6 @@ internal static class CoreLayerValidation
     {
         "Kafka.Ksql.Linq.Communication",
         "Kafka.Ksql.Linq.Messaging",
-        "Kafka.Ksql.Linq.Serialization",
         "Kafka.Ksql.Linq.Monitoring",
         "Kafka.Ksql.Linq.Avro",
         "Kafka.Ksql.Linq.Services"

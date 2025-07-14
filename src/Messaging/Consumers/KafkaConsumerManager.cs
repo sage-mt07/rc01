@@ -6,8 +6,9 @@ using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Configuration;
 using Kafka.Ksql.Linq.Messaging.Consumers.Core;
-using Kafka.Ksql.Linq.Serialization;
-using Kafka.Ksql.Linq.Serialization.Abstractions;
+using Confluent.SchemaRegistry.Serdes;
+using Confluent.Kafka.SyncOverAsync;
+using Kafka.Ksql.Linq.Messaging.Internal;
 using Kafka.Ksql.Linq.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -31,7 +32,7 @@ internal class KafkaConsumerManager : IDisposable
     private readonly ILogger? _logger;
     private readonly ILoggerFactory? _loggerFactory;
     private readonly ConcurrentDictionary<Type, object> _consumers = new();
-    private readonly ConfluentSerializerFactory _serializerFactory;
+    private readonly AvroDeserializerConfig _deserializerConfig = new();
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
     private bool _disposed = false;
 
@@ -47,8 +48,6 @@ internal class KafkaConsumerManager : IDisposable
 
         // SchemaRegistryClientの遅延初期化
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
-
-        _serializerFactory = new ConfluentSerializerFactory(_schemaRegistryClient.Value);
 
         _logger?.LogInformation("Type-safe KafkaConsumerManager initialized");
     }
@@ -77,7 +76,9 @@ internal class KafkaConsumerManager : IDisposable
             // Create deserializers via Confluent factory
             var keyType = KeyExtractor.DetermineKeyType(entityModel);
             var keyDeserializer = CreateKeyDeserializer(keyType);
-            var valueDeserializer = DeserializerAdapter.Create(_serializerFactory.CreateDeserializer<T>());
+            var valueDeserializer = SerializerAdapters.ToObjectDeserializer(
+                new AvroDeserializer<T>(_schemaRegistryClient.Value, _deserializerConfig)
+                    .AsSyncOverAsync());
 
             // Build consumer
             var policy = entityModel.DeserializationErrorPolicy == default
@@ -245,10 +246,15 @@ internal class KafkaConsumerManager : IDisposable
 
     private IDeserializer<object> CreateKeyDeserializer(Type keyType)
     {
-        var method = typeof(IDeserializerFactory).GetMethod("CreateDeserializer")!.MakeGenericMethod(keyType);
-        var typed = method.Invoke(_serializerFactory, null);
-        var adapterMethod = typeof(DeserializerAdapter).GetMethod("Create")!.MakeGenericMethod(keyType);
-        return (IDeserializer<object>)adapterMethod.Invoke(null, new[] { typed! })!;
+        var method = typeof(KafkaConsumerManager).GetMethod(nameof(CreateKeyDeserializerGeneric), BindingFlags.NonPublic | BindingFlags.Instance)!
+            .MakeGenericMethod(keyType);
+        return (IDeserializer<object>)method.Invoke(this, null)!;
+    }
+
+    private IDeserializer<object> CreateKeyDeserializerGeneric<T>()
+    {
+        var typed = new AvroDeserializer<T>(_schemaRegistryClient.Value, _deserializerConfig).AsSyncOverAsync();
+        return SerializerAdapters.ToObjectDeserializer(typed);
     }
 
     /// <summary>

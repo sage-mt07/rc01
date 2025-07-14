@@ -5,8 +5,9 @@ using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Configuration;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
-using Kafka.Ksql.Linq.Serialization;
-using Kafka.Ksql.Linq.Serialization.Abstractions;
+using Confluent.SchemaRegistry.Serdes;
+using Confluent.Kafka.SyncOverAsync;
+using Kafka.Ksql.Linq.Messaging.Internal;
 using Kafka.Ksql.Linq.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -29,7 +30,7 @@ internal class KafkaProducerManager : IDisposable
     private readonly ILoggerFactory? _loggerFactory;
     private readonly ConcurrentDictionary<Type, object> _producers = new();
     private readonly ConcurrentDictionary<(Type, string), object> _topicProducers = new();
-    private readonly ConfluentSerializerFactory _serializerFactory;
+    private readonly AvroSerializerConfig _serializerConfig = new();
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
     private bool _disposed = false;
 
@@ -45,8 +46,6 @@ internal class KafkaProducerManager : IDisposable
 
         // SchemaRegistryClientの遅延初期化
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
-
-        _serializerFactory = new ConfluentSerializerFactory(_schemaRegistryClient.Value);
 
         _logger?.LogInformation("Type-safe KafkaProducerManager initialized");
     }
@@ -76,7 +75,9 @@ internal class KafkaProducerManager : IDisposable
             var keyType = KeyExtractor.DetermineKeyType(entityModel);
             var keySerializer = CreateKeySerializer(keyType);
 
-            var valueSerializer = SerializerAdapter.Create(_serializerFactory.CreateSerializer<T>());
+            var valueSerializer = SerializerAdapters.ToObjectSerializer(
+                new AvroSerializer<T>(_schemaRegistryClient.Value, _serializerConfig)
+                    .AsSyncOverAsync());
 
             var producer = new KafkaProducer<T>(
                 rawProducer,
@@ -119,7 +120,9 @@ internal class KafkaProducerManager : IDisposable
         var keyType = KeyExtractor.DetermineKeyType(entityModel);
         var keySerializer = CreateKeySerializer(keyType);
 
-        var valueSerializer = SerializerAdapter.Create(_serializerFactory.CreateSerializer<T>());
+        var valueSerializer = SerializerAdapters.ToObjectSerializer(
+            new AvroSerializer<T>(_schemaRegistryClient.Value, _serializerConfig)
+                .AsSyncOverAsync());
 
         var producer = new KafkaProducer<T>(
             rawProducer,
@@ -264,10 +267,15 @@ internal class KafkaProducerManager : IDisposable
 
     private ISerializer<object> CreateKeySerializer(Type keyType)
     {
-        var method = typeof(ISerializerFactory).GetMethod("CreateSerializer")!.MakeGenericMethod(keyType);
-        var typed = method.Invoke(_serializerFactory, null);
-        var adapterMethod = typeof(SerializerAdapter).GetMethod("Create")!.MakeGenericMethod(keyType);
-        return (ISerializer<object>)adapterMethod.Invoke(null, new[] { typed! })!;
+        var method = typeof(KafkaProducerManager).GetMethod(nameof(CreateKeySerializerGeneric), BindingFlags.NonPublic | BindingFlags.Instance)!
+            .MakeGenericMethod(keyType);
+        return (ISerializer<object>)method.Invoke(this, null)!;
+    }
+
+    private ISerializer<object> CreateKeySerializerGeneric<T>()
+    {
+        var typed = new AvroSerializer<T>(_schemaRegistryClient.Value, _serializerConfig).AsSyncOverAsync();
+        return SerializerAdapters.ToObjectSerializer(typed);
     }
     public async Task SendAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class
     {

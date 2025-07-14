@@ -69,7 +69,7 @@ public class KafkaProducerManagerDisposeTests
         Assert.True(GetDisposedFlag(manager));
         Assert.Empty(GetProducerDict(manager));
         Assert.Empty(GetTopicProducerDict(manager));
-        Assert.True(GetSchemaLazy(manager).IsValueCreated);
+        Assert.False(GetSchemaLazy(manager).IsValueCreated);
     }
 
     [Fact]

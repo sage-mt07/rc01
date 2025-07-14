@@ -16,11 +16,9 @@ public class LoggerConfigurationTests
 
         using var factory = config.CreateLoggerFactory();
 
-        var serLogger = factory.CreateLogger("Kafka.Ksql.Linq.Serialization.Sample");
         var msgLogger = factory.CreateLogger("Kafka.Ksql.Linq.Messaging.Sample");
         var coreLogger = factory.CreateLogger("Kafka.Ksql.Linq.Core.Sample");
-
-        Assert.True(serLogger.IsEnabled(LogLevel.Debug));
+        // Serialization namespace removed
         Assert.False(msgLogger.IsEnabled(LogLevel.Information));
         Assert.True(msgLogger.IsEnabled(LogLevel.Warning));
         Assert.True(coreLogger.IsEnabled(LogLevel.Information));

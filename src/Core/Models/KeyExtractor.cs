@@ -1,6 +1,5 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Extensions;
-using Kafka.Ksql.Linq.Serialization.Abstractions;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
