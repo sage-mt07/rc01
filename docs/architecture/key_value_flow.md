@@ -234,3 +234,24 @@ var (recvKeyBytes, recvValueBytes) = await messagingConsumer.ConsumeAsync(topic)
 
 
 ドキュメント・設計書にも「型情報・設計情報の一元管理＝Mapping」ルールを明記すること。
+
+### 8.7 Readonly Entity Flow via Schema Registry
+
+Readonly 属性を持つエンティティは LINQ 解析を行わず、登録済みの Avro スキーマから
+`PropertyMeta` 情報を生成する。専用ツール `SchemaRegistryMetaProvider` を利用し、
+取得したメタ情報を `MappingRegistry` へ登録することで、通常の Produce/Consume フロー
+と同じく Messaging 層で参照可能となる。
+
+サンプルコード：
+
+```csharp
+var client = new CachedSchemaRegistryClient(new SchemaRegistryConfig
+{
+    Url = "http://localhost:8081"
+});
+var meta = SchemaRegistryMetaProvider.GetMetaFromSchemaRegistry(typeof(Log), client);
+mapping.RegisterMeta(typeof(Log), meta);
+```
+
+これにより Readonly エンティティでも既存の Mapping/Serialization 処理を変更せず
+デシリアライズが可能となる。

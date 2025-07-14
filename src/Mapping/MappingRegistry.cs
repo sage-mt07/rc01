@@ -54,6 +54,16 @@ public class MappingRegistry
         return mapping;
     }
 
+    /// <summary>
+    /// Register mapping using pre-generated PropertyMeta information.
+    /// </summary>
+    public KeyValueTypeMapping RegisterMeta(
+        Type pocoType,
+        (PropertyMeta[] KeyProperties, PropertyMeta[] ValueProperties) meta)
+    {
+        return Register(pocoType, meta.KeyProperties, meta.ValueProperties);
+    }
+
     public KeyValueTypeMapping GetMapping(Type pocoType)
     {
         if (_mappings.TryGetValue(pocoType, out var mapping))
