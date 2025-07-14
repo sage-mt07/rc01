@@ -9,7 +9,7 @@
 - `docs/core_namespace_redesign_plan.md` で示されたとおり、`TopicAttribute` などの属性は削除予定。
 - `IEntityBuilder<T>` を介してキーやトピックなどを宣言的に設定する。
 - `HasKey` は必須呼び出しとし、複合キーも `HasKey(e => new { e.A, e.B })` で定義する。
-- エンティティ登録時に `readOnly` または `writeOnly` フラグを指定でき、未指定時は両用となる。
+- エンティティ登録時は `readonly` `writeonly` `readwrite` の3種類で役割を指定する。未指定時は `readwrite` とみなす。
 
 ## 2. 推奨 Fluent API 記述例
 ```csharp
