@@ -6,7 +6,6 @@ using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Query.Abstractions;
-using Kafka.Ksql.Linq.Serialization.Abstractions;
 using Kafka.Ksql.Linq.StateStore;
 using Kafka.Ksql.Linq.StateStore.Extensions;
 using Kafka.Ksql.Linq.StateStore.Integration;
