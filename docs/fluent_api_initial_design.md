@@ -9,6 +9,7 @@
 - `docs/core_namespace_redesign_plan.md` で示されたとおり、`TopicAttribute` などの属性は削除予定。
 - `IEntityBuilder<T>` を介してキーやトピックなどを宣言的に設定する。
 - `HasKey` は必須呼び出しとし、複合キーも `HasKey(e => new { e.A, e.B })` で定義する。
+- エンティティ登録時に `readOnly` または `writeOnly` フラグを指定でき、未指定時は両用となる。
 
 ## 2. 推奨 Fluent API 記述例
 ```csharp
@@ -20,12 +21,10 @@ class Order
 
 void OnModelCreating(ModelBuilder builder)
 {
-    builder.Entity<Order>(b =>
-    {
-        b.HasKey(o => o.Id);
-        b.WithTopic("orders");
-        b.WithDecimalPrecision(o => o.Amount, precision: 18, scale: 2);
-    });
+    builder.Entity<Order>(writeOnly: true)
+        .HasKey(o => o.Id)
+        .WithTopic("orders")
+        .WithDecimalPrecision(o => o.Amount, precision: 18, scale: 2);
 }
 ```
 上記により、旧 `[Topic]` や `DecimalPrecision` 属性を使用せずにトピックや精度を設定できる。

@@ -17,6 +17,11 @@ public class EntityModel
 
     public PropertyInfo[] AllProperties { get; set; } = Array.Empty<PropertyInfo>();
 
+    /// <summary>
+    /// Indicates whether this entity is used for reading, writing, or both.
+    /// </summary>
+    public EntityAccessMode AccessMode { get; set; } = EntityAccessMode.ReadWrite;
+
     public ValidationResult? ValidationResult { get; set; }
 
     public bool IsValid => ValidationResult?.IsValid ?? false;

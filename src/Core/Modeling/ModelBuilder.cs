@@ -15,14 +15,22 @@ internal class ModelBuilder : IModelBuilder
     {
         _validationMode = validationMode;
     }
-    public IEntityBuilder<T> Entity<T>() where T : class
+    public IEntityBuilder<T> Entity<T>(bool readOnly = false, bool writeOnly = false) where T : class
     {
+        if (readOnly && writeOnly)
+            throw new ArgumentException("Cannot specify both readOnly and writeOnly");
+
         AddEntityModel<T>();
         var model = GetEntityModel<T>();
         if (model == null)
         {
             throw new InvalidOperationException($"Failed to create entity model for {typeof(T).Name}");
         }
+
+        model.AccessMode = readOnly ? EntityAccessMode.ReadOnly :
+                           writeOnly ? EntityAccessMode.WriteOnly :
+                           EntityAccessMode.ReadWrite;
+
         return new EntityModelBuilder<T>(model);
     }
     public EntityModel? GetEntityModel<T>() where T : class
