@@ -1,5 +1,6 @@
-using Apache.Avro;
-using Apache.Avro.Generic;
+using Avro;
+using Avro.Generic;
+using System.Linq;
 using Confluent.SchemaRegistry;
 using Kafka.Ksql.Linq.Core.Models;
 using System;
@@ -43,7 +44,7 @@ public static class SchemaRegistryMetaProvider
 
     private static PropertyMeta[] ParseSchema(string avroSchema)
     {
-        var schema = Schema.Parse(avroSchema) as RecordSchema
+        var schema = Avro.Schema.Parse(avroSchema) as RecordSchema
             ?? throw new InvalidOperationException("Expected record schema");
 
         var metas = new List<PropertyMeta>();
@@ -54,7 +55,7 @@ public static class SchemaRegistryMetaProvider
             {
                 Name = field.Name,
                 PropertyType = clrType,
-                IsNullable = field.Schema is UnionSchema u && u.Schemas.Exists(s => s.Tag == Schema.Type.Null),
+                IsNullable = field.Schema is UnionSchema u && u.Schemas.Any(s => s.Tag == Avro.Schema.Type.Null),
                 Precision = null,
                 Scale = null,
                 Format = null,
@@ -66,13 +67,13 @@ public static class SchemaRegistryMetaProvider
         return metas.ToArray();
     }
 
-    private static Type AvroTypeToClrType(Schema schema)
+    private static Type AvroTypeToClrType(Avro.Schema schema)
     {
         if (schema is UnionSchema union)
         {
             foreach (var inner in union.Schemas)
             {
-                if (inner.Tag != Schema.Type.Null)
+                if (inner.Tag != Avro.Schema.Type.Null)
                     return AvroTypeToClrType(inner);
             }
             return typeof(string);
@@ -80,13 +81,13 @@ public static class SchemaRegistryMetaProvider
 
         return schema.Tag switch
         {
-            Schema.Type.String => typeof(string),
-            Schema.Type.Int => typeof(int),
-            Schema.Type.Long => typeof(long),
-            Schema.Type.Boolean => typeof(bool),
-            Schema.Type.Bytes => typeof(byte[]),
-            Schema.Type.Float => typeof(float),
-            Schema.Type.Double => typeof(double),
+            Avro.Schema.Type.String => typeof(string),
+            Avro.Schema.Type.Int => typeof(int),
+            Avro.Schema.Type.Long => typeof(long),
+            Avro.Schema.Type.Boolean => typeof(bool),
+            Avro.Schema.Type.Bytes => typeof(byte[]),
+            Avro.Schema.Type.Float => typeof(float),
+            Avro.Schema.Type.Double => typeof(double),
             _ => typeof(string)
         };
     }
