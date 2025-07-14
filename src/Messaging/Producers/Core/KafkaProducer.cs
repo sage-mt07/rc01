@@ -24,6 +24,8 @@ internal class KafkaProducer<T> : IKafkaProducer<T> where T : class
     private readonly ILogger? _logger;
     private bool _disposed = false;
 
+    public event Func<T, KafkaMessageContext?, Exception, Task>? SendError;
+
     public string TopicName { get; }
 
     public KafkaProducer(
@@ -82,6 +84,10 @@ internal class KafkaProducer<T> : IKafkaProducer<T> where T : class
         catch (System.Exception ex)
         {
             _logger?.LogError(ex, "Failed to send message: {EntityType} -> {Topic}", typeof(T).Name, TopicName);
+            if (SendError != null)
+            {
+                SendError.Invoke(message, context, ex).GetAwaiter().GetResult();
+            }
             throw;
         }
     }

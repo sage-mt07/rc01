@@ -58,9 +58,9 @@ public class KafkaConsumerManagerTests
         var dlqProducer = new DlqProducer(producerManager, new DlqOptions { TopicName = options.DlqTopicName });
         var manager = new KafkaConsumerManager(
             Options.Create(options),
-            (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
-                dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
             new NullLoggerFactory());
+        manager.DeserializationError += (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+            dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType);
         var config = InvokePrivate<ConsumerConfig>(manager, "BuildConsumerConfig", new[] { typeof(string), typeof(KafkaSubscriptionOptions) }, null, "topic", null);
 
         Assert.Equal("server", config.BootstrapServers);
@@ -87,9 +87,9 @@ public class KafkaConsumerManagerTests
         var dlqProducer = new DlqProducer(producerManager, new DlqOptions { TopicName = options.Value.DlqTopicName });
         var manager = new KafkaConsumerManager(
             options,
-            (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
-                dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
             new NullLoggerFactory());
+        manager.DeserializationError += (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+            dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType);
 
         var model = InvokePrivate<Kafka.Ksql.Linq.Core.Abstractions.EntityModel>(manager, "GetEntityModel", Type.EmptyTypes, new[] { typeof(SampleEntity) });
         Assert.Equal(typeof(SampleEntity), model.EntityType);

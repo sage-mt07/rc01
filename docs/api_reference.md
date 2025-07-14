@@ -33,6 +33,7 @@
 - `ToList`/`ToListAsync` は Pull Query として実行されます【F:src/Query/Pipeline/DMLQueryGenerator.cs†L27-L34】。
 - `WithManualCommit()` を指定しない `ForEachAsync()` は自動コミット動作となります【F:docs/manual_commit.md†L1-L23】。
 - `OnError(ErrorAction.DLQ)` を指定すると DLQ トピックへ送信されます【F:docs/oss_design_combined.md†L580-L599】。
+- Messaging クラス自体は DLQ 送信処理を持たず、`ErrorOccurred`/`DeserializationError`/`ProduceError` などのイベントを通じて外部で DLQ 送信を行います。
 
 これらの戻り値型を把握することで、DSLチェーンにおける次の操作を判断しやすくなります。特に `OnError()` や `WithRetry()` は `EventSet<T>` を返すため、続けて `IEventSet` 系メソッドを利用できます。
 

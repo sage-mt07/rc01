@@ -64,6 +64,31 @@ public class KafkaProducerTests
         public void SendOffsetsToTransaction(IEnumerable<TopicPartitionOffset> offsets, IConsumerGroupMetadata groupMetadata, TimeSpan timeout) { }
     }
 
+    private class FailingProducer : IProducer<object, object>
+    {
+        public string Name => "fail";
+        public Handle Handle => throw new NotImplementedException();
+        public int AddBrokers(string brokers) => 0;
+        public void SetSaslCredentials(string username, string password) { }
+        public void Dispose() { }
+        public void Flush(CancellationToken cancellationToken = default) { }
+        public int Flush(TimeSpan timeout) => 0;
+        public void Produce(string topic, Message<object, object> message, Action<DeliveryReport<object, object>>? handler = null) => throw new NotImplementedException();
+        public void Produce(TopicPartition topicPartition, Message<object, object> message, Action<DeliveryReport<object, object>>? handler = null) => throw new NotImplementedException();
+        public int Poll(TimeSpan timeout) => 0;
+        public Task<DeliveryResult<object, object>> ProduceAsync(string topic, Message<object, object> message, CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("fail");
+        public Task<DeliveryResult<object, object>> ProduceAsync(TopicPartition topicPartition, Message<object, object> message, CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("fail");
+        public void InitTransactions(TimeSpan timeout) { }
+        public void BeginTransaction() { }
+        public void CommitTransaction(TimeSpan timeout) { }
+        public void CommitTransaction() { }
+        public void AbortTransaction(TimeSpan timeout) { }
+        public void AbortTransaction() { }
+        public void SendOffsetsToTransaction(IEnumerable<TopicPartitionOffset> offsets, IConsumerGroupMetadata groupMetadata, TimeSpan timeout) { }
+    }
+
     private class Sample
     {
         public int Id { get; set; }
@@ -92,5 +117,19 @@ public class KafkaProducerTests
         Assert.Single(producer.Produced);
         Assert.Equal("orders", producer.Produced[0].Partition.Topic);
         Assert.Equal(1, result.Offset);
+    }
+
+    [Fact]
+    public async Task SendAsync_RaisesSendErrorEvent()
+    {
+        var producer = new FailingProducer();
+        var kp = new KafkaProducer<Sample>(producer, new DummySerializer(), new DummySerializer(), "orders", CreateModel(), NullLoggerFactory.Instance);
+
+        var raised = false;
+        kp.SendError += (msg, ctx, ex) => { raised = true; return Task.CompletedTask; };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => kp.SendAsync(new Sample { Id = 2 }));
+
+        Assert.True(raised);
     }
 }

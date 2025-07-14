@@ -26,6 +26,11 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
         _entityModel = entityModel ?? throw new ArgumentNullException(nameof(entityModel));
         _errorHandlingContext = new ErrorHandlingContext();
         _dlqErrorSink = dlqErrorSink;
+
+        if (_dlqErrorSink != null)
+        {
+            _errorHandlingContext.ErrorOccurred += (ctx, msg) => _dlqErrorSink.HandleErrorAsync(ctx, msg);
+        }
     }
 
     private EventSet(IKsqlContext context, EntityModel entityModel, ErrorHandlingContext errorHandlingContext, IErrorSink? dlqErrorSink)
@@ -34,6 +39,11 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
         _entityModel = entityModel;
         _errorHandlingContext = errorHandlingContext;
         _dlqErrorSink = dlqErrorSink;
+
+        if (_dlqErrorSink != null)
+        {
+            _errorHandlingContext.ErrorOccurred += (ctx, msg) => _dlqErrorSink.HandleErrorAsync(ctx, msg);
+        }
     }
 
     /// <summary>
@@ -241,8 +251,7 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
         {
             ErrorAction = _errorHandlingContext.ErrorAction,
             RetryCount = maxRetries,
-            RetryInterval = retryInterval ?? TimeSpan.FromSeconds(1),
-            ErrorSink = _errorHandlingContext.ErrorSink
+            RetryInterval = retryInterval ?? TimeSpan.FromSeconds(1)
         };
 
         return CreateNewInstance(_context, _entityModel, newContext, _dlqErrorSink);
@@ -270,8 +279,7 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
             {
                 ErrorAction = _errorHandlingContext.ErrorAction,
                 RetryCount = _errorHandlingContext.RetryCount,
-                RetryInterval = _errorHandlingContext.RetryInterval,
-                ErrorSink = _errorHandlingContext.ErrorSink
+                RetryInterval = _errorHandlingContext.RetryInterval
             };
 
             await ProcessItemWithErrorHandling(
@@ -302,8 +310,7 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
             {
                 ErrorAction = _errorHandlingContext.ErrorAction,
                 RetryCount = _errorHandlingContext.RetryCount,
-                RetryInterval = _errorHandlingContext.RetryInterval,
-                ErrorSink = _errorHandlingContext.ErrorSink
+                RetryInterval = _errorHandlingContext.RetryInterval
             };
 
             ProcessItemWithErrorHandlingSync(

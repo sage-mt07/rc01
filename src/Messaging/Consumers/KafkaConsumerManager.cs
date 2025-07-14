@@ -35,15 +35,13 @@ internal class KafkaConsumerManager : IDisposable
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
     private bool _disposed = false;
 
-    private readonly Action<byte[]?, Exception, string, int, long, DateTime, Headers?, string, string> _sendToDlq;
+    public event Func<byte[]?, Exception, string, int, long, DateTime, Headers?, string, string, Task>? DeserializationError;
 
     public KafkaConsumerManager(
         IOptions<KsqlDslOptions> options,
-        Action<byte[]?, Exception, string, int, long, DateTime, Headers?, string, string> sendToDlq,
         ILoggerFactory? loggerFactory = null)
     {
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-        _sendToDlq = sendToDlq ?? throw new ArgumentNullException(nameof(sendToDlq));
         _logger = loggerFactory.CreateLoggerOrNull<KafkaConsumerManager>();
         _loggerFactory = loggerFactory;
 
@@ -93,9 +91,12 @@ internal class KafkaConsumerManager : IDisposable
                 topicName,
                 entityModel,
                 policy,
-                _options.DlqTopicName,
-                _sendToDlq,
                 _loggerFactory);
+
+            if (DeserializationError != null)
+            {
+                consumer.DeserializationError += DeserializationError;
+            }
 
             _consumers.TryAdd(entityType, consumer);
 

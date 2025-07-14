@@ -30,8 +30,7 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
     private readonly EntityModel _entityModel;
     private readonly ILogger? _logger;
     private readonly DeserializationErrorPolicy _deserializationPolicy;
-    private readonly string _dlqTopicName;
-    private readonly Action<byte[]?, Exception, string, int, long, DateTime, Headers?, string, string> _sendToDlq;
+    public event Func<byte[]?, Exception, string, int, long, DateTime, Headers?, string, string, Task>? DeserializationError;
     private bool _subscribed = false;
     private bool _disposed = false;
 
@@ -44,8 +43,6 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
         string topicName,
         EntityModel entityModel,
         DeserializationErrorPolicy deserializationPolicy,
-        string dlqTopicName,
-        Action<byte[]?, Exception, string, int, long, DateTime, Headers?, string, string> sendToDlq,
         ILoggerFactory? loggerFactory = null)
     {
         _consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
@@ -54,8 +51,6 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
         TopicName = topicName ?? throw new ArgumentNullException(nameof(topicName));
         _entityModel = entityModel ?? throw new ArgumentNullException(nameof(entityModel));
         _deserializationPolicy = deserializationPolicy;
-        _dlqTopicName = dlqTopicName ?? throw new ArgumentNullException(nameof(dlqTopicName));
-        _sendToDlq = sendToDlq ?? throw new ArgumentNullException(nameof(sendToDlq));
         _logger = loggerFactory.CreateLoggerOrNull<KafkaConsumer<TValue, TKey>>();
 
         EnsureSubscribed();
@@ -330,16 +325,20 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
         {
             try
             {
-                _sendToDlq(
-                    data,
-                    ex,
-                    result.Topic,
-                    result.Partition.Value,
-                    result.Offset.Value,
-                    result.Message.Timestamp.UtcDateTime,
-                    result.Message.Headers,
-                    typeof(TKey).FullName ?? string.Empty,
-                    typeof(TValue).FullName ?? string.Empty);
+                if (DeserializationError != null)
+                {
+                    DeserializationError.Invoke(
+                        data,
+                        ex,
+                        result.Topic,
+                        result.Partition.Value,
+                        result.Offset.Value,
+                        result.Message.Timestamp.UtcDateTime,
+                        result.Message.Headers,
+                        typeof(TKey).FullName ?? string.Empty,
+                        typeof(TValue).FullName ?? string.Empty
+                    ).GetAwaiter().GetResult();
+                }
             }
             catch (Exception dlqEx)
             {
