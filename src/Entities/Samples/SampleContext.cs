@@ -19,7 +19,7 @@ public class SampleContext : KafkaContextCore
 
     protected override void OnModelCreating(IModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<User>()
+        modelBuilder.Entity<User>(readOnly: true)
             .WithTopic("users")
             .HasKey(u => u.Id);
 
@@ -27,7 +27,7 @@ public class SampleContext : KafkaContextCore
             .WithTopic("products")
             .HasKey(p => p.ProductId);
 
-        modelBuilder.Entity<Order>()
+        modelBuilder.Entity<Order>(writeOnly: true)
             .WithTopic("orders")
             .HasKey(o => new { o.OrderId, o.UserId });
     }
