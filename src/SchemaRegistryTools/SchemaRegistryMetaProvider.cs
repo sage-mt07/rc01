@@ -50,14 +50,14 @@ public static class SchemaRegistryMetaProvider
         var metas = new List<PropertyMeta>();
         foreach (var field in schema.Fields)
         {
-            var clrType = AvroTypeToClrType(field.Schema);
+            var clrType = AvroTypeToClrType(field.Schema, out var precision, out var scale);
             metas.Add(new PropertyMeta
             {
                 Name = field.Name,
                 PropertyType = clrType,
                 IsNullable = field.Schema is UnionSchema u && u.Schemas.Any(s => s.Tag == Avro.Schema.Type.Null),
-                Precision = null,
-                Scale = null,
+                Precision = precision,
+                Scale = scale,
                 Format = null,
                 Attributes = Array.Empty<Attribute>(),
                 PropertyInfo = null,
@@ -67,16 +67,36 @@ public static class SchemaRegistryMetaProvider
         return metas.ToArray();
     }
 
-    private static Type AvroTypeToClrType(Avro.Schema schema)
+    private static Type AvroTypeToClrType(Avro.Schema schema, out int? precision, out int? scale)
     {
+        precision = null;
+        scale = null;
+
         if (schema is UnionSchema union)
         {
             foreach (var inner in union.Schemas)
             {
                 if (inner.Tag != Avro.Schema.Type.Null)
-                    return AvroTypeToClrType(inner);
+                    return AvroTypeToClrType(inner, out precision, out scale);
             }
             return typeof(string);
+        }
+
+        if (schema is LogicalSchema logical)
+        {
+            switch (logical.LogicalTypeName)
+            {
+                case "decimal":
+                    if (int.TryParse(logical.GetProperty("precision"), out var p))
+                        precision = p;
+                    if (int.TryParse(logical.GetProperty("scale"), out var s))
+                        scale = s;
+                    return typeof(decimal);
+                case "timestamp-millis":
+                    return typeof(DateTimeOffset);
+            }
+
+            schema = logical.BaseSchema;
         }
 
         return schema.Tag switch
