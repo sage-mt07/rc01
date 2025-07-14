@@ -1,5 +1,5 @@
-using Kafka.Ksql.Linq.Query.Schema;
 using Kafka.Ksql.Linq.Core.Models;
+using Kafka.Ksql.Linq.Query.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Kafka.Ksql.Linq.Query.Analysis;
+
 
 /// <summary>
 /// LINQ式からQuerySchemaを抽出する解析エンジン
@@ -166,37 +167,5 @@ public static class QueryAnalyzer
                underlyingType == typeof(int) ||
                underlyingType == typeof(long) ||
                underlyingType == typeof(Guid);
-    }
-}
-
-/// <summary>
-/// クエリ解析用Visitor
-/// </summary>
-internal class QueryAnalysisVisitor : ExpressionVisitor
-{
-    public Expression? GroupByExpression { get; private set; }
-    public Expression? SelectExpression { get; private set; }
-    public bool HasWindow { get; private set; }
-
-    protected override Expression VisitMethodCall(MethodCallExpression node)
-    {
-        switch (node.Method.Name)
-        {
-            case "GroupBy":
-                if (node.Arguments.Count >= 2)
-                    GroupByExpression = node.Arguments[1];
-                break;
-
-            case "Select":
-                if (node.Arguments.Count >= 2)
-                    SelectExpression = node.Arguments[1];
-                break;
-
-            case "Window":
-                HasWindow = true;
-                break;
-        }
-
-        return base.VisitMethodCall(node);
     }
 }

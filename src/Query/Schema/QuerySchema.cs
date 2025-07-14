@@ -1,22 +1,8 @@
+using Kafka.Ksql.Linq.Core.Models;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Linq;
-using Kafka.Ksql.Linq.Core.Models;
 
 namespace Kafka.Ksql.Linq.Query.Schema;
-
-/// <summary>
-/// クエリによって生成されるKey/Value構造の定義
-/// </summary>
-public class KeyValueSchemaInfo
-{
-    public string ClassName { get; set; } = string.Empty;
-    public string Namespace { get; set; } = string.Empty;
-    public PropertyMeta[] Properties { get; set; } = Array.Empty<PropertyMeta>();
-    public string SchemaVersion { get; set; } = "1";
-    public string Compatibility { get; set; } = string.Empty;
-}
 
 public class QuerySchema
 {
@@ -76,19 +62,3 @@ public class QuerySchema
     public string GetStreamTableType() => IsKeyless ? "Stream" : "Table";
 }
 
-/// <summary>
-/// クエリスキーマ解析結果
-/// </summary>
-public class QuerySchemaResult
-{
-    public QuerySchema? Schema { get; set; }
-    public bool Success { get; set; }
-    public string ErrorMessage { get; set; } = string.Empty;
-    public List<string> Warnings { get; set; } = new();
-
-    public static QuerySchemaResult Failure(string error) => 
-        new() { Success = false, ErrorMessage = error };
-
-    public static QuerySchemaResult CreateSuccess(QuerySchema schema) => 
-        new() { Success = true, Schema = schema };
-}
