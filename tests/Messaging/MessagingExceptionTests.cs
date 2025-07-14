@@ -1,6 +1,6 @@
 using System;
 using Kafka.Ksql.Linq.Messaging.Consumers.Exceptions;
-using Kafka.Ksql.Linq.Messaging.Producers.Exception;
+using Kafka.Ksql.Linq.Messaging.Producers.Exceptions;
 using Xunit;
 
 namespace Kafka.Ksql.Linq.Tests.Messaging;

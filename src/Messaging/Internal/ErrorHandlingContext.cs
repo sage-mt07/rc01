@@ -30,9 +30,9 @@ public class ErrorHandlingContext
     public int CurrentAttempt { get; set; } = 0;
 
     /// <summary>
-    /// エラーシンク（DLQ送信等）
+    /// エラー発生イベント
     /// </summary>
-    public IErrorSink? ErrorSink { get; set; }
+    public event Func<ErrorContext, KafkaMessageContext, Task>? ErrorOccurred;
 
     /// <summary>
     /// カスタムエラーハンドラー（型安全版）
@@ -81,22 +81,36 @@ public class ErrorHandlingContext
 
             case ErrorAction.Retry:
                 // リトライはProcessItemWithErrorHandling側で制御
-                // ここに到達するのは最終試行後なので、スキップまたはDLQ送信
-                if (ErrorSink != null)
+                // 最終試行後にエラーイベントを通知
+                if (ErrorOccurred != null)
                 {
-                    await SendToDlqAsync(originalItem, exception, messageContext);
+                    var errorContext = new ErrorContext
+                    {
+                        Exception = exception,
+                        OriginalMessage = originalItem,
+                        AttemptCount = CurrentAttempt,
+                        FirstAttemptTime = DateTime.UtcNow.AddSeconds(-CurrentAttempt * RetryInterval.TotalSeconds),
+                        LastAttemptTime = DateTime.UtcNow,
+                        ErrorPhase = "Processing"
+                    };
+                    await ErrorOccurred.Invoke(errorContext, messageContext);
                 }
                 return false; // スキップ
 
             case ErrorAction.DLQ:
-                // DLQ送信
-                if (ErrorSink != null)
+                // エラーイベントを通知
+                if (ErrorOccurred != null)
                 {
-                    await SendToDlqAsync(originalItem, exception, messageContext);
-                }
-                else
-                {
-                    Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss}] DLQ: No ErrorSink configured, skipping item");
+                    var errorContext = new ErrorContext
+                    {
+                        Exception = exception,
+                        OriginalMessage = originalItem,
+                        AttemptCount = CurrentAttempt,
+                        FirstAttemptTime = DateTime.UtcNow.AddSeconds(-CurrentAttempt * RetryInterval.TotalSeconds),
+                        LastAttemptTime = DateTime.UtcNow,
+                        ErrorPhase = "Processing"
+                    };
+                    await ErrorOccurred.Invoke(errorContext, messageContext);
                 }
                 return false; // スキップ
 
@@ -107,32 +121,4 @@ public class ErrorHandlingContext
         }
     }
 
-    /// <summary>
-    /// DLQ送信処理
-    /// </summary>
-    private async Task SendToDlqAsync<T>(T originalItem, Exception exception, KafkaMessageContext messageContext)
-    {
-        try
-        {
-            if (ErrorSink != null)
-            {
-                var errorContext = new ErrorContext
-                {
-                    Exception = exception,
-                    OriginalMessage = originalItem,
-                    AttemptCount = CurrentAttempt,
-                    FirstAttemptTime = DateTime.UtcNow.AddSeconds(-CurrentAttempt * RetryInterval.TotalSeconds),
-                    LastAttemptTime = DateTime.UtcNow,
-                    ErrorPhase = "Processing"
-                };
-
-                await ErrorSink.HandleErrorAsync(errorContext, messageContext);
-                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss}] DLQ: Sent error record to DLQ");
-            }
-        }
-        catch (Exception dlqEx)
-        {
-            Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss}] DLQ ERROR: Failed to send to DLQ - {dlqEx.Message}");
-        }
-    }
 }

@@ -33,6 +33,8 @@ internal class KafkaProducerManager : IDisposable
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
     private bool _disposed = false;
 
+    public event Func<object, KafkaMessageContext?, Exception, Task>? ProduceError;
+
     public KafkaProducerManager(
         IOptions<KsqlDslOptions> options,
         ILoggerFactory? loggerFactory = null)
@@ -84,6 +86,11 @@ internal class KafkaProducerManager : IDisposable
                 entityModel,
                 _loggerFactory);
 
+            if (ProduceError != null)
+            {
+                producer.SendError += (msg, ctx, ex) => ProduceError.Invoke(msg!, ctx, ex);
+            }
+
             _producers.TryAdd(entityType, producer);
 
             _logger?.LogDebug("Producer created: {EntityType} -> {TopicName}", entityType.Name, topicName);
@@ -121,6 +128,11 @@ internal class KafkaProducerManager : IDisposable
             topicName,
             entityModel,
             _loggerFactory);
+
+        if (ProduceError != null)
+        {
+            producer.SendError += (msg, ctx, ex) => ProduceError.Invoke(msg!, ctx, ex);
+        }
 
         _topicProducers.TryAdd(key, producer);
         return Task.FromResult<IKafkaProducer<T>>(producer);

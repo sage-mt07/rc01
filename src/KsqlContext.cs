@@ -70,11 +70,35 @@ public abstract class KsqlContext : KafkaContextCore
                 new DlqOptions { TopicName = _dslOptions.DlqTopicName });
             _dlqProducer.InitializeAsync().GetAwaiter().GetResult();
 
+            _producerManager.ProduceError += (msg, ctx, ex) =>
+            {
+                var errorContext = new ErrorContext
+                {
+                    Exception = ex,
+                    OriginalMessage = msg,
+                    AttemptCount = 1,
+                    FirstAttemptTime = DateTime.UtcNow,
+                    LastAttemptTime = DateTime.UtcNow,
+                    ErrorPhase = "Producer"
+                };
+
+                var messageContext = ctx ?? new KafkaMessageContext
+                {
+                    MessageId = Guid.NewGuid().ToString(),
+                    Tags = new System.Collections.Generic.Dictionary<string, object>
+                    {
+                        ["original_topic"] = ctx?.Tags.GetValueOrDefault("topic")?.ToString() ?? string.Empty
+                    }
+                };
+
+                return _dlqProducer.HandleErrorAsync(errorContext, messageContext);
+            };
+
             _consumerManager = new KafkaConsumerManager(
                 Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
-                    _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
                 null);
+            _consumerManager.DeserializationError += (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+                _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType);
 
             InitializeStateStoreIntegration();
         }
@@ -114,9 +138,9 @@ public abstract class KsqlContext : KafkaContextCore
 
             _consumerManager = new KafkaConsumerManager(
                 Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
-                    _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
                 null);
+            _consumerManager.DeserializationError += (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+                _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType);
 
             InitializeStateStoreIntegration();
         }

@@ -1,6 +1,6 @@
 ﻿using Kafka.Ksql.Linq.Core.Exceptions;
 
-namespace Kafka.Ksql.Linq.Messaging.Producers.Exception;
+namespace Kafka.Ksql.Linq.Messaging.Producers.Exceptions;
 
 
 /// <summary>

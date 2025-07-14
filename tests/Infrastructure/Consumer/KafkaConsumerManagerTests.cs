@@ -55,9 +55,9 @@ public class KafkaConsumerManagerTests
         var dlqProducer = new DlqProducer(producerManager, new DlqOptions { TopicName = options.Value.DlqTopicName });
         var manager = new KafkaConsumerManager(
             options,
-            (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
-                dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType).GetAwaiter().GetResult(),
             new NullLoggerFactory());
+        manager.DeserializationError += (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+            dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType);
 
         // inject stub consumer via reflection
         typeof(KafkaConsumerManager).GetField("_consumers", BindingFlags.Instance | BindingFlags.NonPublic)!
