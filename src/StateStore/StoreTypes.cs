@@ -9,5 +9,10 @@ internal static class StoreTypes
     /// RocksDB-backed store implementation.
     /// </summary>
     public const string RocksDb = "RocksDb";
+
+    /// <summary>
+    /// Streamiz.Kafka.Net RocksDB-backed implementation.
+    /// </summary>
+    public const string StreamizRocksDb = "StreamizRocksDb";
 }
 

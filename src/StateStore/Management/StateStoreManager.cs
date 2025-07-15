@@ -67,7 +67,11 @@ internal class StateStoreManager : IStateStoreManager
             var storeName = GenerateStoreName(entityType, windowMinutes, config?.StoreName);
             var storeOptions = CreateStoreOptions(config);
 
-            var store = new RocksDbStateStore<TKey, TValue>(storeName, storeOptions, _loggerFactory);
+            IStateStore<TKey, TValue> store = storeOptions.StoreType switch
+            {
+                StoreTypes.StreamizRocksDb => new StreamizRocksDbStateStore<TKey, TValue>(storeName, storeOptions, _loggerFactory),
+                _ => new RocksDbStateStore<TKey, TValue>(storeName, storeOptions, _loggerFactory)
+            };
 
             _stores.TryAdd(storeKey, store);
 
@@ -81,7 +85,7 @@ internal class StateStoreManager : IStateStoreManager
     internal void InitializeStoresForEntity(Type entityType)
     {
         var config = GetEntityConfiguration(entityType);
-        if (config == null || config.StoreType != StoreTypes.RocksDb) return;
+        if (config == null || (config.StoreType != StoreTypes.RocksDb && config.StoreType != StoreTypes.StreamizRocksDb)) return;
 
         if (config.Windows.Count == 0)
         {
