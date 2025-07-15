@@ -7,6 +7,7 @@
         - KsqlContextBuilder／QueryBuilderの責任分割設計案    Contextは依存注入・全体統括、Queryは式解析・Key生成・Serialize呼び出し等、役割境界を明確化し肥大化を防止する設計方針とする。
         - pocoの属性廃止、FluentAPI化　（現在はpocoの属性と部分的なFluentAPIの運用となっているところをFluentAPIへ一本化）
         - RocksDBの採用：ToListAsyncではデフォルトをRocksDBの利用とする。
+        - Window関数のmarketschedule対応
 
 ## ステップ
 ### ステータス一覧
@@ -104,6 +105,26 @@
    - ロギング基盤の整理（メトリクスは Confluent パッケージの機能を利用し、本OSSでは実装しない）
    - 既存クラスターからの段階的移行手順
    - 障害発生時のDLQ運用方針（詳細は docs/getting-started.md, docs/docs_advanced_rules.md を参照）
+   - ウィンドウ区間設計・API拡張および境界値ルールの標準化
+        - 区間の境界値は「左閉右開」 [Open, Close) をOSS標準とする。
+        - 隣接ウィンドウ間の重複防止・標準時系列集計ロジックへの準拠
+        - ドキュメント・テスト・実装すべてでこのルールを徹底
+        - 例外対応（Close含む等）は明示的なAPI/DSL指定で管理
+        - Window().BaseOn<MarketSchedule>(keySelector) 型のスケジュール連動ウィンドウ設計を正式にOSS API拡張議題とする
+```
+modelBuilder.Entity<Order>()
+    .Window()
+    .BaseOn<MarketSchedule>(order => order.MarketCode);
+```
+        - Open/Closeで可変長のウィンドウを実現（サマータイム・特別日・24時間市場なども対応可能）
+        - MarketSchedule以外のカスタムスケジューラや他カレンダーとの連携も将来見据えた拡張構造にする
+        - 等間隔Window（従来型 .Window(x)）との共存・切替設計も含めて検討
+        - ウィンドウ区間の**API設計と境界値ルールの標準化**
+            - 区間の境界値は「左閉右開」[Open, Close) をOSS標準とする。
+            - Window定義は `.Window().BaseOn<MarketSchedule>(keySelector)` 型DSL拡張を導入し、営業日・特別スケジュールにも柔軟に対応できるようにする。
+            - サマータイムや特別営業、常時オープン市場なども`MarketSchedule`テーブル設計で表現。
+            - ドキュメント・実装・テストにおいて一貫性を担保し、例外は明示的API指定で管理。
+            - 等間隔Windowとの選択・共存もOSS設計に含めて明示。
 
 ### 次回マイルストーン案
 - RocksDB 適用サンプルとベンチマーク取得
