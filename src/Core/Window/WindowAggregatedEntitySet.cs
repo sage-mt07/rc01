@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Kafka.Ksql.Linq.Query.Abstractions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,7 +48,7 @@ internal class WindowAggregatedEntitySet<TSource, TKey, TResult> : IEntitySet<TR
 
     private static EntityModel CreateResultEntityModel<T>() where T : class
     {
-        return new EntityModel
+        var model = new EntityModel
         {
             EntityType = typeof(T),
             TopicName = $"{typeof(T).Name.ToLowerInvariant()}_windowresult",
@@ -55,6 +56,8 @@ internal class WindowAggregatedEntitySet<TSource, TKey, TResult> : IEntitySet<TR
             KeyProperties = Array.Empty<PropertyInfo>(),
             ValidationResult = new ValidationResult { IsValid = true }
         };
+        model.SetStreamTableType(StreamTableType.Table);
+        return model;
     }
 
     // ✅ IEntitySet<TResult> インターフェース実装

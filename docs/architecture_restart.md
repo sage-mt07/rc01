@@ -110,18 +110,25 @@
         - 隣接ウィンドウ間の重複防止・標準時系列集計ロジックへの準拠
         - ドキュメント・テスト・実装すべてでこのルールを徹底
         - 例外対応（Close含む等）は明示的なAPI/DSL指定で管理
-        - Window().BaseOn<MarketSchedule>(keySelector) 型のスケジュール連動ウィンドウ設計を正式にOSS API拡張議題とする
-```
+        - `Window().BaseOn<MarketSchedulePoco>(keySelector)` 型のスケジュール連動ウィンドウ設計を正式にOSS API拡張議題とする。
+            - `MarketSchedulePoco` は複数の主キーを許容し、日時範囲を `[ScheduleOpen]` / `[ScheduleClose]` 属性で示すプロパティを必須とする。
+            - Fluent API は `IQueryable<T>.Window().BaseOn<TSchedule>(keySelector)` 形式で提供する。
+```csharp
 modelBuilder.Entity<Order>()
     .Window()
-    .BaseOn<MarketSchedule>(order => order.MarketCode);
+    .BaseOn<MarketSchedulePoco>(order => order.MarketCode);
 ```
-        - Open/Closeで可変長のウィンドウを実現（サマータイム・特別日・24時間市場なども対応可能）
-        - MarketSchedule以外のカスタムスケジューラや他カレンダーとの連携も将来見据えた拡張構造にする
-        - 等間隔Window（従来型 .Window(x)）との共存・切替設計も含めて検討
+        - Open/Close で可変長のウィンドウを実現（サマータイム・特別日・24 時間市場なども対応可能）。
+        - 5 分足など 1 分より長い足は、`Open` から `Close` までの範囲内でのみ生成する。
+        - 日足生成時に `ScheduleClose` が 6:30 など翌朝にまたがる場合、6:30 未満の
+          データを当日の終値として扱い、6:30 以降は次の日の足に含める。
+        - MarketSchedule 以外のカスタムスケジューラや他カレンダーとの連携も将来見据えた拡張構造にする。
+        - 等間隔 Window（従来型 `.Window(x)`）との共存・切替設計も含めて検討。
+        - 内部処理は既存 `WindowProcessor`/`WindowFinalizationManager` を利用し、スケジュール境界から生成したウィンドウ区間を渡して確定処理を行う。
+        - 足別トピックは `<BaseTopic>_WINDOW_<Minutes>_FINAL` 名で作成し `StreamTableType.Table` 扱いとするため RocksDB ベースの TableCache が既定で有効となる。
         - ウィンドウ区間の**API設計と境界値ルールの標準化**
             - 区間の境界値は「左閉右開」[Open, Close) をOSS標準とする。
-            - Window定義は `.Window().BaseOn<MarketSchedule>(keySelector)` 型DSL拡張を導入し、営業日・特別スケジュールにも柔軟に対応できるようにする。
+            - Window 定義は `.Window().BaseOn<MarketSchedulePoco>(keySelector)` 型 DSL 拡張を導入し、営業日・特別スケジュールにも柔軟に対応できるようにする。
             - サマータイムや特別営業、常時オープン市場なども`MarketSchedule`テーブル設計で表現。
             - ドキュメント・実装・テストにおいて一貫性を担保し、例外は明示的API指定で管理。
             - 等間隔Windowとの選択・共存もOSS設計に含めて明示。
