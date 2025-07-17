@@ -1,10 +1,9 @@
 using Avro;
-using Avro.Generic;
-using System.Linq;
 using Confluent.SchemaRegistry;
 using Kafka.Ksql.Linq.Core.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Kafka.Ksql.Linq.SchemaRegistryTools;
 
