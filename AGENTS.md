@@ -448,6 +448,7 @@ AIは、指摘内容・理由を自動で集約・要約し、「現場設計Pro
 - [2025-07-22 楠木レポート](Reportsx/kusunoki/20250722_kusunoki_report.md)
 - [2025-07-27 楠木レポート](Reportsx/kusunoki/20250727_kusunoki_report.md)
 - [2025-07-12 広夢レポート](Reportsx/hiromu/20250712_hiromu_report.md)
+- [2025-07-17 差分ログ](docs/diff_log/diff_remove_producer_error_dlq_20250717.md)
 
 ## イレギュラー対応ルール
 
