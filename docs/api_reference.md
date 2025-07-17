@@ -24,6 +24,7 @@
 |--------------------------------|-------------------------------|-----------------------------------|---------------|---------|
 | `.Where(predicate)`            | 条件フィルタ                  | `IEventSet<T>`                    | Stream/Table  | ✅      |
 | `.Window(WindowDef \| TimeSpan)` | タイムウィンドウ指定       | `IQueryable<T>`                   | Stream        | ✅      |
+| `.Window().BaseOn<TSchedule>(keySelector)` | `[ScheduleOpen]`/`[ScheduleClose]` 属性を持つスケジュールPOCOに基づきウィンドウを生成 | `IQueryable<T>` | Stream | ✅ |
 | `.GroupBy(...)`                | グループ化および集約          | `IEventSet<IGrouping<TKey, T>>`   | Stream/Table  | ✅      |
 | `.OnError(ErrorAction)`        | エラー処理方針指定            | `EventSet<T>`                     | Stream        | ✅      |
 | `.WithRetry(int)`              | リトライ設定                  | `EventSet<T>`                     | Stream        | ✅      |
@@ -34,6 +35,7 @@
 - `WithManualCommit()` を指定しない `ForEachAsync()` は自動コミット動作となります【F:docs/old/manual_commit.md†L1-L23】。
 - `OnError(ErrorAction.DLQ)` を指定すると DLQ トピックへ送信されます【F:docs/old/defaults.md†L52-L52】。
 - Messaging クラス自体は DLQ 送信処理を持たず、`ErrorOccurred`/`DeserializationError`/`ProduceError` などのイベントを通じて外部で DLQ 送信を行います。
+- `.Window().BaseOn<TSchedule>` を用いる場合、バーは `[ScheduleOpen]` ～ `[ScheduleClose)` の範囲に含まれるデータのみで構成されます。日足生成で `ScheduleClose` が 6:30 のときは、6:30 未満のデータが当日の終値として扱われます。
 
 これらの戻り値型を把握することで、DSLチェーンにおける次の操作を判断しやすくなります。特に `OnError()` や `WithRetry()` は `EventSet<T>` を返すため、続けて `IEventSet` 系メソッドを利用できます。
 
@@ -50,6 +52,8 @@
 | `KsqlColumnAttribute`      | (予定) 列名マッピング          | ⏳      |
 | `DefaultValueAttribute`    | 既定値指定                     | ✅      |
 | `MaxLengthAttribute`       | 文字列長制限                   | ✅      |
+| `ScheduleOpenAttribute`    | 取引開始日時プロパティを示す    | 🚧      |
+| `ScheduleCloseAttribute`   | 取引終了日時プロパティを示す    | 🚧      |
 
 `WithDeadLetterQueue()` は過去の設計で提案されましたが、現在は `OnError(ErrorAction.DLQ)` に置き換えられています。
 
