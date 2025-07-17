@@ -31,8 +31,8 @@
 | `.WithManualCommit()`          | 手動コミットモード切替        | `IEntityBuilder<T>`               | Subscription  | ✅      |
 
 - `ToList`/`ToListAsync` は Pull Query として実行されます【F:src/Query/Pipeline/DMLQueryGenerator.cs†L27-L34】。
-- `WithManualCommit()` を指定しない `ForEachAsync()` は自動コミット動作となります【F:docs/manual_commit.md†L1-L23】。
-- `OnError(ErrorAction.DLQ)` を指定すると DLQ トピックへ送信されます【F:docs/oss_design_combined.md†L580-L599】。
+- `WithManualCommit()` を指定しない `ForEachAsync()` は自動コミット動作となります【F:docs/old/manual_commit.md†L1-L23】。
+- `OnError(ErrorAction.DLQ)` を指定すると DLQ トピックへ送信されます【F:docs/old/defaults.md†L52-L52】。
 - Messaging クラス自体は DLQ 送信処理を持たず、`ErrorOccurred`/`DeserializationError`/`ProduceError` などのイベントを通じて外部で DLQ 送信を行います。
 
 これらの戻り値型を把握することで、DSLチェーンにおける次の操作を判断しやすくなります。特に `OnError()` や `WithRetry()` は `EventSet<T>` を返すため、続けて `IEventSet` 系メソッドを利用できます。
@@ -41,13 +41,15 @@
 
 | 属性                       | 役割                           | 実装状態 |
 |----------------------------|--------------------------------|---------|
-| `TopicAttribute`           | トピック構成指定               | ✅      |
-| `KeyAttribute`             | キー項目指定                   | ✅      |
-| `KsqlTableAttribute`       | テーブル情報指定               | ✅      |
-| `AvroTimestampAttribute`   | Avro タイムスタンプ列指定      | ✅      |
-| `DecimalPrecisionAttribute`| Decimal 精度指定               | ✅      |
+| `TopicAttribute`           | トピック構成指定               | ❌      |
+| `KeyAttribute`             | キー項目指定                   | ❌      |
+| `KsqlTableAttribute`       | テーブル情報指定               | ❌      |
+| `AvroTimestampAttribute`   | Avro タイムスタンプ列指定      | ❌      |
+| `DecimalPrecisionAttribute`| Decimal 精度指定               | ❌      |
 | `RetryAttribute`           | (予定) リトライポリシー指定    | ⏳      |
 | `KsqlColumnAttribute`      | (予定) 列名マッピング          | ⏳      |
+| `DefaultValueAttribute`    | 既定値指定                     | ✅      |
+| `MaxLengthAttribute`       | 文字列長制限                   | ✅      |
 
 `WithDeadLetterQueue()` は過去の設計で提案されましたが、現在は `OnError(ErrorAction.DLQ)` に置き換えられています。
 
@@ -81,13 +83,14 @@
 | `CacheBinding`         | Kafka トピックと Cache の双方向バインディング | ✅ |
 | `SchemaRegistryClient`      | スキーマ管理クライアント        | ✅      |
 | `ResilientAvroSerializerManager` | Avro操作のリトライ管理     | ✅      |
+
 | `WindowFinalizationManager` | Window最終化処理のタイマー管理  | ✅      |
 
 ## 各 API の備考
 
-- `IEventSet<T>.WithRetry()` の実装例は `EventSetErrorHandlingExtensions.cs` にあります【F:src/EventSetErrorHandlingExtensions.cs†L120-L156】。
-- `OnError` の拡張は同ファイルで提供されています【F:src/EventSetErrorHandlingExtensions.cs†L14-L37】。
-- 手動コミットの利用例は [manual_commit.md](manual_commit.md) を参照してください。
+- `IEventSet<T>.WithRetry()` の実装例は `EventSet.cs` にあります【F:src/EventSet.cs†L238-L258】。
+- `OnError` の拡張は `EventSetErrorHandlingExtensions.cs` で提供されています【F:src/EventSetErrorHandlingExtensions.cs†L8-L20】。
+- 手動コミットの利用例は [manual_commit.md](old/manual_commit.md) を参照してください。
 - `StartErrorHandling()` → `.Map()` → `.WithRetry()` の流れで細かいエラー処理を構築できます。
 - `AvroOperationRetrySettings` で SchemaRegistry 操作のリトライ方針を制御します【F:src/Configuration/Options/AvroOperationRetrySettings.cs†L8-L33】。
 
