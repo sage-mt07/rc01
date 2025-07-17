@@ -127,7 +127,7 @@
 ## 外部依存関係
 
 - **IKafkaProducer**: 最終トピックへのメッセージ送信
-- **RocksDbStateStore**: 確定データの永続化
+- **StreamizCache**: 確定データの永続化
 - **KeyAttribute**: エンティティキー特定（リフレクション使用）
 
 ---

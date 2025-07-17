@@ -10,7 +10,7 @@
 | **Core**          | Kafka/KsqlDB用エンティティ・モデル管理、基盤設定・属性定義           |
 | **Messaging**     | 型安全なProducer/Consumer抽象、DLQ・エラーハンドリング               |
 | **Serialization** | Avroスキーマ生成・シリアライズ/デシリアライズ、Schema Registry連携   |
-| **StateStore**    | ストリーム処理の状態管理（RocksDB等）、ウィンドウ確定データ永続化    |
+| **Cache**    | ストリーム処理の状態管理（RocksDB等）、ウィンドウ確定データ永続化    |
 | **Window**        | 時間窓（Window）処理と集約・ウィンドウ確定の全体管理                 |
 | **Mapping**       | POCO ⇄ key/value 変換専用ユーティリティ                         |
 | **Application**   | KsqlContext構築・上位層統合（Builderパターンによる初期化・設定管理） |
@@ -22,9 +22,9 @@
 - **責務の逸脱NG例**  
   - Messagingでシリアライズ処理を直接行わない  
   - Query内でKafka通信やDLQ処理は行わない  
-  - StateStore実装はWindowの外に出さない
+  - Cache実装はWindowの外に出さない
 - **依存関係は「上位→下位」限定**  
-  - 例：Application → Core → Messaging/Serialization → StateStore/Window
+  - 例：Application → Core → Messaging/Serialization → Cache/Window
 - **責務に迷った場合は、必ず本サマリ＋各詳細ドキュメントで確認すること**
 
 ---
@@ -37,8 +37,8 @@ graph TD
   Core --> Messaging
   Core --> Query
   Messaging --> Serialization
-  Serialization --> StateStore
-  StateStore --> Window
+  Serialization --> Cache
+  Cache --> Window
 ```
 
 📝 代表的な処理の責務マッピング
@@ -50,7 +50,7 @@ KSQLクエリ生成・変換 … Query
 
 Avroスキーマ生成・Schema登録 … Serialization
 
-ストリーム状態同期・永続化 … StateStore
+ストリーム状態同期・永続化 … Cache
 
 時間窓集約・確定・永続化 … Window
 
@@ -63,8 +63,8 @@ MessagingとSerializationの役割分担
 QueryとCoreの分離
 　→ Queryは「クエリ変換」だけ、Coreは「エンティティ/属性/設定管理」
 
-WindowとStateStoreの境界
-　→ Windowは「時間窓の集約と確定」、StateStoreは「確定データの永続化・同期」
+WindowとCacheの境界
+　→ Windowは「時間窓の集約と確定」、Cacheは「確定データの永続化・同期」
 
 📚 詳細は各namespaceドキュメント参照
 Query … LINQ→KSQLクエリ責務【query_namespace_doc.md】
@@ -75,7 +75,7 @@ Messaging … Producer/Consumer抽象・DLQ【messaging_namespace_doc.md】
 
 Serialization … Avro/Schema Registry対応【serialization_namespace_doc.md】
 
-StateStore … ストリーム状態・RocksDB連携【statestore_namespace_doc.md】
+Cache … ストリーム状態・RocksDB連携【cache_namespace_doc.md】
 
 Window … 時間窓集約・確定処理【window_namespace_doc.md】
 

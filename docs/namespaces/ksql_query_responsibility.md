@@ -6,6 +6,7 @@
 - Key/Value の構造は LINQ DSL 構文から抽出される
 - Query namespace は構文解析とスキーマ抽出までを担い、管理責務は持たない
 - スキーマの永続的管理は KsqlContext（アプリケーション側）が行う
+- 抽出された Key/Value 型は `Mapping` namespace に登録され、Avro 用の型として利用される
 
 ---
 
@@ -19,7 +20,7 @@
 | `Query.SchemaExtractor` | LINQ式からスキーマ生成 | 一時スキーマの抽出 | serializer連携用途 |
 | `Query.Abstract.*` | Query定義のIF群 | DSL解析の標準化 | Interface管理の中心 |
 | `Serialization.*` | シリアライザ生成と最適化 | 実行時スキーマに基づく | キャッシュ対応可能 |
-| `StateStore.*` | 状態管理構造 | Materialized View用途 | 今回の範囲では直接関係なし |
+| `Cache.*` | 状態管理構造 | Materialized View用途 | 今回の範囲では直接関係なし |
 
 ---
 

@@ -1,8 +1,7 @@
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.StateStore.Monitoring;
-using Kafka.Ksql.Linq.StateStore;
+using Kafka.Ksql.Linq.Cache.Core;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -31,29 +30,18 @@ public class KsqlContextBindingEventTests
     }
 
     [Fact]
-    public void ReadyStateChanged_IsForwarded()
+    public void TableCacheRegistry_IsInitialized()
     {
         var ctx = new BindingContext();
 
         var optionsField = typeof(KsqlContext).GetField("_dslOptions", BindingFlags.NonPublic | BindingFlags.Instance)!;
         var options = (KsqlDslOptions)optionsField.GetValue(ctx)!;
-        options.Entities.Add(new EntityConfiguration { Entity = nameof(Sample), SourceTopic = "s", StoreType = StoreTypes.RocksDb });
+        options.Entities.Add(new EntityConfiguration { Entity = nameof(Sample), SourceTopic = "s" });
 
-        var initMethod = typeof(KsqlContext).GetMethod("InitializeStateStoreIntegration", BindingFlags.NonPublic | BindingFlags.Instance)!;
-        initMethod.Invoke(ctx, null);
+        Kafka.Ksql.Linq.Cache.Extensions.KsqlContextCacheExtensions.UseTableCache(ctx, options);
 
-        var bindingsField = typeof(KsqlContext).GetField("_stateBindings", BindingFlags.NonPublic | BindingFlags.Instance)!;
-        var bindings = (List<IDisposable>)bindingsField.GetValue(ctx)!;
-        Assert.Single(bindings);
-        var binding = bindings[0];
-
-        bool invoked = false;
-        ctx.BindingReadyStateChanged += (s, e) => invoked = true;
-
-        var onMethod = binding.GetType().GetMethod("OnReadyStateChanged", BindingFlags.NonPublic | BindingFlags.Instance)!;
-        var args = new ReadyStateChangedEventArgs { TopicName = "s", IsReady = false, CurrentLag = 1, TimeToReady = TimeSpan.Zero };
-        onMethod.Invoke(binding, new object?[] { null, args });
-
-        Assert.True(invoked);
+        var registryField = typeof(KsqlContext).GetField("_cacheRegistry", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var registry = registryField.GetValue(ctx);
+        Assert.NotNull(registry);
     }
 }

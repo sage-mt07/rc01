@@ -10,7 +10,7 @@
 | Core            | `KsqlEntity`, `TopicAttribute`   | モデル構築のユニットテスト |
 | Messaging       | `KafkaProducer`, `KafkaConsumer` | 擬似ブローカーを用いた送受信試験 |
 | Serialization   | `AvroSerializer`                 | スキーマ整合性と例外ハンドリング |
-| StateStore      | `RocksDbStateStore`              | データ永続化と復元の検証 |
+| Cache      | `StreamizCache`              | データ永続化と復元の検証 |
 | Window          | `WindowProcessor`                | 境界値・時間経過による動作確認 |
 
 ## 観測ポイント

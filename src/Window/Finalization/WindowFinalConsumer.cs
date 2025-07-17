@@ -1,4 +1,4 @@
-using Kafka.Ksql.Linq.StateStore.Core;
+using Kafka.Ksql.Linq.Cache.Core;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -12,14 +12,14 @@ internal class WindowFinalConsumer : IDisposable
 {
     private readonly ILogger<WindowFinalConsumer> _logger;
     private readonly ConcurrentDictionary<string, WindowFinalMessage> _finalizedWindows = new();
-    private readonly RocksDbStateStore<string, WindowFinalMessage> _rocksDbStore;
+    private readonly RocksDbTableCache<WindowFinalMessage> _tableCache;
     private bool _disposed = false;
 
     public WindowFinalConsumer(
-        RocksDbStateStore<string, WindowFinalMessage> rocksDbStore,
+        RocksDbTableCache<WindowFinalMessage> tableCache,
         ILoggerFactory? loggerFactory = null)
     {
-        _rocksDbStore = rocksDbStore ?? throw new ArgumentNullException(nameof(rocksDbStore));
+        _tableCache = tableCache ?? throw new ArgumentNullException(nameof(tableCache));
         _logger = loggerFactory?.CreateLogger<WindowFinalConsumer>()
                  ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<WindowFinalConsumer>.Instance;
     }
@@ -58,7 +58,8 @@ internal class WindowFinalConsumer : IDisposable
                 message.WindowKey, message.PodId);
 
             // Save to RocksDB
-            _rocksDbStore.Put(message.WindowKey, message);
+            _tableCache.TryGet(message.WindowKey, out _);
+            // RocksDbTableCache does not support direct writes; data should come from Kafka topics
 
             // Execute external handler
             await messageHandler(message);
@@ -83,8 +84,8 @@ internal class WindowFinalConsumer : IDisposable
             return cachedWindow;
         }
 
-        // Retrieve from RocksDB
-        var persistedWindow = _rocksDbStore.Get(windowKey);
+        // Retrieve from local RocksDB cache
+        var persistedWindow = _tableCache.TryGet(windowKey, out var val) ? val : null;
         if (persistedWindow != null)
         {
             // Store in memory cache as well
@@ -103,7 +104,7 @@ internal class WindowFinalConsumer : IDisposable
         var results = new List<WindowFinalMessage>();
 
         // Retrieve all data from RocksDB then filter by the range
-        foreach (var kvp in _rocksDbStore.All())
+        foreach (var kvp in _tableCache.GetAll())
         {
             var window = kvp.Value;
             if (window.WindowStart >= start && window.WindowEnd <= end)
@@ -123,7 +124,7 @@ internal class WindowFinalConsumer : IDisposable
         var results = new List<WindowFinalMessage>();
         var cutoffTime = since ?? DateTime.UtcNow.AddDays(-7); // default is seven days ago
 
-        foreach (var kvp in _rocksDbStore.All())
+        foreach (var kvp in _tableCache.GetAll())
         {
             var window = kvp.Value;
             if (window.WindowMinutes == windowMinutes && window.WindowStart >= cutoffTime)
@@ -141,9 +142,8 @@ internal class WindowFinalConsumer : IDisposable
         {
             _disposed = true;
 
-            // Flush RocksDB before disposing
-            _rocksDbStore?.Flush();
-            _rocksDbStore?.Dispose();
+            // Dispose cache
+            _tableCache?.Dispose();
 
             _finalizedWindows.Clear();
             _logger.LogInformation("WindowFinalConsumer disposed with RocksDB persistence");

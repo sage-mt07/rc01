@@ -13,7 +13,7 @@ Kafka.Ksql.Linq では、`appsettings.json` を通じて柔軟なDSL設定が可
     "Common": { /* 共通設定 */ },
     "Topics": { /* トピック別設定 */ },
     "SchemaRegistry": { /* スキーマレジストリ設定 */ },
-    "Entities": [ /* エンティティ／StateStore 設定 */ ],
+    "TableCache": [ /* エンティティ／キャッシュ設定 */ ],
     "DlqTopicName": "dead.letter.queue",
     "DlqConfiguration": { /* DLQ トピック設定 */ },
     "DeserializationErrorPolicy": "Skip|Retry|DLQ",
@@ -179,17 +179,18 @@ Consumer の設定は `ConsumerSection` クラスにそれぞれマッピング�
 
 ---
 
-### 🏪 1.4 Entities（StateStore定義）
+### 🏪 1.4 TableCache（テーブルキャッシュ設定）
 
 ```json
-"Entities": [
+"TableCache": [
   {
     "Entity": "OrderEntity",
     "SourceTopic": "orders",
     "StoreType": "RocksDb",
     "EnableCache": true,
     "Windows": [5, 15, 60],
-    "StoreName": "orders_store"
+    "StoreName": "orders_store",
+    "BaseDirectory": "/var/lib/ksql_cache"
   }
 ]
 ```
@@ -201,7 +202,8 @@ Consumer の設定は `ConsumerSection` クラスにそれぞれマッピング�
 | `StoreType` | ストレージ方式（例：`RocksDb`） |
 | `EnableCache` | キャッシュ有効化（bool） |
 | `Windows` | タンブリングウィンドウサイズ（整数：分単位） |
-| `StoreName` | StateStore名（省略時は自動生成） |
+| `StoreName` | キャッシュ名（省略時はトピック名を基に自動生成） |
+| `BaseDirectory` | RocksDBディレクトリのルートパス |
 
 ---
 
@@ -329,7 +331,7 @@ public class MyKsqlContext : KsqlContext
         }
       }
     },
-    "Entities": [
+    "TableCache": [
       {
         "Type": "Order",
         "Windows": [5]

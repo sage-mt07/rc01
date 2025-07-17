@@ -80,9 +80,10 @@
 | API                         | 説明                             | 実装状態 |
 |-----------------------------|----------------------------------|---------|
 | `ReadyStateMonitor`         | トピック同期状態の監視           | ✅      |
-| `StateStoreBindingManager`  | Kafka トピックと StateStore の双方向バインディング管理 | ✅ |
-| `SchemaRegistryClient`      | スキーマ管理クライアント        | ❌      |
-| `ResilientAvroSerializerManager` | Avro操作のリトライ管理     | ❌      |
+| `CacheBinding`         | Kafka トピックと Cache の双方向バインディング | ✅ |
+| `SchemaRegistryClient`      | スキーマ管理クライアント        | ✅      |
+| `ResilientAvroSerializerManager` | Avro操作のリトライ管理     | ✅      |
+
 | `WindowFinalizationManager` | Window最終化処理のタイマー管理  | ✅      |
 
 ## 各 API の備考
