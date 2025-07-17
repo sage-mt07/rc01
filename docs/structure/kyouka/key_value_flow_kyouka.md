@@ -40,5 +40,5 @@
 
 ### 型情報管理レビュー
 - `PropertyMeta` による型情報の集中管理を正式ルールとし、Mapping 以外の層で型定義を持たないことを確認。
-- Messaging 層はバイト列処理のみを担当し、Mapping 更新時の影響範囲を最小化する構造を維持する。
+- Messaging 層では `KafkaProducerManager` と `KafkaConsumerManager` が Avro 変換とキャッシュ処理を担う。Mapping 更新時の影響を最小化しつつ、送受信効率を保つ。
 - 新しい POCO 追加時は必ず MappingManager 登録フローが実行されているかを監査ポイントとする。

@@ -96,4 +96,25 @@ public class KafkaConsumerManagerTests
         Assert.Empty(model.KeyProperties);
         Assert.Equal("sampleentity", model.TopicName);
     }
+
+    [Fact]
+    public void DeserializerCaching_WorksPerType()
+    {
+        var manager = new KafkaConsumerManager(Options.Create(new KsqlDslOptions()), new NullLoggerFactory());
+        var d1 = InvokePrivate<IDeserializer<object>>(manager, "CreateKeyDeserializer", new[] { typeof(Type) }, null, typeof(int));
+        var d2 = InvokePrivate<IDeserializer<object>>(manager, "CreateKeyDeserializer", new[] { typeof(Type) }, null, typeof(int));
+        var cache = (ConcurrentDictionary<Type, IDeserializer<object>>)typeof(KafkaConsumerManager)
+            .GetField("_keyDeserializerCache", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(manager)!;
+        Assert.Same(d1, d2);
+        Assert.Single(cache);
+
+        var v1 = InvokePrivate<IDeserializer<object>>(manager, "GetValueDeserializer", Type.EmptyTypes, new[] { typeof(string) });
+        var v2 = InvokePrivate<IDeserializer<object>>(manager, "GetValueDeserializer", Type.EmptyTypes, new[] { typeof(string) });
+        var vcache = (ConcurrentDictionary<Type, IDeserializer<object>>)typeof(KafkaConsumerManager)
+            .GetField("_valueDeserializerCache", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(manager)!;
+        Assert.Same(v1, v2);
+        Assert.Single(vcache);
+    }
 }

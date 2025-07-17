@@ -30,11 +30,12 @@ internal class KafkaProducerManager : IDisposable
     private readonly ILoggerFactory? _loggerFactory;
     private readonly ConcurrentDictionary<Type, object> _producers = new();
     private readonly ConcurrentDictionary<(Type, string), object> _topicProducers = new();
+    private readonly ConcurrentDictionary<Type, ISerializer<object>> _keySerializerCache = new();
+    private readonly ConcurrentDictionary<Type, ISerializer<object>> _valueSerializerCache = new();
     private readonly AvroSerializerConfig _serializerConfig = new();
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
     private bool _disposed = false;
 
-    public event Func<object, KafkaMessageContext?, Exception, Task>? ProduceError;
 
     public KafkaProducerManager(
         IOptions<KsqlDslOptions> options,
@@ -75,9 +76,7 @@ internal class KafkaProducerManager : IDisposable
             var keyType = KeyExtractor.DetermineKeyType(entityModel);
             var keySerializer = CreateKeySerializer(keyType);
 
-            var valueSerializer = SerializerAdapters.ToObjectSerializer(
-                new AvroSerializer<T>(_schemaRegistryClient.Value, _serializerConfig)
-                    .AsSyncOverAsync());
+            var valueSerializer = GetValueSerializer<T>();
 
             var producer = new KafkaProducer<T>(
                 rawProducer,
@@ -87,10 +86,6 @@ internal class KafkaProducerManager : IDisposable
                 entityModel,
                 _loggerFactory);
 
-            if (ProduceError != null)
-            {
-                producer.SendError += (msg, ctx, ex) => ProduceError.Invoke(msg!, ctx, ex);
-            }
 
             _producers.TryAdd(entityType, producer);
 
@@ -120,9 +115,7 @@ internal class KafkaProducerManager : IDisposable
         var keyType = KeyExtractor.DetermineKeyType(entityModel);
         var keySerializer = CreateKeySerializer(keyType);
 
-        var valueSerializer = SerializerAdapters.ToObjectSerializer(
-            new AvroSerializer<T>(_schemaRegistryClient.Value, _serializerConfig)
-                .AsSyncOverAsync());
+        var valueSerializer = GetValueSerializer<T>();
 
         var producer = new KafkaProducer<T>(
             rawProducer,
@@ -132,10 +125,6 @@ internal class KafkaProducerManager : IDisposable
             entityModel,
             _loggerFactory);
 
-        if (ProduceError != null)
-        {
-            producer.SendError += (msg, ctx, ex) => ProduceError.Invoke(msg!, ctx, ex);
-        }
 
         _topicProducers.TryAdd(key, producer);
         return Task.FromResult<IKafkaProducer<T>>(producer);
@@ -267,15 +256,32 @@ internal class KafkaProducerManager : IDisposable
 
     private ISerializer<object> CreateKeySerializer(Type keyType)
     {
+        if (_keySerializerCache.TryGetValue(keyType, out var cached))
+            return cached;
+
         var method = typeof(KafkaProducerManager).GetMethod(nameof(CreateKeySerializerGeneric), BindingFlags.NonPublic | BindingFlags.Instance)!
             .MakeGenericMethod(keyType);
-        return (ISerializer<object>)method.Invoke(this, null)!;
+        var serializer = (ISerializer<object>)method.Invoke(this, null)!;
+        _keySerializerCache[keyType] = serializer;
+        return serializer;
     }
 
     private ISerializer<object> CreateKeySerializerGeneric<T>()
     {
         var typed = new AvroSerializer<T>(_schemaRegistryClient.Value, _serializerConfig).AsSyncOverAsync();
         return SerializerAdapters.ToObjectSerializer(typed);
+    }
+
+    private ISerializer<object> GetValueSerializer<T>()
+    {
+        var type = typeof(T);
+        if (_valueSerializerCache.TryGetValue(type, out var cached))
+            return cached;
+
+        var typed = new AvroSerializer<T>(_schemaRegistryClient.Value, _serializerConfig).AsSyncOverAsync();
+        var serializer = SerializerAdapters.ToObjectSerializer(typed);
+        _valueSerializerCache[type] = serializer;
+        return serializer;
     }
     public async Task SendAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class
     {
@@ -341,6 +347,9 @@ internal class KafkaProducerManager : IDisposable
                 }
             }
             _topicProducers.Clear();
+
+            _keySerializerCache.Clear();
+            _valueSerializerCache.Clear();
 
 
 

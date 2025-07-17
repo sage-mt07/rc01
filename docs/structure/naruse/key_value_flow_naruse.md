@@ -78,4 +78,4 @@ await context.AddAsync(entity);
 sharedドキュメントの型情報管理フローを受け、実装担当として以下を意識します。
 1. `PropertyMeta` 定義は Fluent API で決定し、クラス属性には依存しない。
 2. `MappingManager` で自動生成される KeyType/ValueType を中心に型情報をやり取りする。
-3. Messaging 層には型を渡さず、バイト列のみでやり取りすることで実装の安定度を高める。
+3. Messaging 層では `KafkaProducerManager` / `KafkaConsumerManager` が POCO と key/value の Avro 変換を担当し、Serializer/Deserializer をキャッシュして安定した処理を実現する。

@@ -165,12 +165,11 @@ await ctx.AddAsync(entity);
 - POCO⇄key/value⇄バイト列の流れで、型安全・設計一貫性を担保。
 - POCO⇄key/valueの分割・統合は`KeyValueTypeMapping`に備わるAPIを通じて行い、POCO型へのリフレクションや独自プロパティ探索は行わない。
 
-### 8.4 Messaging層の責務純化
-- Messaging は **バイト列 (keyBytes, valueBytes) とトピック名のみ** を扱う。POCO 型や PropertyMeta など設計情報への参照は一切持たない。
-- DLQ (Dead Letter Queue) も単なる送信先トピックとして扱い、特別な型やロジックを Messaging 層で実装しない。
-- DLQ 管理機能は Core 層で担い、Messaging 層はバイト列送受信のみを行う。
-- 型情報やスキーマ管理は Mapping/Serialization 層で完結させ、Messaging 層の API は `PublishAsync(byte[] keyBytes, byte[] valueBytes, string topic)` / `ConsumeAsync(string topic)` が基本形となる。
-- 型進化や属性追加は Mapping 更新だけで全体へ即反映され、Messaging 層の実装・運用は完全不変となる。
+### 8.4 Messaging層の責務
+- `KafkaProducerManager` と `KafkaConsumerManager` が `PocoMapper` を介して POCO と key/value の Avro 変換を担当する。
+- 生成した `Serializer` と `Deserializer` はキャッシュして再利用し、処理性能を向上させる。
+- DLQ (Dead Letter Queue) 送信は Messaging 層から行うが、エンベロープ生成などの制御は Core 層に委ねる。
+- 型情報やスキーマ管理は Mapping/Serialization 層が保持し、Messaging 層はそれらを利用するのみとする。
 
 ### 8.5 設計進化時の運用ポイント
 - 新しいPOCOや属性、精度/フォーマットの追加もMappingへの登録・PropertyMeta反映だけでOK。
@@ -229,7 +228,7 @@ var (recvKeyBytes, recvValueBytes) = await messagingConsumer.ConsumeAsync(topic)
 ■ ポイント
 設計フロー・サンプルコードとも「PropertyMeta管理→Mapping→型生成→Avro変換→Messaging」の流れが“一本化”
 
-すべての型情報・設計情報はMappingで一元管理／Messagingは型意識せずバイト列のみ扱う
+すべての型情報・設計情報は Mapping が一元管理し、Messaging 層では `KafkaProducerManager` と `KafkaConsumerManager` が Avro 変換を行う
 
 
 

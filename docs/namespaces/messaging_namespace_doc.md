@@ -1,7 +1,7 @@
 # Kafka.Ksql.Linq.Messaging 責務ドキュメント
 
 ## 概要
-Kafka メッセージング機能の型安全な抽象化層を提供する namespace。Producer/Consumer の統一管理、設定管理、エラーハンドリング（DLQ）を担当。新アーキテクチャでは **key/value の送受信のみを担う最小 API** へ責務を絞る。
+Kafka メッセージング機能の型安全な抽象化層を提供する namespace。Producer/Consumer の統一管理、設定管理、エラーハンドリング（DLQ）を担当。POCO と key/value の変換には `Mapping` namespace の `PocoMapper` を利用し、Kafka との通信では Avro 形式を用いる。キー・値の Avro `Serializer`/`Deserializer` は内部でキャッシュし、KsqlContext からの送受信を効率化する。
 
 ## 主要な責務
 
