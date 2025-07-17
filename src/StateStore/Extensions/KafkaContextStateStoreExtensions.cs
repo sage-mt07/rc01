@@ -39,6 +39,30 @@ internal static class KafkaContextStateStoreExtensions
         }
     }
 
+    internal static void UseTableCache(this IKsqlContext context, KsqlDslOptions options)
+    {
+        if (options.Entities.Count == 0)
+        {
+            var entityModels = context.GetEntityModels();
+            foreach (var model in entityModels.Values)
+            {
+                if (model.EnableCache)
+                {
+                    options.Entities.Add(new EntityConfiguration
+                    {
+                        Entity = model.EntityType.Name,
+                        SourceTopic = model.TopicName ?? model.EntityType.Name.ToLowerInvariant(),
+                        StoreType = StoreTypes.RocksDb,
+                        EnableCache = true
+                    });
+                }
+            }
+        }
+
+        context.CleanupStateStores();
+        context.InitializeStateStores(options);
+    }
+
     internal static IStateStoreManager? GetStateStoreManager(this IKsqlContext context)
     {
         lock (_lock)
