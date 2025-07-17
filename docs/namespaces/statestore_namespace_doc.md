@@ -1,3 +1,5 @@
+> **Removed: このnamespaceはCacheに統合され廃止されました。cache_namespace_doc.mdを参照してください。**
+
 # Kafka.Ksql.Linq.StateStore Namespace 責務ドキュメント
 
 ## 概要

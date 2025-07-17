@@ -5,7 +5,7 @@
 ## 依存順
 
 ```
-Application -> Core -> Messaging -> Serialization -> StateStore -> Window -> Context
+Application -> Core -> Messaging -> Serialization -> Cache -> Window -> Context
 ```
 
 ## 責務分離

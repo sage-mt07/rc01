@@ -5,6 +5,7 @@ using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Application;
+using Kafka.Ksql.Linq.Cache.Core;
 using System;
 using Xunit;
 
@@ -48,7 +49,7 @@ public class KsqlContextTests
             AllProperties = typeof(TestEntity).GetProperties()
         };
         var set = ctx.CallCreateEntitySet<TestEntity>(model);
-        Assert.IsType<EventSetWithServices<TestEntity>>(set);
+        Assert.IsType<ReadCachedEntitySet<TestEntity>>(set);
     }
 
     [Fact]

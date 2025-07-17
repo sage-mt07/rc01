@@ -3,7 +3,7 @@
 ## 📋 概要
 **KSQLコンテキストの構築・設定・初期化を担う上位層namespace**
 
-Core層の抽象化（`KafkaContextCore`）を継承し、Schema Registry連携・Producer/Consumer管理・StateStore統合など本格的なKafka機能を提供する実装層です。
+Core層の抽象化（`KafkaContextCore`）を継承し、Schema Registry連携・Producer/Consumer管理・Cache統合など本格的なKafka機能を提供する実装層です。
 
 ---
 
@@ -101,10 +101,10 @@ KafkaContext (互換性シム)
 - **テストモード**: `SkipSchemaRegistration = true` でスキーマ処理をスキップ
 - **失敗時**: FATAL例外で即座にアプリケーション停止
 
-### **StateStore統合**
-- RocksDB設定時の自動バインディング作成
-- エンティティ単位でのストア管理
-- レディネス状態の監視・通知
+### **Cache統合**
+- TableCache設定に基づく自動バインディング作成
+- エンティティ単位でのキャッシュ管理
+- `RUNNING` 状態監視と警告ログ出力
 
 ---
 
@@ -113,7 +113,7 @@ KafkaContext (互換性シム)
 ### **このnamespaceが担う責務**
 - ✅ KSQLコンテキストの構築・設定管理
 - ✅ Schema Registry連携の初期化
-- ✅ 上位層サービス（Producer/Consumer/StateStore）の統合
+- ✅ 上位層サービス（Producer/Consumer/Cache）の統合
 - ✅ Avroスキーマ情報の操作ユーティリティ
 
 ### **このnamespaceが担わない責務**  

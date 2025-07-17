@@ -9,7 +9,7 @@ Application
   └─ Core
        ├─ Messaging
        │    └─ Serialization
-       ├─ StateStore
+       ├─ Cache
        └─ Window
 ```
 
@@ -17,11 +17,11 @@ Application
 
 1. **Application** : OSS外部との接点を持つ最上位レイヤー。
 2. **Core** : ドメインモデルと設定を管理。
-3. **Messaging/Serialization/StateStore/Window** : 技術要素ごとの下位モジュール群。
+3. **Messaging/Serialization/Cache/Window** : 技術要素ごとの下位モジュール群。
 4. **Context** : これらを束ねる実行環境。
 
 ## 優先度
 
 - 機能拡張時は `Core` と `Messaging` を最優先で整備
-- パフォーマンス課題が出た場合は `StateStore` と `Window` を重点的に調査
+- パフォーマンス課題が出た場合は `Cache` と `Window` を重点的に調査
 - 設計変更は常に `docs/diff_log` へ記録し、各担当へフィードバック

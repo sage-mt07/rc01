@@ -1,4 +1,4 @@
-namespace Kafka.Ksql.Linq.StateStore;
+namespace Kafka.Ksql.Linq.Cache;
 
 /// <summary>
 /// Known state store type names.

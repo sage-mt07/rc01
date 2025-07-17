@@ -12,7 +12,7 @@
 
 ### 構造分割思想
 - **責務分離**: 各 namespace は特定の役割のみに集中し、依存方向は上位から下位へ限定します。
-- **参照方向**: Application → Core → Messaging → StateStore/Window → External の流れを基本とします。
+- **参照方向**: Application → Core → Messaging → Cache/Window → External の流れを基本とします。
 - **PM統括**: 天城がレイヤー間の優先度と整合性を統括し、各エージェントの作業を調整します。
 
 ## 構造一覧表
@@ -22,7 +22,7 @@
 | `Kafka.Ksql.Linq.Query` | Query | `QueryBuilder`, `KsqlFunctionRegistry` | LINQ式からKSQLへの変換 | 鳴瀬・鏡花 |
 | `Kafka.Ksql.Linq.Core` | Core | `KsqlEntity`, `TopicAttribute` | エンティティ管理・属性定義 | 鳴瀬・鏡花 |
 | `Kafka.Ksql.Linq.Messaging` | Messaging | `KafkaProducer`, `KafkaConsumer` | 型安全なProducer/Consumer抽象 | 鳴瀬・詩音 |
-| `Kafka.Ksql.Linq.StateStore` | StateStore | `RocksDbStateStore`, `StateStoreManager` | ストリーム状態の永続化 | 鳴瀬・詩音 |
+| `Kafka.Ksql.Linq.Cache` | Cache | `StreamizCache`, `CacheManager` | ストリーム状態の永続化 | 鳴瀬・詩音 |
 | `Kafka.Ksql.Linq.Window` | Window | `WindowProcessor`, `WindowFinalizationManager` | 時間窓処理と確定 | 鳴瀬・詩音 |
 | `Kafka.Ksql.Linq.Application` | Application | `KsqlContextBuilder`, `KsqlContextOptions` | コンテキスト構築・統合設定 | 鳴瀬・天城 |
 | `Kafka.Ksql.Linq.Configuration` | Configuration | `ProducerSection`, `ConsumerSection` | Kafka設定オブジェクト管理 | 鳴瀬 |

@@ -1,4 +1,4 @@
-using Kafka.Ksql.Linq.StateStore;
+using Kafka.Ksql.Linq.Cache;
 using System.Collections.Generic;
 
 namespace Kafka.Ksql.Linq.Configuration
@@ -11,5 +11,6 @@ namespace Kafka.Ksql.Linq.Configuration
         public string StoreType { get; set; } = StoreTypes.RocksDb;
         public bool EnableCache { get; set; } = false;
         public string? StoreName { get; set; }
+        public string? BaseDirectory { get; set; }
     }
 }
