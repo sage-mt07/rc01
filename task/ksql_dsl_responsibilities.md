@@ -257,9 +257,9 @@
 ### `KsqlDsl.Messaging.Consumers`
 
 #### `KafkaConsumerManager`
-- **責務**: 型安全Consumer管理
-- **役割**: Pool削除、直接管理、型安全性強化
-- **設計意図**: EF風API、事前確定管理
+- **責務**: 型安全Consumer管理、受信データの Avro → POCO 変換
+- **役割**: Pool削除、直接管理、型安全性強化、`PocoMapper` 経由のデシリアライズ
+- **設計意図**: EF風API、事前確定管理、Deserializer キャッシュによる性能向上
 - **拡張可否**: 可（Consumer機能拡張）
 
 #### `KafkaConsumer<TValue, TKey>`
@@ -271,9 +271,9 @@
 ### `KsqlDsl.Messaging.Producers`
 
 #### `KafkaProducerManager`
-- **責務**: 型安全Producer管理
-- **役割**: Pool削除、直接管理、型安全性強化
-- **設計意図**: EF風API、事前確定管理
+- **責務**: 型安全Producer管理、送信データの POCO → Avro 変換
+- **役割**: Pool削除、直接管理、型安全性強化、`PocoMapper` でキー生成
+- **設計意図**: EF風API、事前確定管理、Serializer キャッシュによる性能向上
 - **拡張可否**: 可（Producer機能拡張）
 
 #### `KafkaProducer<T>`

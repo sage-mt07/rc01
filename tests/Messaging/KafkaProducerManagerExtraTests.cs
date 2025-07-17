@@ -1,8 +1,12 @@
 using Confluent.SchemaRegistry;
+using Confluent.Kafka;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Messaging.Configuration;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Reflection;
+using System;
 using Microsoft.Extensions.Options;
 using Xunit;
 using static Kafka.Ksql.Linq.Tests.PrivateAccessor;
@@ -99,5 +103,26 @@ public class KafkaProducerManagerExtraTests
         var manager = new KafkaProducerManager(Options.Create(options), null);
         var client = InvokePrivate<object>(manager, "CreateSchemaRegistryClient", System.Type.EmptyTypes);
         Assert.NotNull(client);
+    }
+
+    [Fact]
+    public void SerializerCaching_WorksPerType()
+    {
+        var manager = new KafkaProducerManager(Options.Create(new KsqlDslOptions()), null);
+        var s1 = InvokePrivate<ISerializer<object>>(manager, "CreateKeySerializer", new[] { typeof(Type) }, null, typeof(int));
+        var s2 = InvokePrivate<ISerializer<object>>(manager, "CreateKeySerializer", new[] { typeof(Type) }, null, typeof(int));
+        var cache = (ConcurrentDictionary<Type, ISerializer<object>>)typeof(KafkaProducerManager)
+            .GetField("_keySerializerCache", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(manager)!;
+        Assert.Same(s1, s2);
+        Assert.Single(cache);
+
+        var v1 = InvokePrivate<ISerializer<object>>(manager, "GetValueSerializer", System.Type.EmptyTypes, new[] { typeof(string) });
+        var v2 = InvokePrivate<ISerializer<object>>(manager, "GetValueSerializer", System.Type.EmptyTypes, new[] { typeof(string) });
+        var vcache = (ConcurrentDictionary<Type, ISerializer<object>>)typeof(KafkaProducerManager)
+            .GetField("_valueSerializerCache", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(manager)!;
+        Assert.Same(v1, v2);
+        Assert.Single(vcache);
     }
 }

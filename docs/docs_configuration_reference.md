@@ -63,6 +63,11 @@ Kafka.Ksql.Linq では、`appsettings.json` を通じて柔軟なDSL設定が可
 
 ### 📦 1.2 Topics（トピックごとの詳細設定）
 
+Producer の設定は `Kafka.Ksql.Linq.Messaging.Configuration.ProducerSection`、
+Consumer の設定は `ConsumerSection` クラスにそれぞれマッピングされます。
+アプリ設定ファイルの項目名とクラスプロパティが 1 対 1 で対応するため、
+カスタム設定を追加する際はこれらのクラスを拡張してください。
+
 ```json
 "Topics": {
   "my-topic": {

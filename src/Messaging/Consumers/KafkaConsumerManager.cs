@@ -32,6 +32,8 @@ internal class KafkaConsumerManager : IDisposable
     private readonly ILogger? _logger;
     private readonly ILoggerFactory? _loggerFactory;
     private readonly ConcurrentDictionary<Type, object> _consumers = new();
+    private readonly ConcurrentDictionary<Type, IDeserializer<object>> _keyDeserializerCache = new();
+    private readonly ConcurrentDictionary<Type, IDeserializer<object>> _valueDeserializerCache = new();
     private readonly AvroDeserializerConfig _deserializerConfig = new();
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
     private bool _disposed = false;
@@ -76,9 +78,7 @@ internal class KafkaConsumerManager : IDisposable
             // Create deserializers via Confluent factory
             var keyType = KeyExtractor.DetermineKeyType(entityModel);
             var keyDeserializer = CreateKeyDeserializer(keyType);
-            var valueDeserializer = SerializerAdapters.ToObjectDeserializer(
-                new AvroDeserializer<T>(_schemaRegistryClient.Value, _deserializerConfig)
-                    .AsSyncOverAsync());
+            var valueDeserializer = GetValueDeserializer<T>();
 
             // Build consumer
             var policy = entityModel.DeserializationErrorPolicy == default
@@ -246,15 +246,32 @@ internal class KafkaConsumerManager : IDisposable
 
     private IDeserializer<object> CreateKeyDeserializer(Type keyType)
     {
+        if (_keyDeserializerCache.TryGetValue(keyType, out var cached))
+            return cached;
+
         var method = typeof(KafkaConsumerManager).GetMethod(nameof(CreateKeyDeserializerGeneric), BindingFlags.NonPublic | BindingFlags.Instance)!
             .MakeGenericMethod(keyType);
-        return (IDeserializer<object>)method.Invoke(this, null)!;
+        var deserializer = (IDeserializer<object>)method.Invoke(this, null)!;
+        _keyDeserializerCache[keyType] = deserializer;
+        return deserializer;
     }
 
     private IDeserializer<object> CreateKeyDeserializerGeneric<T>()
     {
         var typed = new AvroDeserializer<T>(_schemaRegistryClient.Value, _deserializerConfig).AsSyncOverAsync();
         return SerializerAdapters.ToObjectDeserializer(typed);
+    }
+
+    private IDeserializer<object> GetValueDeserializer<T>()
+    {
+        var type = typeof(T);
+        if (_valueDeserializerCache.TryGetValue(type, out var cached))
+            return cached;
+
+        var typed = new AvroDeserializer<T>(_schemaRegistryClient.Value, _deserializerConfig).AsSyncOverAsync();
+        var deserializer = SerializerAdapters.ToObjectDeserializer(typed);
+        _valueDeserializerCache[type] = deserializer;
+        return deserializer;
     }
 
     /// <summary>
@@ -342,6 +359,9 @@ internal class KafkaConsumerManager : IDisposable
                 }
             }
             _consumers.Clear();
+
+            _keyDeserializerCache.Clear();
+            _valueDeserializerCache.Clear();
 
             // SchemaRegistryClientの解放
             if (_schemaRegistryClient.IsValueCreated)

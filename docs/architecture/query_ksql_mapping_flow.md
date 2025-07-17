@@ -21,7 +21,7 @@ Query namespace で組み立てた DSL から Messaging 層までの責務分界
 | KsqlContext | `KsqlContext`, `KsqlContextBuilder` | `QuerySchema` 登録、Mapping/Serialization への橋渡し |
 | Mapping | `MappingManager`, `PocoMapper` | `QuerySchema` を用いた POCO⇔Key/Value 変換 |
 | Serialization | `AvroSerializerFactory` 等 | Key/Value のシリアライズ／デシリアライズ |
-| Messaging | `IKafkaProducer<T>`, `IKafkaConsumer<TKey,TValue>` | Key/Value の送受信のみ |
+| Messaging | `KafkaProducerManager`, `KafkaConsumerManager` | POCO を Avro へ変換して送信、受信時は Avro から POCO へ復元 (Serializer/Deserializer はキャッシュ) |
 
 ## 3. データフロー
 ```mermaid
@@ -62,6 +62,5 @@ await ctx.Messaging.AddAsync(key, value);
 - `Task AddAsync(byte[] key, byte[] value, string topic);`
 - `IAsyncEnumerable<(byte[] Key, byte[] Value)> ConsumeAsync(string topic);`
 
-上記のように、Messaging 層はシリアライズ済みの key/value を送受信するだけに責務を絞
-る。KsqlContext は必要な型変換や Serializer の取得を行った上で Messaging を呼び出す。
+以前は Messaging 層をシリアライズ済みの key/value 送受信のみに限定していたが、現行設計では `KafkaProducerManager` と `KafkaConsumerManager` が Avro 変換を担当する。これらのマネージャーは `PocoMapper` により POCO と key/value を相互変換し、生成した Serializer/Deserializer をキャッシュして高頻度の送受信に備える。
 
