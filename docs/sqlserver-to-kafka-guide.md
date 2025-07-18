@@ -206,6 +206,28 @@ SELECT * FROM customer_orders WHERE CustomerID = 'CUST001';
 SELECT * FROM orders_stream WHERE CustomerID = 'CUST001' EMIT CHANGES;
 ```
 
+### Push Query と Pull Query の対応
+
+SQLServer には Push/Pull クエリという明確な区別は存在しませんが、KSQLDB ではストリームとテーブルで次のようなサポート状況の違いがあります。
+
+| | STREAM（ストリーム） | TABLE（テーブル／KTable） |
+|---|---|---|
+| Push Query | ✅ サポート（リアルタイムで流れる） | ✅ サポート（更新イベントが流れる） |
+| Pull Query | ❌ 非対応（そもそも状態がない） | ✅ 対応（現在の状態を取得できる） |
+
+#### Pull Query で使えない主な表現
+
+| 分類 | 内容（禁止される表現） | 例 | 備考 |
+|---|---|---|---|
+| 集約関数 | `SUM()`, `AVG()`, `COUNT()`, `MIN()`, `MAX()` 等 | `SELECT SUM(AMOUNT) FROM ORDERS;` | ❌ |
+| 集約関数（BY_OFFSET） | `EARLIEST_BY_OFFSET()`, `LATEST_BY_OFFSET()` など | `SELECT EARLIEST_BY_OFFSET(NAME) FROM USERS;` | ❌ |
+| GROUP BY | `GROUP BY` 句 | `SELECT COUNT(*) FROM ORDERS GROUP BY ITEM;` | ❌ |
+| EMIT CHANGES | `EMIT CHANGES` はPull Queryでは使用不可 | `SELECT * FROM TABLE EMIT CHANGES;` | ❌（Push専用） |
+| JOIN句 | テーブル・ストリームの JOIN | `SELECT * FROM A JOIN B ON A.ID = B.ID;` | ❌ |
+| WINDOW句 | `WINDOW TUMBLING`, `HOPPING`, `SESSION` など | `SELECT COUNT(*) FROM STREAM WINDOW TUMBLING ...` | ❌ |
+| 非KTable参照 | STREAM からの Pull Query | `SELECT * FROM STREAM;` | ❌（TABLEのみ可） |
+| 非キー検索 | 主キー以外での `WHERE` 検索 | `SELECT * FROM TABLE WHERE COL2 = 'x';` | ❌ |
+
 ## 6. 永続性と耐久性
 
 **SQLServer**:
