@@ -3,7 +3,7 @@
 namespace Kafka.Ksql.Linq.Messaging.Configuration;
 
 /// <summary>
-/// Schema Registry設定（Confluent.Kafka仕様準拠）
+/// Schema Registry configuration (follows Confluent.Kafka specifications)
 /// </summary>
 public class SchemaRegistrySection
 {
@@ -42,7 +42,7 @@ public class SchemaRegistrySection
     /// </summary>
     public int LatestCacheTtlSecs { get; init; } = 300;
 
-    // SSL/TLS関連（Confluent標準）
+    // SSL/TLS settings (Confluent standard)
     /// <summary>
     /// File path to CA certificate(s) for verifying the Schema Registry's key
     /// </summary>
@@ -64,13 +64,13 @@ public class SchemaRegistrySection
     public string? SslKeyPassword { get; init; }
 
     /// <summary>
-    /// 追加設定プロパティ（Confluent非標準プロパティ用）
+    /// Additional properties (non-standard Confluent options)
     /// </summary>
     public Dictionary<string, string> AdditionalProperties { get; init; } = new();
 }
 
 /// <summary>
-/// Basic auth credentials source (Confluent標準)
+/// Basic auth credentials source (Confluent standard)
 /// </summary>
 public enum BasicAuthCredentialsSource
 {

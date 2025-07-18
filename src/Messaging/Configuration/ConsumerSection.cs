@@ -4,80 +4,80 @@ using System.Collections.Generic;
 namespace Kafka.Ksql.Linq.Messaging.Configuration;
 
 /// <summary>
-/// Consumer設定
+/// Consumer configuration
 /// </summary>
 public class ConsumerSection
 {
     /// <summary>
-    /// コンシューマーグループID
+    /// Consumer group ID
     /// </summary>
     public string GroupId { get; init; } = string.Empty;
 
     /// <summary>
-    /// オートオフセットリセット（Latest, Earliest, None）
+    /// Auto offset reset (Latest, Earliest, None)
     /// </summary>
     [DefaultValue("Latest")]
     public string AutoOffsetReset { get; init; } = "Latest";
 
     /// <summary>
-    /// 自動コミット有効化
+    /// Enable auto commit
     /// </summary>
     [DefaultValue(true)]
     public bool EnableAutoCommit { get; init; } = true;
 
     /// <summary>
-    /// 自動コミット間隔（ミリ秒）
+    /// Auto commit interval (ms)
     /// </summary>
     [DefaultValue(5000)]
     public int AutoCommitIntervalMs { get; init; } = 5000;
 
     /// <summary>
-    /// セッションタイムアウト（ミリ秒）
+    /// Session timeout (ms)
     /// </summary>
     public int SessionTimeoutMs { get; init; } = 30000;
 
     /// <summary>
-    /// ハートビート間隔（ミリ秒）
+    /// Heartbeat interval (ms)
     /// </summary>
     public int HeartbeatIntervalMs { get; init; } = 3000;
 
     /// <summary>
-    /// 最大ポーリング間隔（ミリ秒）
+    /// Max poll interval (ms)
     /// </summary>
     public int MaxPollIntervalMs { get; init; } = 300000;
 
     /// <summary>
-    /// 最大ポーリングレコード数
+    /// Max poll records
     /// </summary>
     public int MaxPollRecords { get; init; } = 500;
 
     /// <summary>
-    /// フェッチ最小バイト数
+    /// Fetch minimum bytes
     /// </summary>
     public int FetchMinBytes { get; init; } = 1;
 
     /// <summary>
-    /// フェッチ最大待機時間（ミリ秒）
+    /// Fetch max wait (ms)
     /// </summary>
     public int FetchMaxWaitMs { get; init; } = 500;
 
     /// <summary>
-    /// フェッチ最大バイト数
+    /// Fetch max bytes
     /// </summary>
     public int FetchMaxBytes { get; init; } = 52428800; // 50MB
 
     /// <summary>
-    /// パーティション割り当て戦略
+    /// Partition assignment strategy
     /// </summary>
     public string? PartitionAssignmentStrategy { get; init; }
 
     /// <summary>
-    /// アイソレーションレベル
+    /// Isolation level
     /// </summary>
     public string IsolationLevel { get; init; } = "ReadUncommitted";
 
     /// <summary>
-    /// 追加設定プロパティ（運用上の柔軟性確保）
+    /// Additional configuration properties
     /// </summary>
     public Dictionary<string, string> AdditionalProperties { get; init; } = new();
 }

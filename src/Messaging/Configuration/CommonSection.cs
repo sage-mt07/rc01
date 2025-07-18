@@ -5,67 +5,67 @@ namespace Kafka.Ksql.Linq.Messaging.Configuration;
 public class CommonSection
 {
     /// <summary>
-    /// Kafkaブローカーのアドレス（カンマ区切り）
+    /// Kafka broker addresses (comma separated)
     /// </summary>
     public string BootstrapServers { get; init; } = "localhost:9092";
 
     /// <summary>
-    /// クライアントID
+    /// Client ID
     /// </summary>
     public string ClientId { get; init; } = "ksql-dsl-client";
 
     /// <summary>
-    /// リクエストタイムアウト（ミリ秒）
+    /// Request timeout (ms)
     /// </summary>
     public int RequestTimeoutMs { get; init; } = 30000;
 
     /// <summary>
-    /// メタデータ最大有効期間（ミリ秒）
+    /// Metadata max age (ms)
     /// </summary>
     public int MetadataMaxAgeMs { get; init; } = 300000;
 
     /// <summary>
-    /// セキュリティプロトコル
+    /// Security protocol
     /// </summary>
     public SecurityProtocol SecurityProtocol { get; init; } = SecurityProtocol.Plaintext;
 
     /// <summary>
-    /// SASLメカニズム
+    /// SASL mechanism
     /// </summary>
     public SaslMechanism? SaslMechanism { get; init; }
 
     /// <summary>
-    /// SASLユーザー名
+    /// SASL user name
     /// </summary>
     public string? SaslUsername { get; init; }
 
     /// <summary>
-    /// SASLパスワード
+    /// SASL password
     /// </summary>
     public string? SaslPassword { get; init; }
 
     /// <summary>
-    /// SSL CA証明書の場所
+    /// SSL CA certificate location
     /// </summary>
     public string? SslCaLocation { get; init; }
 
     /// <summary>
-    /// SSL証明書の場所
+    /// SSL certificate location
     /// </summary>
     public string? SslCertificateLocation { get; init; }
 
     /// <summary>
-    /// SSLキーの場所
+    /// SSL key location
     /// </summary>
     public string? SslKeyLocation { get; init; }
 
     /// <summary>
-    /// SSLキーパスワード
+    /// SSL key password
     /// </summary>
     public string? SslKeyPassword { get; init; }
 
     /// <summary>
-    /// 追加設定プロパティ（運用上の柔軟性確保）
+    /// Additional configuration properties
     /// </summary>
     public Dictionary<string, string> AdditionalProperties { get; init; } = new();
 }
