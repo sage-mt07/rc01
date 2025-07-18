@@ -12,6 +12,20 @@ namespace Kafka.Ksql.Linq.Query.Builders.Functions;
 /// </summary>
 internal static class KsqlFunctionTranslator
 {
+    private static readonly Dictionary<string, HashSet<string>> _functionTypeMatrix = new()
+    {
+        ["SUM"] = new(["INT", "BIGINT", "DOUBLE"]),
+        ["AVG"] = new(["INT", "BIGINT", "DOUBLE"]),
+        ["MIN"] = new(["INT", "BIGINT", "DOUBLE", "DECIMAL", "STRING", "BOOLEAN", "DATETIME"]),
+        ["MAX"] = new(["INT", "BIGINT", "DOUBLE", "DECIMAL", "STRING", "BOOLEAN", "DATETIME"]),
+        ["COUNT"] = new(["INT", "BIGINT", "DOUBLE", "DECIMAL", "STRING", "BOOLEAN", "DATETIME", "STRUCT"]),
+        ["TOPK"] = new(["INT", "BIGINT", "DOUBLE", "DECIMAL", "STRING", "BOOLEAN", "DATETIME"]),
+        ["COLLECT_LIST"] = new(["INT", "BIGINT", "DOUBLE", "DECIMAL", "STRING", "BOOLEAN", "DATETIME", "STRUCT"]),
+        ["LOWER"] = new(["STRING"]),
+        ["UPPER"] = new(["STRING"]),
+        ["LEN"] = new(["STRING"])
+    };
+
     /// <summary>
     /// メソッド呼び出しをKSQL関数に変換
     /// </summary>
@@ -34,6 +48,8 @@ internal static class KsqlFunctionTranslator
             throw new ArgumentException(
                 $"Method '{methodName}' expects {mapping.MinArgs}-{mapping.MaxArgs} arguments, but got {argCount}");
         }
+
+        ValidateTypeCompatibility(mapping.KsqlFunction, ExtractArgumentTypes(methodCall));
 
         // 特殊処理が必要な場合
         if (mapping.RequiresSpecialHandling)
@@ -332,6 +348,67 @@ internal static class KsqlFunctionTranslator
             _ when !underlyingType.IsPrimitive && underlyingType != typeof(string) && underlyingType != typeof(Guid) && underlyingType != typeof(byte[]) => throw new NotSupportedException($"Type '{underlyingType.Name}' is not supported."),
             _ => throw new NotSupportedException($"Type '{underlyingType.Name}' is not supported.")
         };
+    }
+
+    private static string GetTypeCategory(Type type)
+    {
+        var t = Nullable.GetUnderlyingType(type) ?? type;
+        if (t == typeof(int) || t == typeof(short)) return "INT";
+        if (t == typeof(long)) return "BIGINT";
+        if (t == typeof(double) || t == typeof(float)) return "DOUBLE";
+        if (t == typeof(decimal)) return "DECIMAL";
+        if (t == typeof(string) || t == typeof(char)) return "STRING";
+        if (t == typeof(bool)) return "BOOLEAN";
+        if (t == typeof(DateTime) || t == typeof(DateTimeOffset)) return "DATETIME";
+        if (!t.IsPrimitive && t != typeof(string)) return "STRUCT";
+        return "UNKNOWN";
+    }
+
+    private static IEnumerable<Type> ExtractArgumentTypes(MethodCallExpression methodCall)
+    {
+        var types = new List<Type>();
+        if (methodCall.Object != null && !methodCall.Method.IsStatic)
+        {
+            types.Add(methodCall.Object.Type);
+        }
+
+        foreach (var arg in methodCall.Arguments)
+        {
+            if (arg is LambdaExpression lambda)
+            {
+                var body = BuilderValidation.ExtractLambdaBody(lambda);
+                if (body != null)
+                    types.Add(body.Type);
+                else
+                    types.Add(lambda.Type);
+            }
+            else
+            {
+                types.Add(arg.Type);
+            }
+        }
+
+        if (methodCall.Method.IsStatic && methodCall.Method.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute), false) && types.Count > 0)
+        {
+            types.RemoveAt(0);
+        }
+
+        return types;
+    }
+
+    private static void ValidateTypeCompatibility(string functionName, IEnumerable<Type> argTypes)
+    {
+        if (!_functionTypeMatrix.TryGetValue(functionName.ToUpperInvariant(), out var allowed))
+            return;
+
+        foreach (var t in argTypes)
+        {
+            var category = GetTypeCategory(t);
+            if (!allowed.Contains(category))
+            {
+                throw new NotSupportedException($"Function '{functionName}' does not support argument type {t.Name}");
+            }
+        }
     }
 
     /// <summary>
