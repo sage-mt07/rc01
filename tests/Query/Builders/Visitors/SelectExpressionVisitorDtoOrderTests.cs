@@ -38,7 +38,7 @@ public class SelectExpressionVisitorDtoOrderTests
 
         var visitor = new SelectExpressionVisitor();
         var ex = Assert.Throws<InvalidOperationException>(() => visitor.Visit(select.Body));
-        Assert.Contains("GroupByキーの順序", ex.Message);
+        Assert.Contains("GroupBy key order", ex.Message);
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class SelectExpressionVisitorDtoOrderTests
 
         var visitor = new SelectExpressionVisitor();
         var ex = Assert.Throws<InvalidOperationException>(() => visitor.Visit(select.Body));
-        Assert.Contains("GroupByキーの順序と出力DTOの定義順が一致していません", ex.Message);
+        Assert.Contains("The order of GroupBy keys does not match the DTO definition", ex.Message);
     }
 
     [Fact]

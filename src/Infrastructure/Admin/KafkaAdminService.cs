@@ -32,8 +32,8 @@ internal class KafkaAdminService : IDisposable
     }
 
     /// <summary>
-    /// DLQトピックの存在確認と自動作成
-    /// タイミング: KafkaContext.InitializeWithSchemaRegistration()の最後
+    /// Check for the DLQ topic and create it automatically if missing.
+    /// Timing: called at the end of KafkaContext.InitializeWithSchemaRegistration().
     /// </summary>
     public async Task EnsureDlqTopicExistsAsync(CancellationToken cancellationToken = default)
     {
@@ -41,14 +41,14 @@ internal class KafkaAdminService : IDisposable
 
         try
         {
-            // 1. 既存トピック確認
+            // 1. Check if the topic already exists
             if (TopicExists(dlqTopicName, cancellationToken))
             {
                 _logger?.LogDebug("DLQ topic already exists: {DlqTopicName}", dlqTopicName);
                 return;
             }
 
-            // 2. DLQトピック作成
+            // 2. Create the DLQ topic
             await CreateDlqTopicAsync(dlqTopicName, cancellationToken);
             _logger?.LogInformation("DLQ topic created successfully: {DlqTopicName}", dlqTopicName);
         }
@@ -116,7 +116,7 @@ internal class KafkaAdminService : IDisposable
     }
 
     /// <summary>
-    /// トピックの存在確認
+    /// Check whether the topic exists
     /// </summary>
     private bool TopicExists(string topicName, CancellationToken cancellationToken)
     {
@@ -133,7 +133,7 @@ internal class KafkaAdminService : IDisposable
     }
 
     /// <summary>
-    /// DBトピック作成。存在する場合はNo-Op
+    /// Create a DB topic; no-op if it already exists
     /// </summary>
     public async Task CreateDbTopicAsync(string topicName, int partitions, short replicationFactor)
     {
@@ -176,14 +176,14 @@ internal class KafkaAdminService : IDisposable
     }
 
     /// <summary>
-    /// DLQトピック作成
-    /// 設定: DlqTopicConfigurationに基づく動的設定
+    /// Create the DLQ topic.
+    /// Settings are dynamically applied from DlqTopicConfiguration.
     /// </summary>
     private async Task CreateDlqTopicAsync(string topicName, CancellationToken cancellationToken)
     {
         var dlqConfig = _options.DlqConfiguration;
 
-        // DLQ自動作成が無効化されている場合はスキップ
+        // Skip if automatic DLQ creation is disabled
         if (!dlqConfig.EnableAutoCreation)
         {
             _logger?.LogInformation("DLQ auto-creation disabled. Skipping topic creation: {TopicName}", topicName);
@@ -195,7 +195,7 @@ internal class KafkaAdminService : IDisposable
             ["retention.ms"] = dlqConfig.RetentionMs.ToString()
         };
 
-        // 追加設定をマージ
+        // Merge additional settings
         foreach (var kvp in dlqConfig.AdditionalConfigs)
         {
             configs[kvp.Key] = kvp.Value;
@@ -220,12 +220,12 @@ internal class KafkaAdminService : IDisposable
         }
         catch (CreateTopicsException ex)
         {
-            // 個別結果確認
+            // Check each result
             var result = ex.Results.FirstOrDefault(r => r.Topic == topicName);
             if (result?.Error.Code == ErrorCode.TopicAlreadyExists)
             {
                 _logger?.LogDebug("DLQ topic already exists (race condition): {TopicName}", topicName);
-                return; // 他のインスタンスが先に作成済み
+                return; // Another instance created it first
             }
 
             throw new InvalidOperationException(
@@ -234,7 +234,7 @@ internal class KafkaAdminService : IDisposable
     }
 
     /// <summary>
-    /// Kafka接続性確認（KafkaContext初期化時の接続確認用）
+    /// Verify Kafka connectivity (used during KafkaContext initialization)
     /// </summary>
     public void ValidateKafkaConnectivity(CancellationToken cancellationToken = default)
     {
@@ -257,7 +257,7 @@ internal class KafkaAdminService : IDisposable
     }
 
     /// <summary>
-    /// AdminClient設定構築
+    /// Build the AdminClient configuration
     /// </summary>
     private AdminClientConfig CreateAdminConfig()
     {
@@ -269,7 +269,7 @@ internal class KafkaAdminService : IDisposable
             MetadataMaxAgeMs = _options.Common.MetadataMaxAgeMs
         };
 
-        // セキュリティ設定
+        // Security settings
         if (_options.Common.SecurityProtocol != SecurityProtocol.Plaintext)
         {
             config.SecurityProtocol = _options.Common.SecurityProtocol;
@@ -290,7 +290,7 @@ internal class KafkaAdminService : IDisposable
             }
         }
 
-        // 追加設定適用
+        // Apply additional settings
         foreach (var kvp in _options.Common.AdditionalProperties)
         {
             config.Set(kvp.Key, kvp.Value);
@@ -300,7 +300,7 @@ internal class KafkaAdminService : IDisposable
     }
 
     /// <summary>
-    /// リソース解放
+    /// Release resources
     /// </summary>
     public void Dispose()
     {

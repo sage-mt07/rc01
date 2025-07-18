@@ -34,7 +34,7 @@ public class KsqlContextTests
         var ctx = new TestContext();
         Assert.NotNull(ctx.CallGetProducerManager());
         Assert.NotNull(ctx.CallGetConsumerManager());
-        Assert.Contains("スキーマ自動登録対応", ctx.ToString());
+        Assert.Contains("schema auto-registration supported", ctx.ToString());
     }
 
     [Fact]
