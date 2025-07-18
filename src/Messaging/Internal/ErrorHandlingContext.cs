@@ -2,6 +2,7 @@ using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Attributes;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Kafka.Ksql.Linq.Messaging.Internal;
 public class ErrorHandlingContext
@@ -11,6 +12,8 @@ public class ErrorHandlingContext
     /// </summary>
     [DefaultValue(ErrorAction.Skip)]
     public ErrorAction ErrorAction { get; set; } = ErrorAction.Skip;
+
+    private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<ErrorHandlingContext>();
 
     /// <summary>
     /// Number of retry attempts
@@ -67,7 +70,7 @@ public class ErrorHandlingContext
             }
             catch (Exception handlerEx)
             {
-                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss}] CUSTOM_HANDLER_ERROR: {handlerEx.Message}");
+                Logger.LogError(handlerEx, "CUSTOM_HANDLER_ERROR");
                 return false; // Skip if custom handler throws
             }
         }
@@ -76,7 +79,7 @@ public class ErrorHandlingContext
         {
             case ErrorAction.Skip:
                 // Log the error and skip
-                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss}] SKIP: {exception.Message}");
+                Logger.LogWarning(exception, "SKIP");
                 return false; // Skip
 
             case ErrorAction.Retry:
@@ -116,7 +119,7 @@ public class ErrorHandlingContext
 
             default:
                 // Skip if action is unknown
-                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss}] UNKNOWN ERROR ACTION: {ErrorAction}, skipping item");
+                Logger.LogError("UNKNOWN ERROR ACTION: {Action}, skipping item", ErrorAction);
                 return false;
         }
     }
