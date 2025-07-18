@@ -5,6 +5,7 @@ using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using System.Linq;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 using System.Threading.Tasks;
 
@@ -17,6 +18,7 @@ internal static class TestEnvironment
     private const string KafkaBootstrapServers = "localhost:9093";
     private const string DlqTopic = "dead.letter.queue";
     private static readonly HttpClient Http = new();
+    private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger("TestEnvironment");
 
     /// <summary>
     /// テスト開始時の初期化処理
@@ -74,7 +76,7 @@ internal static class TestEnvironment
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to execute: {stmt} Exception: {ex.Message}");
+                Logger.LogError(ex, "Failed to execute: {Stmt}", stmt);
             }
         }
 
@@ -108,13 +110,13 @@ internal static class TestEnvironment
             var resp = await Http.DeleteAsync($"{SchemaRegistryUrl}/subjects/{subject}");
             if (!resp.IsSuccessStatusCode && resp.StatusCode != HttpStatusCode.NotFound)
             {
-                Console.WriteLine($"Failed to delete schema {subject}: {resp.StatusCode}");
+                Logger.LogWarning("Failed to delete schema {Subject}: {StatusCode}", subject, resp.StatusCode);
             }
             await Task.Delay(200); // wait a bit for schema registry to propagate deletions
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to delete schema {subject}: {ex.Message}");
+            Logger.LogError(ex, "Failed to delete schema {Subject}", subject);
         }
     }
 
@@ -142,7 +144,7 @@ internal static class TestEnvironment
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Service check failed: {ex.Message}");
+            Logger.LogError(ex, "Service check failed");
             throw;
         }
     }
@@ -165,7 +167,7 @@ internal static class TestEnvironment
         {
             var result = ex.Results.FirstOrDefault(r => r.Topic == DlqTopic);
             if (result?.Error.Code != ErrorCode.TopicAlreadyExists)
-                Console.WriteLine($"Failed to create DLQ topic: {result?.Error.Reason}");
+                Logger.LogError("Failed to create DLQ topic: {Reason}", result?.Error.Reason);
         }
     }
 

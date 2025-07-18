@@ -14,6 +14,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ConfluentSchemaRegistry = Confluent.SchemaRegistry;
+using Microsoft.Extensions.Logging;
 
 namespace Kafka.Ksql.Linq.Application;
 /// <summary>
@@ -30,6 +31,7 @@ public abstract class KsqlContext : KafkaContextCore
     private readonly KafkaAdminService _adminService;
     private readonly KsqlDslOptions _dslOptions;
     private TableCacheRegistry? _cacheRegistry;
+    private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<KsqlContext>();
 
     /// <summary>
     /// Hook to decide whether schema registration should be skipped for tests
@@ -150,7 +152,7 @@ public abstract class KsqlContext : KafkaContextCore
             await _adminService.EnsureWindowFinalTopicsExistAsync(GetEntityModels());
 
             // Log output: DLQ preparation complete
-            Console.WriteLine($"✅ Kafka initialization completed. DLQ topic '{GetDlqTopicName()}' is ready with 5-second retention.");
+            Logger.LogInformation("✅ Kafka initialization completed. DLQ topic '{Topic}' is ready with 5-second retention.", GetDlqTopicName());
         }
         catch (Exception ex)
         {
