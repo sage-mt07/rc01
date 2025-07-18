@@ -60,7 +60,7 @@ public class DynamicKsqlGenerationTests
         var tableExpr = orders
             .Where(o => o.Amount > 100)
             .GroupBy(o => o.Region)
-            .Select(g => new { g.Key, Total = g.Sum(x => x.Amount) });
+            .Select(g => new { g.Key, Total = g.Sum(x => (double)x.Amount) });
         yield return ExecuteInScope(() => ddl.GenerateCreateTableAs("orders_by_region", "orders", tableExpr.Expression));
 
         IQueryable<Customer> customers = new List<Customer>().AsQueryable();
@@ -94,7 +94,7 @@ public class DynamicKsqlGenerationTests
 
         IQueryable<OrderValue> orders = new List<OrderValue>().AsQueryable();
 
-        yield return ExecuteInScope(() => dml.GenerateAggregateQuery("orders", ((Expression<Func<IGrouping<int, OrderValue>, object>>)(g => new { Sum = g.Sum(x => x.Amount) })).Body).ToUpperInvariant());
+        yield return ExecuteInScope(() => dml.GenerateAggregateQuery("orders", ((Expression<Func<IGrouping<int, OrderValue>, object>>)(g => new { Sum = g.Sum(x => (double)x.Amount) })).Body).ToUpperInvariant());
         yield return ExecuteInScope(() => dml.GenerateAggregateQuery("orders", ((Expression<Func<IGrouping<int, OrderValue>, object>>)(g => new { Last = g.LatestByOffset(x => x.Id) })).Body).ToUpperInvariant());
         yield return ExecuteInScope(() => dml.GenerateAggregateQuery("orders", ((Expression<Func<IGrouping<int, OrderValue>, object>>)(g => new { First = g.EarliestByOffset(x => x.Id) })).Body).ToUpperInvariant());
 
@@ -116,8 +116,8 @@ public class DynamicKsqlGenerationTests
 
         var multiKey = orders
             .GroupBy(o => new { o.CustomerId, o.Region })
-            .Having(g => g.Sum(x => x.Amount) > 500)
-            .Select(g => new { g.Key.CustomerId, g.Key.Region, Total = g.Sum(x => x.Amount) });
+            .Having(g => g.Sum(x => (double)x.Amount) > 500)
+            .Select(g => new { g.Key.CustomerId, g.Key.Region, Total = g.Sum(x => (double)x.Amount) });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", multiKey.Expression, false).ToUpperInvariant());
 
         var conditionalSum = orders
@@ -125,8 +125,8 @@ public class DynamicKsqlGenerationTests
             .Select(g => new
             {
                 g.Key,
-                Total = g.Sum(o => o.Amount),
-                HighPriorityTotal = g.Sum(o => o.IsHighPriority ? o.Amount : 0)
+                Total = g.Sum(o => (double)o.Amount),
+                HighPriorityTotal = g.Sum(o => o.IsHighPriority ? (double)o.Amount : 0d)
             });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", conditionalSum.Expression, false).ToUpperInvariant());
 
@@ -135,7 +135,7 @@ public class DynamicKsqlGenerationTests
             .Select(g => new
             {
                 g.Key,
-                AverageAmount = g.Average(o => o.Amount),
+                AverageAmount = g.Average(o => (double)o.Amount),
                 MinAmount = g.Min(o => o.Amount),
                 MaxAmount = g.Max(o => o.Amount)
             });
@@ -143,24 +143,24 @@ public class DynamicKsqlGenerationTests
 
         var orderByDesc = orders
             .GroupBy(o => o.CustomerId)
-            .Select(g => new { g.Key, Total = g.Sum(o => o.Amount) });
+            .Select(g => new { g.Key, Total = g.Sum(o => (double)o.Amount) });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", orderByDesc.Expression, false).ToUpperInvariant());
 
         var orderByThenBy = orders
             .GroupBy(o => new { o.CustomerId, o.Region })
-            .Select(g => new { g.Key.CustomerId, g.Key.Region, Total = g.Sum(o => o.Amount) });
+            .Select(g => new { g.Key.CustomerId, g.Key.Region, Total = g.Sum(o => (double)o.Amount) });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", orderByThenBy.Expression, false).ToUpperInvariant());
 
         var complexHaving = orders
             .GroupBy(o => new { o.CustomerId, o.Region })
-            .Having(g => (g.Sum(x => x.Amount) > 1000 && g.Count() > 10) || g.Average(x => x.Amount) > 150)
+            .Having(g => (g.Sum(x => (double)x.Amount) > 1000 && g.Count() > 10) || g.Average(x => (double)x.Amount) > 150)
             .Select(g => new
             {
                 g.Key.CustomerId,
                 g.Key.Region,
-                TotalAmount = g.Sum(x => x.Amount),
+                TotalAmount = g.Sum(x => (double)x.Amount),
                 OrderCount = g.Count(),
-                AverageAmount = g.Average(x => x.Amount)
+                AverageAmount = g.Average(x => (double)x.Amount)
             });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", complexHaving.Expression, false).ToUpperInvariant());
 
@@ -169,27 +169,27 @@ public class DynamicKsqlGenerationTests
             .Select(g => new
             {
                 g.Key,
-                Total = g.Sum(o => o.Amount),
-                Status = g.Sum(o => o.Amount) > 1000 ? "VIP" : "Regular"
+                Total = g.Sum(o => (double)o.Amount),
+                Status = g.Sum(o => (double)o.Amount) > 1000 ? "VIP" : "Regular"
             });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", caseWhen.Expression, false).ToUpperInvariant());
 
         var groupWhereHaving = orders
             .GroupBy(o => o.CustomerId)
-            .Where(g => (g.Sum(o => o.Amount) > 1000 && g.Count() > 5) || g.Average(o => o.Amount) > 500)
+            .Where(g => (g.Sum(o => (double)o.Amount) > 1000 && g.Count() > 5) || g.Average(o => (double)o.Amount) > 500)
             .Select(g => new
             {
                 g.Key,
-                Total = g.Sum(o => o.Amount),
+                Total = g.Sum(o => (double)o.Amount),
                 Count = g.Count(),
-                Avg = g.Average(o => o.Amount)
+                Avg = g.Average(o => (double)o.Amount)
             });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", groupWhereHaving.Expression, false).ToUpperInvariant());
 
         var orHaving = orders
             .GroupBy(o => o.CustomerId)
-            .Where(g => g.Sum(x => x.Amount) > 1000 || g.Sum(x => x.Count) > 5)
-            .Select(g => new { g.Key, TotalAmount = g.Sum(x => x.Amount), TotalCount = g.Sum(x => x.Count) });
+            .Where(g => g.Sum(x => (double)x.Amount) > 1000 || g.Sum(x => x.Count) > 5)
+            .Select(g => new { g.Key, TotalAmount = g.Sum(x => (double)x.Amount), TotalCount = g.Sum(x => x.Count) });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", orHaving.Expression, false).ToUpperInvariant());
 
         var excluded = new[] { "CN", "RU" };
@@ -213,13 +213,13 @@ public class DynamicKsqlGenerationTests
         var groupNullableKey = nullKeyOrders
             .Where(o => o.CustomerId != null)
             .GroupBy(o => o.CustomerId)
-            .Select(g => new { CustomerId = g.Key, Total = g.Sum(x => x.Amount) });
+            .Select(g => new { CustomerId = g.Key, Total = g.Sum(x => (double)x.Amount) });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders_nullable_key", groupNullableKey.Expression, false).ToUpperInvariant());
 
         var exprKey = orders
             .GroupBy(o => o.Region.ToUpper())
-            .Having(g => g.Sum(x => x.Amount) > 500)
-            .Select(g => new { RegionUpper = g.Key, TotalAmount = g.Sum(x => x.Amount) });
+            .Having(g => g.Sum(x => (double)x.Amount) > 500)
+            .Select(g => new { RegionUpper = g.Key, TotalAmount = g.Sum(x => (double)x.Amount) });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", exprKey.Expression, false).ToUpperInvariant());
     }
 
