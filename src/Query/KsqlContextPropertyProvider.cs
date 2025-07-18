@@ -1,5 +1,6 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Query.Schema;
+using Kafka.Ksql.Linq.Query.Pipeline;
 using System;
 using System.Linq;
 using System.Linq.Expressions;
@@ -27,6 +28,8 @@ public interface IQueryBuilder<T> where T : class
     /// </summary>
     IQueryBuilder<T> AsTable(string? topicName = null);
     IQueryBuilder<T> AsStream(string? topicName = null);
+    IQueryBuilder<T> AsPush();
+    IQueryBuilder<T> AsPull();
 
     /// <summary>
     /// QuerySchemaを取得
@@ -43,6 +46,7 @@ internal class QueryBuilder<T> : IQueryBuilder<T> where T : class
     private Type? _sourceType;
     private bool _autoKeyExtraction = true;
     private string? _topicName;
+    private QueryExecutionMode? _executionMode;
 
     public IQueryBuilder<T> FromSource<TSource>(Expression<Func<IQueryable<TSource>, IQueryable<T>>> queryExpression) 
         where TSource : class
@@ -70,6 +74,18 @@ internal class QueryBuilder<T> : IQueryBuilder<T> where T : class
         return this;
     }
 
+    public IQueryBuilder<T> AsPush()
+    {
+        _executionMode = QueryExecutionMode.PushQuery;
+        return this;
+    }
+
+    public IQueryBuilder<T> AsPull()
+    {
+        _executionMode = QueryExecutionMode.PullQuery;
+        return this;
+    }
+
     public QuerySchema GetSchema()
     {
         if (_queryExpression == null || _sourceType == null)
@@ -94,6 +110,9 @@ internal class QueryBuilder<T> : IQueryBuilder<T> where T : class
                 // 追加設定を適用
                 if (!string.IsNullOrEmpty(_topicName))
                     result.Schema.TopicName = _topicName;
+
+                if (_executionMode.HasValue)
+                    result.Schema.ExecutionMode = _executionMode.Value;
 
                 return result.Schema;
             }

@@ -137,6 +137,7 @@ OSS本体はアプリケーション側の運用情報・エラー通知等を**
 
 - `GroupBy`, `Aggregate`, `Window` を含むLINQ式はテーブルと判定
 - `AsStream()`, `AsTable()` は判定ロジックを上書き
+- `AsPush()`, `AsPull()` でクエリの実行モードを強制（未指定時は `Unspecified` として扱い、Pull クエリ制約違反検知時に自動で Push へ切り替え）
 - 判定結果は `.Explain()` や `ILogger` に出力可能（開発支援）
 
 ---

@@ -1,4 +1,5 @@
 using Kafka.Ksql.Linq.Core.Models;
+using Kafka.Ksql.Linq.Query.Pipeline;
 using System;
 using System.Collections.Generic;
 
@@ -13,6 +14,10 @@ public class QuerySchema
     public string TopicName { get; set; } = string.Empty;
     public bool IsValid { get; set; }
     public List<string> Errors { get; set; } = new();
+    /// <summary>
+    /// Query execution mode. <see cref="QueryExecutionMode.Unspecified"/> if not explicitly configured.
+    /// </summary>
+    public QueryExecutionMode ExecutionMode { get; set; } = QueryExecutionMode.Unspecified;
 
     public PropertyMeta[] KeyProperties
     {

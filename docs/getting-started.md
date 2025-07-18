@@ -196,6 +196,8 @@ public class MyKsqlContext : KsqlContext
 
 これらのメソッドは呼び出された場合に NotSupportedException をスローする設計とし、誤用を防止する。
 
+### Push/Pull Query の明示
+`DefineQuery` で使用するクエリビルダーは `.AsPush()` / `.AsPull()` により実行モードを指定できます。明示しない場合は `Unspecified` 扱いとなり、Schema Registry 登録時に Pull クエリの制約違反が検出されると自動で Push (`EMIT CHANGES` 付き) へ切り替わります。
 ※その他の詳細設定はdev_guide.md参照
 
 ## 4. スキーマ構築と初期化手順（OnModelCreating）
