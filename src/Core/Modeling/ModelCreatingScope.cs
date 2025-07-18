@@ -31,6 +31,6 @@ internal static class ModelCreatingScope
     public static void EnsureInScope()
     {
         if (!IsActive)
-            throw new InvalidOperationException("Where/GroupBy/Selectのクエリ定義はOnModelCreating専用です。");
+            throw new InvalidOperationException("Where/GroupBy/Select query definitions are allowed only inside OnModelCreating.");
     }
 }

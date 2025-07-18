@@ -317,7 +317,7 @@ internal class SelectExpressionVisitor : ExpressionVisitor
         if (dtoKeyMembers.Count != groupKeys.Count || !dtoKeyMembers.SequenceEqual(groupKeys))
         {
             throw new InvalidOperationException(
-                "GroupByキーの順序と出力DTOの定義順が一致していません。必ず同じ順序にしてください。");
+                "The order of GroupBy keys does not match the output DTO definition. Please ensure they are the same order.");
         }
     }
 
@@ -339,7 +339,7 @@ internal class SelectExpressionVisitor : ExpressionVisitor
         if (dtoKeyMembers.Count != groupKeys.Count || !dtoKeyMembers.SequenceEqual(groupKeys))
         {
             throw new InvalidOperationException(
-                "GroupByキーの順序と出力DTOの定義順が一致していません。必ず同じ順序にしてください。");
+                "The order of GroupBy keys does not match the output DTO definition. Please ensure they are the same order.");
         }
     }
 
