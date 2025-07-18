@@ -19,6 +19,19 @@ internal static class TestEnvironment
     private const string DlqTopic = "dead.letter.queue";
     private static readonly HttpClient Http = new();
     private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger("TestEnvironment");
+    private static readonly string[] ExtraSubjects = new[]
+    {
+        "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+ordervalue-key",
+        "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+ordervalue-value",
+        "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+customer-key",
+        "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+customer-value",
+        "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+eventlog-key",
+        "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+eventlog-value",
+        "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+nullableorder-key",
+        "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+nullableorder-value",
+        "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+nullablekeyorder-key",
+        "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+nullablekeyorder-value"
+    };
 
     /// <summary>
     /// テスト開始時の初期化処理
@@ -38,6 +51,10 @@ internal static class TestEnvironment
             {
                 await TryDeleteSubjectAsync($"{table}{suffix}");
             }
+        }
+        foreach (var subject in ExtraSubjects)
+        {
+            await TryDeleteSubjectAsync(subject);
         }
 
         // create required stream/table objects
@@ -88,6 +105,10 @@ internal static class TestEnvironment
                 var subject = $"{table}{suffix}";
                 await TryDeleteSubjectAsync(subject);
             }
+        }
+        foreach (var subject in ExtraSubjects)
+        {
+            await TryDeleteSubjectAsync(subject);
         }
         await TryDeleteSubjectAsync("customers-value");
     }
@@ -175,6 +196,7 @@ internal static class TestEnvironment
     {
         var expected = TestSchema.AllTopicNames
             .SelectMany(n => new[] {$"{n}-value", $"{n}-key"})
+            .Concat(ExtraSubjects)
             .Concat(new[] { "source-value" })
             .ToArray();
 
