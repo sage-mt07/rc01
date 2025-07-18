@@ -251,6 +251,7 @@ internal class DDLQueryGenerator : GeneratorBase, IDDLQueryGenerator
             "Where" => ProcessWhereMethod(structure, methodCall),
             "GroupBy" => ProcessGroupByMethod(structure, methodCall),
             "Window" => ProcessWindowMethod(structure, methodCall),
+            "Join" => ProcessJoinMethod(structure, methodCall),
             "Having" => ProcessHavingMethod(structure, methodCall),
             "OrderBy" or "OrderByDescending" or "ThenBy" or "ThenByDescending" => ProcessOrderByMethod(structure, methodCall),
             _ => structure // 未対応メソッドは無視
@@ -359,6 +360,27 @@ internal class DDLQueryGenerator : GeneratorBase, IDDLQueryGenerator
             var orderByContent = SafeCallBuilder(KsqlBuilderType.OrderBy, methodCall, "ORDER BY processing");
             var clause = QueryClause.Optional(QueryClauseType.OrderBy, $"ORDER BY {orderByContent}", methodCall);
             structure = structure.AddClause(clause);
+        }
+
+        return structure;
+    }
+
+    /// <summary>
+    /// JOIN メソッド処理 (単純内部JOINのみ対応)
+    /// </summary>
+    private QueryStructure ProcessJoinMethod(QueryStructure structure, MethodCallExpression methodCall)
+    {
+        if (HasBuilder(KsqlBuilderType.Join))
+        {
+            var joinContent = SafeCallBuilder(KsqlBuilderType.Join, methodCall, "JOIN processing");
+            var fromIndex = joinContent.IndexOf("FROM", StringComparison.OrdinalIgnoreCase);
+            if (fromIndex >= 0)
+            {
+                var fromPart = joinContent.Substring(fromIndex); // FROM table JOIN ...
+                var clause = QueryClause.Required(QueryClauseType.From, fromPart, methodCall);
+                structure = structure.RemoveClause(QueryClauseType.From);
+                structure = structure.AddClause(clause);
+            }
         }
 
         return structure;
