@@ -4,55 +4,55 @@ using System.Collections.Generic;
 namespace Kafka.Ksql.Linq.Messaging.Configuration;
 
 /// <summary>
-/// トピック別設定（Producer/Consumer両方の設定を含む）
+/// Topic-specific configuration (for both Producer and Consumer)
 /// </summary>
 public class TopicSection
 {
     /// <summary>
-    /// トピック名（オプション - Dictionaryのキーからも取得可能）
+    /// Topic name (optional - can also be obtained from the dictionary key)
     /// </summary>
     public string? TopicName { get; init; }
 
     /// <summary>
-    /// Producer設定
+    /// Producer configuration
     /// </summary>
     public ProducerSection Producer { get; init; } = new();
 
     /// <summary>
-    /// Consumer設定
+    /// Consumer configuration
     /// </summary>
     public ConsumerSection Consumer { get; init; } = new();
 
     /// <summary>
-    /// トピック作成時の設定（パーティション数、レプリケーション係数等）
+    /// Settings for topic creation (partition count, replication factor, etc.)
     /// </summary>
     public TopicCreationSection? Creation { get; init; }
 }
 
 /// <summary>
-/// トピック作成設定
+/// Topic creation settings
 /// </summary>
 public class TopicCreationSection
 {
     /// <summary>
-    /// パーティション数
+    /// Number of partitions
     /// </summary>
     [DefaultValue(1)]
     public int NumPartitions { get; init; } = 1;
 
     /// <summary>
-    /// レプリケーション係数
+    /// Replication factor
     /// </summary>
     [DefaultValue(1)]
     public short ReplicationFactor { get; init; } = 1;
 
     /// <summary>
-    /// トピック設定（cleanup.policy, retention.ms等）
+    /// Topic configuration (cleanup.policy, retention.ms, etc.)
     /// </summary>
     public Dictionary<string, string> Configs { get; init; } = new();
 
     /// <summary>
-    /// 自動作成を有効にするか
+    /// Enable automatic creation
     /// </summary>
     public bool EnableAutoCreation { get; init; } = false;
 }

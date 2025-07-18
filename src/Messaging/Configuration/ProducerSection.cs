@@ -5,65 +5,65 @@ namespace Kafka.Ksql.Linq.Messaging.Configuration;
 public class ProducerSection
 {
     /// <summary>
-    /// 確認応答レベル（All, Leader, None）
+    /// Acknowledgement level (All, Leader, None)
     /// </summary>
     [DefaultValue("All")]
     public string Acks { get; init; } = "All";
 
     /// <summary>
-    /// 圧縮タイプ
+    /// Compression type
     /// </summary>
     [DefaultValue("Snappy")]
     public string CompressionType { get; init; } = "Snappy";
 
     /// <summary>
-    /// 冪等性有効化
+    /// Enable idempotence
     /// </summary>
     [DefaultValue(true)]
     public bool EnableIdempotence { get; init; } = true;
 
     /// <summary>
-    /// 最大インフライトリクエスト数
+    /// Maximum in-flight requests
     /// </summary>
     public int MaxInFlightRequestsPerConnection { get; init; } = 1;
 
     /// <summary>
-    /// バッチ送信前の待機時間（ミリ秒）
+    /// Delay before batch send (ms)
     /// </summary>
     public int LingerMs { get; init; } = 5;
 
     /// <summary>
-    /// バッチサイズ（バイト）
+    /// Batch size (bytes)
     /// </summary>
     public int BatchSize { get; init; } = 16384;
 
     /// <summary>
-    /// 配信タイムアウト（ミリ秒）
+    /// Delivery timeout (ms)
     /// </summary>
     public int DeliveryTimeoutMs { get; init; } = 120000;
 
     /// <summary>
-    /// リトライバックオフ時間（ミリ秒）
+    /// Retry backoff time (ms)
     /// </summary>
     public int RetryBackoffMs { get; init; } = 100;
 
     /// <summary>
-    /// 最大リトライ回数
+    /// Maximum retry count
     /// </summary>
     public int Retries { get; init; } = int.MaxValue;
 
     /// <summary>
-    /// バッファメモリ（バイト）
+    /// Buffer memory (bytes)
     /// </summary>
     public long BufferMemory { get; init; } = 33554432; // 32MB
 
     /// <summary>
-    /// パーティショナー
+    /// Partitioner
     /// </summary>
     public string? Partitioner { get; init; }
 
     /// <summary>
-    /// 追加設定プロパティ（運用上の柔軟性確保）
+    /// Additional configuration properties
     /// </summary>
     public Dictionary<string, string> AdditionalProperties { get; init; } = new();
 }
