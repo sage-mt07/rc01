@@ -196,7 +196,6 @@ internal static class TestEnvironment
     {
         var expected = TestSchema.AllTopicNames
             .SelectMany(n => new[] {$"{n}-value", $"{n}-key"})
-            .Concat(ExtraSubjects)
             .Concat(new[] { "source-value" })
             .ToArray();
 
