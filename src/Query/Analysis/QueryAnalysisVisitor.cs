@@ -9,7 +9,7 @@ namespace Kafka.Ksql.Linq.Query.Analysis;
 
 
 /// <summary>
-/// クエリ解析用Visitor
+/// Visitor for analyzing queries
 /// </summary>
 internal class QueryAnalysisVisitor : ExpressionVisitor
 {

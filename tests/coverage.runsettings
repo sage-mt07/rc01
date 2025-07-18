@@ -6,29 +6,29 @@
         <Configuration>
           <CodeCoverage>
 
-            <!-- 除外する属性 -->
+            <!-- Attributes to exclude -->
             <ExcludeByAttribute>
               <Attribute>GeneratedCodeAttribute</Attribute>
               <Attribute>CompilerGeneratedAttribute</Attribute>
               <Attribute>ExcludeFromCodeCoverageAttribute</Attribute>
             </ExcludeByAttribute>
 
-            <!-- 除外するクラス名・ファイル名 -->
+            <!-- Classes or files to exclude -->
             <Exclude>
-              <!-- コンパイラ生成の state machine（async/iterator） -->
+              <!-- Compiler-generated state machine (async/iterator) -->
               <Class>*d__*</Class>
               <Class>*DisplayClass*</Class>
 
-              <!-- テストダブルや拡張コードで使われないやつ -->
+              <!-- Unused mocks or helper code -->
               <Class>*Moq.*</Class>
               <Class>*TestUtilities*</Class>
 
-              <!-- テスト対象外のアセンブリ（必要に応じて） -->
+              <!-- Assemblies excluded from tests (as needed) -->
               <Module>*.Tests</Module>
               <Module>*.TestHelpers</Module>
             </Exclude>
 
-            <!-- 除外対象に含めるソースフォルダ（必要に応じて） -->
+            <!-- Source folders to include in the exclusion list (optional) -->
             <!--
             <Include>
               <Module>Kafka.Ksql.Linq</Module>
