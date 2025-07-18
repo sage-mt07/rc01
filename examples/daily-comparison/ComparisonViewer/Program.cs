@@ -1,12 +1,14 @@
 using DailyComparisonLib;
-using Microsoft.EntityFrameworkCore;
+using DailyComparisonLib.Models;
+using Microsoft.Extensions.Logging;
 
-var options = new DbContextOptionsBuilder<RateContext>()
-    .UseSqlServer(Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? "Server=sqlserver;Database=Rates;User Id=sa;Password=Your_password123;TrustServerCertificate=true")
-    .Options;
+var schemaUrl = Environment.GetEnvironmentVariable("SCHEMA_URL") ?? "http://schema-registry:8081";
 
-await using var context = new RateContext(options);
-var comparisons = context.DailyComparisons.ToList();
+await using var context = new MyKsqlContext(
+    schemaUrl,
+    LoggerFactory.Create(b => b.AddConsole()));
+
+var comparisons = await context.Set<DailyComparison>().ToListAsync();
 
 foreach (var c in comparisons)
 {

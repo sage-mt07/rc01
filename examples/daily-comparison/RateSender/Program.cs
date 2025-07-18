@@ -1,24 +1,15 @@
 using DailyComparisonLib;
 using DailyComparisonLib.Models;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-var options = new DbContextOptionsBuilder<RateContext>()
-    .UseSqlServer(Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? "Server=sqlserver;Database=Rates;User Id=sa;Password=Your_password123;TrustServerCertificate=true")
-    .Options;
+var schemaUrl = Environment.GetEnvironmentVariable("SCHEMA_URL") ?? "http://schema-registry:8081";
 
-await using var context = new RateContext(options);
-context.Database.EnsureCreated();
+await using var context = new MyKsqlContext(
+    schemaUrl,
+    LoggerFactory.Create(b => b.AddConsole()));
 
 var broker = "demo";
 var symbol = "EURUSD";
-var id = DateTime.UtcNow.Ticks;
-var timestamp = DateTime.UtcNow;
-
-var rate = RateGenerator.Create(broker, symbol, id, timestamp);
-context.Rates.Add(rate);
-await context.SaveChangesAsync();
-
-Console.WriteLine($"Inserted rate {id} at {timestamp:O}");
 
 var scheduleUpdater = new ScheduleUpdater(context);
 await scheduleUpdater.UpdateAsync(new[]{ new MarketSchedule{
@@ -29,7 +20,15 @@ await scheduleUpdater.UpdateAsync(new[]{ new MarketSchedule{
     CloseTime = DateTime.UtcNow.Date.AddHours(24)
 }}, CancellationToken.None);
 
+for (int i = 0; i < 100; i++)
+{
+    var id = DateTime.UtcNow.Ticks;
+    var timestamp = DateTime.UtcNow;
+    var rate = RateGenerator.Create(broker, symbol, id, timestamp);
+    await context.Set<Rate>().AddAsync(rate);
+    Console.WriteLine($"Sent rate {id} at {timestamp:O}");
+    await Task.Delay(1000);
+}
+
 var aggregator = new Aggregator(context);
 await aggregator.AggregateAsync(DateTime.UtcNow.Date);
-
-
