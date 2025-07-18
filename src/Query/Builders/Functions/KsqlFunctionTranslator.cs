@@ -14,8 +14,8 @@ internal static class KsqlFunctionTranslator
 {
     private static readonly Dictionary<string, HashSet<string>> _functionTypeMatrix = new()
     {
-        ["SUM"] = new(["INT", "BIGINT", "DOUBLE"]),
-        ["AVG"] = new(["INT", "BIGINT", "DOUBLE"]),
+        ["SUM"] = new(["INT", "BIGINT", "DOUBLE", "DECIMAL"]),
+        ["AVG"] = new(["INT", "BIGINT", "DOUBLE", "DECIMAL"]),
         ["MIN"] = new(["INT", "BIGINT", "DOUBLE", "DECIMAL", "STRING", "BOOLEAN", "DATETIME"]),
         ["MAX"] = new(["INT", "BIGINT", "DOUBLE", "DECIMAL", "STRING", "BOOLEAN", "DATETIME"]),
         ["COUNT"] = new(["INT", "BIGINT", "DOUBLE", "DECIMAL", "STRING", "BOOLEAN", "DATETIME", "STRUCT"]),

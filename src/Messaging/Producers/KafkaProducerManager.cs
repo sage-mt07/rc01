@@ -68,15 +68,17 @@ internal class KafkaProducerManager : IDisposable
             var entityModel = GetEntityModel<T>();
             var topicName = (entityModel.TopicName ?? entityType.Name).ToLowerInvariant();
 
-            // Confluent.Kafka Producer作成
-            var config = BuildProducerConfig(topicName);
-            var rawProducer = new ProducerBuilder<object, object>(config).Build();
-
             // Serializer creation via Confluent factory
             var keyType = KeyExtractor.DetermineKeyType(entityModel);
             var keySerializer = CreateKeySerializer(keyType);
-
             var valueSerializer = GetValueSerializer<T>();
+
+            // Confluent.Kafka Producer作成 with serializers
+            var config = BuildProducerConfig(topicName);
+            var rawProducer = new ProducerBuilder<object, object>(config)
+                .SetKeySerializer(keySerializer)
+                .SetValueSerializer(valueSerializer)
+                .Build();
 
             var producer = new KafkaProducer<T>(
                 rawProducer,
@@ -109,13 +111,15 @@ internal class KafkaProducerManager : IDisposable
 
         var entityModel = GetEntityModel<T>();
 
-        var config = BuildProducerConfig(topicName);
-        var rawProducer = new ProducerBuilder<object, object>(config).Build();
-
         var keyType = KeyExtractor.DetermineKeyType(entityModel);
         var keySerializer = CreateKeySerializer(keyType);
-
         var valueSerializer = GetValueSerializer<T>();
+
+        var config = BuildProducerConfig(topicName);
+        var rawProducer = new ProducerBuilder<object, object>(config)
+            .SetKeySerializer(keySerializer)
+            .SetValueSerializer(valueSerializer)
+            .Build();
 
         var producer = new KafkaProducer<T>(
             rawProducer,

@@ -144,11 +144,12 @@ public class KsqlFunctionTranslatorTests
     }
 
     [Fact]
-    public void Translate_Sum_WithDecimal_Throws()
+    public void Translate_Sum_WithDecimal_ReturnsSum()
     {
         Expression<Func<Entity, object>> expr = e => Sum(e.Amount);
         var call = GetCall(expr);
-        Assert.Throws<NotSupportedException>(() => KsqlFunctionTranslator.TranslateMethodCall(call));
+        var result = KsqlFunctionTranslator.TranslateMethodCall(call);
+        Assert.Equal("SUM(Amount)", result);
     }
 
     [Fact]
