@@ -110,8 +110,8 @@ public class DynamicKsqlGenerationTests
         var join = orders
             .Join(customers, o => o.CustomerId, c => c.Id, (o, c) => new { o, c })
             .GroupBy(x => x.o.CustomerId)
-            .Having(g => g.Sum(x => x.o.Amount) > 1000)
-            .Select(g => new { g.Key, Total = g.Sum(x => x.o.Amount) });
+            .Having(g => g.Sum(x => (double)x.o.Amount) > 1000)
+            .Select(g => new { g.Key, Total = g.Sum(x => (double)x.o.Amount) });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", join.Expression, false).ToUpperInvariant());
 
         var multiKey = orders
