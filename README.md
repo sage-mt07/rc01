@@ -38,6 +38,11 @@ public class ManualCommitOrder
 
 public class ManualCommitContext : KsqlContext
 {
+    public ManualCommitContext(KafkaContextOptions options)
+        : base(options)
+    {
+    }
+
     protected override void OnModelCreating(IModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ManualCommitOrder>()
@@ -49,11 +54,15 @@ class Program
 {
     static async Task Main(string[] args)
     {
+        // 設定ファイルからKafkaContextOptionsを生成
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json")
             .Build();
 
         var options = KafkaContextOptions.FromConfiguration(configuration);
+
+
+        // Contextを直接newする
         await using var context = new ManualCommitContext(options);
 
         var order = new ManualCommitOrder
@@ -79,6 +88,7 @@ class Program
         });
     }
 }
+
 
 ```
 
