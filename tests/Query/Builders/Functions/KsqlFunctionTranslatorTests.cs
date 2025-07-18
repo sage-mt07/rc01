@@ -123,6 +123,34 @@ public class KsqlFunctionTranslatorTests
         Assert.Contains("Substring", ex.Message);
     }
 
+    private static string ToLower(int value) => value.ToString().ToLower();
+    private static int Length(int value) => value.ToString().Length;
+    private static decimal Sum(decimal value) => value;
+
+    [Fact]
+    public void Translate_ToLower_WithInt_Throws()
+    {
+        Expression<Func<Entity, object>> expr = e => ToLower(e.Value);
+        var call = GetCall(expr);
+        Assert.Throws<NotSupportedException>(() => KsqlFunctionTranslator.TranslateMethodCall(call));
+    }
+
+    [Fact]
+    public void Translate_Length_WithInt_Throws()
+    {
+        Expression<Func<Entity, object>> expr = e => Length(e.Value);
+        var call = GetCall(expr);
+        Assert.Throws<NotSupportedException>(() => KsqlFunctionTranslator.TranslateMethodCall(call));
+    }
+
+    [Fact]
+    public void Translate_Sum_WithDecimal_Throws()
+    {
+        Expression<Func<Entity, object>> expr = e => Sum(e.Amount);
+        var call = GetCall(expr);
+        Assert.Throws<NotSupportedException>(() => KsqlFunctionTranslator.TranslateMethodCall(call));
+    }
+
     [Fact]
     public void GetSqlOperator_Add_ReturnsPlus()
     {
