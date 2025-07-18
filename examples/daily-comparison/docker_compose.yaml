@@ -1,0 +1,25 @@
+version: '3.9'
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Your_password123
+    ports:
+      - "1433:1433"
+  ratesender:
+    build:
+      context: .
+      dockerfile: Dockerfile.RateSender
+    environment:
+      - CONNECTION_STRING=Server=sqlserver;Database=Rates;User Id=sa;Password=Your_password123;TrustServerCertificate=true
+    depends_on:
+      - sqlserver
+  viewer:
+    build:
+      context: .
+      dockerfile: Dockerfile.Viewer
+    environment:
+      - CONNECTION_STRING=Server=sqlserver;Database=Rates;User Id=sa;Password=Your_password123;TrustServerCertificate=true
+    depends_on:
+      - sqlserver

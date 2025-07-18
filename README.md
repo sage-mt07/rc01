@@ -203,6 +203,7 @@ NAME_MISMATCH等のエラー時は手動で該当subject削除後に再実行
 - [manual-commit](./examples/manual-commit/) - 手動コミットの利用例
 - [sqlserver-vs-kafka](./examples/sqlserver-vs-kafka/) - SQL Server 操作との対比
 - [api-showcase](./examples/api-showcase/) - 代表的な DSL API の利用例
+- [daily-comparison](./examples/daily-comparison/) - 日次集計の簡易サンプル
 
 
 ## 📊 データ型と関数の対応表（主要関数）
