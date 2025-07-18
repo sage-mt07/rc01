@@ -129,7 +129,7 @@ public class DMLQueryGeneratorTests
     {
         public int CustomerId { get; set; }
         public string Region { get; set; } = string.Empty;
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
         public bool IsHighPriority { get; set; }
     }
 
@@ -142,7 +142,7 @@ public class DMLQueryGeneratorTests
     private class OrderWithCount
     {
         public int CustomerId { get; set; }
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
         public int Count { get; set; }
     }
 
@@ -621,13 +621,13 @@ public class DMLQueryGeneratorTests
     {
         public int? CustomerId { get; set; }
         public string Region { get; set; } = string.Empty;
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
     }
 
     private class NullableKeyOrder
     {
         public int? CustomerId { get; set; }
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
     }
 
     [Fact]

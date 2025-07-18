@@ -38,7 +38,7 @@ public class SelectClauseBuilderTests
 
     private class Order
     {
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
     }
 
     [Fact]
