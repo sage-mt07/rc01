@@ -4,17 +4,17 @@ namespace Kafka.Ksql.Linq.Configuration.Abstractions;
 public class KafkaFetchOptions
 {
     /// <summary>
-    /// 最大レコード数
+    /// Maximum number of records
     /// </summary>
     public int MaxRecords { get; set; } = 100;
 
     /// <summary>
-    /// タイムアウト時間
+    /// Timeout duration
     /// </summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// コンシューマーグループID
+    /// Consumer group ID
     /// </summary>
     public string? GroupId { get; set; }
 }

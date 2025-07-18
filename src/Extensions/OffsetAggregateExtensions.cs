@@ -5,8 +5,8 @@ using System.Linq.Expressions;
 namespace Kafka.Ksql.Linq
 {
     /// <summary>
-    /// KSQLのオフセット集約関数用拡張メソッド
-    /// 実行時には使用されず、LINQ式解析専用
+    /// Extension methods for KSQL offset aggregate functions.
+    /// These are not used at runtime and exist only for LINQ expression analysis.
     /// </summary>
     public static class OffsetAggregateExtensions
     {

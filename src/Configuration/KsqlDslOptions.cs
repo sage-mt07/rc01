@@ -7,22 +7,22 @@ namespace Kafka.Ksql.Linq.Configuration;
 public class KsqlDslOptions
 {
     /// <summary>
-    /// バリデーションモード（ルートレベル配置）
+    /// Validation mode (root level setting)
     /// </summary>
     public ValidationMode ValidationMode { get; init; } = ValidationMode.Strict;
 
     /// <summary>
-    /// 共通設定（BootstrapServers, ClientId等）
+    /// Common settings (BootstrapServers, ClientId, etc.)
     /// </summary>
     public CommonSection Common { get; init; } = new();
 
     /// <summary>
-    /// トピック別設定（Producer/Consumer設定をトピック単位で管理）
+    /// Per-topic settings (manage producer/consumer settings per topic)
     /// </summary>
     public Dictionary<string, TopicSection> Topics { get; init; } = new();
 
     /// <summary>
-    /// Schema Registry設定
+    /// Schema Registry settings
     /// </summary>
     public SchemaRegistrySection SchemaRegistry { get; init; } = new();
 
@@ -34,12 +34,12 @@ public class KsqlDslOptions
     public DlqTopicConfiguration DlqConfiguration { get; init; } = new();
 
     /// <summary>
-    /// デシリアライズ失敗時のポリシー
+    /// Policy when deserialization fails
     /// </summary>
     public DeserializationErrorPolicy DeserializationErrorPolicy { get; set; } = DeserializationErrorPolicy.Skip;
 
     /// <summary>
-    /// Finalトピックからの読み取りをデフォルトで有効にするか
+    /// Whether reading from the Final topic is enabled by default
     /// </summary>
     public bool ReadFromFinalTopicByDefault { get; set; } = false;
 }

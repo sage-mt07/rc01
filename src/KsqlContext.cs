@@ -17,8 +17,8 @@ using ConfluentSchemaRegistry = Confluent.SchemaRegistry;
 
 namespace Kafka.Ksql.Linq.Application;
 /// <summary>
-/// Core層統合KsqlContext
-/// 設計理由：Core抽象化を継承し、上位層機能を統合
+/// KsqlContext that integrates the Core layer.
+/// Design rationale: inherits core abstractions and integrates higher-level features.
 /// </summary>
 public abstract class KsqlContext : KafkaContextCore
 {
@@ -32,7 +32,7 @@ public abstract class KsqlContext : KafkaContextCore
     private TableCacheRegistry? _cacheRegistry;
 
     /// <summary>
-    /// テスト用にスキーマ登録をスキップするか判定するフック
+    /// Hook to decide whether schema registration should be skipped for tests
     /// </summary>
     protected virtual bool SkipSchemaRegistration => false;
 
@@ -123,16 +123,16 @@ public abstract class KsqlContext : KafkaContextCore
     }
 
     /// <summary>
-    /// OnModelCreating → スキーマ自動登録フローの実行
+    /// OnModelCreating → execute automatic schema registration flow
     /// </summary>
     private void InitializeWithSchemaRegistration()
     {
-        // 1. OnModelCreatingでモデル構築
+        // 1. Build the model in OnModelCreating
         ConfigureModel();
 
-        // 旧Avroスキーマ登録処理は削除済み
+        // Removed old Avro schema registration logic
 
-        // 2. Kafka接続確認
+        // 2. Verify Kafka connectivity
         ValidateKafkaConnectivity();
 
         EnsureKafkaReadyAsync().GetAwaiter().GetResult();
@@ -141,15 +141,15 @@ public abstract class KsqlContext : KafkaContextCore
     {
         try
         {
-            // DLQトピック自動生成
+            // Auto-create DLQ topic
             await _adminService.EnsureDlqTopicExistsAsync();
 
-            // 追加の接続確認（AdminServiceで実施）
+            // Additional connectivity check (performed by AdminService)
             _adminService.ValidateKafkaConnectivity();
 
             await _adminService.EnsureWindowFinalTopicsExistAsync(GetEntityModels());
 
-            // ✅ ログ出力: DLQ準備完了
+            // Log output: DLQ preparation complete
             Console.WriteLine($"✅ Kafka initialization completed. DLQ topic '{GetDlqTopicName()}' is ready with 5-second retention.");
         }
         catch (Exception ex)
@@ -367,8 +367,8 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
 
             var consumerManager = _ksqlContext.GetConsumerManager();
 
-            // 簡略実装：実際のConsumer呼び出し
-            // TODO: 実際のConsumer実装と連携
+            // Simplified implementation: call the actual Consumer
+            // TODO: integrate with the actual Consumer implementation
             await Task.Delay(100, cancellationToken); // シミュレート
 
             return new List<T>();
@@ -388,8 +388,8 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
         {
             var consumerManager = _ksqlContext.GetConsumerManager();
 
-            // 簡略実装：ストリーミング消費
-            // TODO: 実際のStreaming Consumer実装と連携
+            // Simplified implementation: streaming consumption
+            // TODO: integrate with the actual streaming Consumer implementation
             await Task.Delay(100, cancellationToken); // シミュレート
         }
         catch (Exception ex)

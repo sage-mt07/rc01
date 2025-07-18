@@ -4,47 +4,47 @@ namespace Kafka.Ksql.Linq.Configuration.Abstractions;
 public class KafkaSubscriptionOptions
 {
     /// <summary>
-    /// コンシューマーグループID
+    /// Consumer group ID
     /// </summary>
     public string? GroupId { get; set; }
 
     /// <summary>
-    /// 自動コミット有効化
+    /// Enable auto commit
     /// </summary>
     public bool? AutoCommit { get; set; }
 
     /// <summary>
-    /// オートオフセットリセット（Confluent.Kafka使用）
+    /// Auto offset reset (uses Confluent.Kafka)
     /// </summary>
     public AutoOffsetReset? AutoOffsetReset { get; set; }
 
     /// <summary>
-    /// パーティションEOF有効化
+    /// Enable partition EOF
     /// </summary>
     public bool EnablePartitionEof { get; set; } = false;
 
     /// <summary>
-    /// セッションタイムアウト
+    /// Session timeout
     /// </summary>
     public TimeSpan? SessionTimeout { get; set; }
 
     /// <summary>
-    /// ハートビート間隔
+    /// Heartbeat interval
     /// </summary>
     public TimeSpan? HeartbeatInterval { get; set; }
 
     /// <summary>
-    /// エラー時停止
+    /// Stop on error
     /// </summary>
     public bool StopOnError { get; set; } = false;
 
     /// <summary>
-    /// 最大ポーリングレコード数
+    /// Maximum number of records to poll
     /// </summary>
     public int? MaxPollRecords { get; set; }
 
     /// <summary>
-    /// 最大ポーリング間隔
+    /// Maximum polling interval
     /// </summary>
     public TimeSpan? MaxPollInterval { get; set; }
 }

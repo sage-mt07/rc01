@@ -7,47 +7,47 @@ namespace Kafka.Ksql.Linq.Configuration;
 public class DlqTopicConfiguration
 {
     /// <summary>
-    /// DLQデータ保持時間（ミリ秒）
-    /// デフォルト: 5000（5秒） - 一時退避先として機能
+    /// DLQ data retention in milliseconds.
+    /// Default: 5000 (5 seconds) - functions as temporary storage.
     /// </summary>
     [DefaultValue(5000)]
     public long RetentionMs { get; set; } = 5000;
 
     /// <summary>
-    /// DLQトピックパーティション数
-    /// デフォルト: 1（可観測性目的、パフォーマンス重視ではない）
+    /// Number of partitions for the DLQ topic.
+    /// Default: 1 (for observability rather than performance)
     /// </summary>
     [DefaultValue(1)]
     public int NumPartitions { get; set; } = 1;
 
     /// <summary>
-    /// DLQトピックレプリケーション係数
-    /// デフォルト: 1（単一ブローカー環境対応）
+    /// Replication factor for the DLQ topic.
+    /// Default: 1 (suitable for single-broker environments)
     /// </summary>
     [DefaultValue(1)]
     public short ReplicationFactor { get; set; } = 1;
 
     /// <summary>
-    /// DLQトピック自動作成を有効にするか
-    /// デフォルト: true（Fail-Fast防止）
+    /// Whether to enable automatic DLQ topic creation.
+    /// Default: true (avoids fail-fast on missing topic)
     /// </summary>
     [DefaultValue(true)]
     public bool EnableAutoCreation { get; set; } = true;
 
     /// <summary>
-    /// DLQトピック追加設定
-    /// 例: cleanup.policy, segment.ms, max.message.bytes等
+    /// Additional DLQ topic settings
+    /// e.g., cleanup.policy, segment.ms, max.message.bytes, etc.
     /// </summary>
     public Dictionary<string, string> AdditionalConfigs { get; set; } = new()
     {
         ["cleanup.policy"] = "delete",
-        ["segment.ms"] = "3600000", // 1時間
-        ["max.message.bytes"] = "1048576", // 1MB
+          ["segment.ms"] = "3600000", // 1 hour
+          ["max.message.bytes"] = "1048576", // 1MB
         ["confluent.topic.description"] = "DLQ topic for error message handling - auto created by KafkaContext"
     };
 
     /// <summary>
-    /// DLQ設定検証
+    /// Validate DLQ configuration
     /// </summary>
     public void Validate()
     {
@@ -62,7 +62,7 @@ public class DlqTopicConfiguration
     }
 
     /// <summary>
-    /// 設定サマリー取得（デバッグ用）
+    /// Get configuration summary (for debugging)
     /// </summary>
     public string GetSummary()
     {
@@ -73,7 +73,7 @@ public class DlqTopicConfiguration
 public static class DlqConfigurationExtensions
 {
     /// <summary>
-    /// DLQ設定をカスタマイズ
+    /// Customize the DLQ configuration
     /// </summary>
     public static KsqlDslOptions ConfigureDlq(
         this KsqlDslOptions options,
@@ -85,7 +85,7 @@ public static class DlqConfigurationExtensions
     }
 
     /// <summary>
-    /// DLQ保持時間設定（利便性メソッド）
+    /// Set DLQ retention time (convenience method)
     /// </summary>
     public static KsqlDslOptions WithDlqRetention(
         this KsqlDslOptions options,
@@ -96,7 +96,7 @@ public static class DlqConfigurationExtensions
     }
 
     /// <summary>
-    /// DLQ無効化（テスト環境等）
+    /// Disable the DLQ (e.g., for testing environments)
     /// </summary>
     public static KsqlDslOptions DisableDlqAutoCreation(this KsqlDslOptions options)
     {
