@@ -7,6 +7,13 @@ namespace DailyComparisonLib;
 
 public class KafkaKsqlContext : KafkaContext
 {
+    public KafkaKsqlContext()
+    {
+    }
+
+    public KafkaKsqlContext(KsqlContextOptions options) : base(options)
+    {
+    }
 
     protected override void OnModelCreating(IModelBuilder modelBuilder)
     {

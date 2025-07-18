@@ -1,7 +1,9 @@
 # Daily Comparison Sample
 
 This example demonstrates a simple rate ingestion and daily aggregation using **Kafka.Ksql.Linq** only.
-All communication with Kafka and ksqlDB goes through a custom `MyKsqlContext` derived from `KafkaKsqlContext`.
+All settings including logging and Schema Registry configuration are read from
+`appsettings.json` following `docs/docs_configuration_reference.md`.
+`KsqlContextBuilder` builds a `MyKsqlContext` using these values.
 
 ## Usage
 
@@ -9,7 +11,7 @@ All communication with Kafka and ksqlDB goes through a custom `MyKsqlContext` de
    ```bash
    docker compose up -d
    ```
-2. Run the rate sender which also performs aggregation. It instantiates `MyKsqlContext` directly:
+2. Run the rate sender which also performs aggregation. It uses `KsqlContextBuilder` to create `MyKsqlContext`:
    ```bash
    dotnet run --project RateSender
    ```
