@@ -160,7 +160,8 @@ public static class EntityBuilderQueryExtensions
             $"Target={schema.TargetType.FullName}," +
             $"KeyClass={schema.KeyInfo.ClassName},KeyNs={schema.KeyInfo.Namespace}," +
             $"ValueClass={schema.ValueInfo.ClassName},ValueNs={schema.ValueInfo.Namespace}," +
-            $"Keys={schema.KeyProperties.Length},Type={schema.GetStreamTableType()}";
+            $"Keys={schema.KeyProperties.Length},Type={schema.GetStreamTableType()}," +
+            $"Mode={schema.ExecutionMode}";
         
         entityModel.ValidationResult.Warnings.Add(schemaInfo);
     }
