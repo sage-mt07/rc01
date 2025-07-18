@@ -85,10 +85,10 @@ public class EntityModelBuilder<T> : IEntityBuilder<T> where T : class
         return _entityModel;
     }
 
-    [Obsolete("POCO属性主導型では、Fluent APIでのトピック名変更は禁止されています。[Topic]属性を使用してください。", true)]
+    [Obsolete("Changing the topic name via Fluent API is prohibited in POCO attribute-driven mode. Use the [Topic] attribute instead.", true)]
     public EntityModelBuilder<T> HasTopicName(string topicName)
     {
-        throw new NotSupportedException("POCO属性主導型では、Fluent APIでのトピック名変更は禁止されています。[Topic]属性を使用してください。");
+        throw new NotSupportedException("Changing the topic name via Fluent API is prohibited in POCO attribute-driven mode. Use the [Topic] attribute instead.");
     }
 
     /// <summary>
@@ -140,9 +140,9 @@ public class EntityModelBuilder<T> : IEntityBuilder<T> where T : class
     public override string ToString()
     {
         var entityName = _entityModel.EntityType.Name;
-        var topicName = _entityModel.TopicName ?? "未定義";
+        var topicName = _entityModel.TopicName ?? "undefined";
         var keyCount = _entityModel.KeyProperties.Length;
-        var validStatus = _entityModel.IsValid ? "有効" : "無効";
+        var validStatus = _entityModel.IsValid ? "valid" : "invalid";
 
         return $"Entity: {entityName}, Topic: {topicName}, Keys: {keyCount}, Status: {validStatus}";
     }

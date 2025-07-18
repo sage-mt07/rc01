@@ -35,7 +35,7 @@ internal class JoinExpressionVisitor : ExpressionVisitor
             }
             catch (Exception ex)
             {
-                _result = $"/* JOIN構築エラー: {ex.Message} */";
+                _result = $"/* JOIN build error: {ex.Message} */";
             }
         }
 

@@ -10,7 +10,7 @@ public class MaxLengthAttribute : Attribute
     public MaxLengthAttribute(int length)
     {
         if (length <= 0)
-            throw new ArgumentException("最大長は1以上である必要があります", nameof(length));
+            throw new ArgumentException("Max length must be at least 1", nameof(length));
 
         Length = length;
     }

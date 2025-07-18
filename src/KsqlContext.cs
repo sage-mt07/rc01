@@ -299,7 +299,7 @@ public abstract class KsqlContext : KafkaContextCore
 
     public override string ToString()
     {
-        return $"{base.ToString()} [スキーマ自動登録対応]";
+        return $"{base.ToString()} [schema auto-registration ready]";
     }
 }
 
