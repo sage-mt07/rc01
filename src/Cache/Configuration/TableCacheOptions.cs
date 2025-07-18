@@ -11,7 +11,6 @@ public class TableCacheEntry
 {
     public string Entity { get; set; } = string.Empty;
     public string SourceTopic { get; set; } = string.Empty;
-    public string StoreType { get; set; } = "RocksDb";
     public bool EnableCache { get; set; } = true;
     public string? StoreName { get; set; }
     public string? BaseDirectory { get; set; }

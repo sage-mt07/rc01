@@ -37,7 +37,7 @@ public class EventSetWithServicesRocksDbTests
 
         var optionsField = typeof(KsqlContext).GetField("_dslOptions", BindingFlags.NonPublic | BindingFlags.Instance)!;
         var options = (KsqlDslOptions)optionsField.GetValue(ctx)!;
-        options.Entities.Add(new EntityConfiguration { Entity = nameof(Sample), SourceTopic = "s", StoreType = StoreTypes.RocksDb, EnableCache = true });
+        options.Entities.Add(new EntityConfiguration { Entity = nameof(Sample), SourceTopic = "s", EnableCache = true });
 
         KsqlContextCacheExtensions.UseTableCache(ctx, options);
         var registry = ctx.GetTableCacheRegistry()!;

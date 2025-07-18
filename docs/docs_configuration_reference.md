@@ -186,7 +186,6 @@ Consumer の設定は `ConsumerSection` クラスにそれぞれマッピング�
   {
     "Entity": "OrderEntity",
     "SourceTopic": "orders",
-    "StoreType": "RocksDb",
     "EnableCache": true,
     "Windows": [5, 15, 60],
     "StoreName": "orders_store",
@@ -199,7 +198,6 @@ Consumer の設定は `ConsumerSection` クラスにそれぞれマッピング�
 |------|------|
 | `Entity` | 対象POCOクラス名 |
 | `SourceTopic` | 入力元となるKafkaトピック名 |
-| `StoreType` | ストレージ方式（例：`RocksDb`） |
 | `EnableCache` | キャッシュ有効化（bool） |
 | `Windows` | タンブリングウィンドウサイズ（整数：分単位） |
 | `StoreName` | キャッシュ名（省略時はトピック名を基に自動生成） |
