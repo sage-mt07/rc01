@@ -2,10 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DailyComparisonLib\DailyComparisonLib.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+    <ProjectReference Include="..\..\..\src\Kafka.Ksql.Linq.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
