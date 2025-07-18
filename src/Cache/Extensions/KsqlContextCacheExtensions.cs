@@ -27,7 +27,6 @@ internal static class KsqlContextCacheExtensions
                 {
                     Entity = e.Entity,
                     SourceTopic = e.SourceTopic,
-                    StoreType = e.StoreType,
                     EnableCache = e.EnableCache,
                     StoreName = e.StoreName,
                     BaseDirectory = null

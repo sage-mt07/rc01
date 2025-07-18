@@ -15,7 +15,6 @@ StateStoreはKafkaストリーム処理における状態管理機能を提供�
 
 ### 2. 設定管理 (Configuration)
 - **StateStoreOptions/Configuration**: ストア設定（キャッシュ有効化、ベースディレクトリ等）
-- **StoreTypes**: サポートするストアタイプ定数（RocksDb）
 
 ### 3. 管理機能 (Management)
 - **StateStoreManager**: エンティティタイプ別ストア生成・管理
