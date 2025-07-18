@@ -24,6 +24,7 @@ C#のLINQスタイルで簡潔かつ直感的に記述できる、Entity Framewo
 ```
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Context;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -52,11 +53,8 @@ class Program
             .AddJsonFile("appsettings.json")
             .Build();
 
-        var context = KsqlContextBuilder.Create()
-            .UseConfiguration(configuration)
-            .UseSchemaRegistry(configuration["KsqlDsl:SchemaRegistry:Url"]!)
-            .EnableLogging(LoggerFactory.Create(builder => builder.AddConsole()))
-            .BuildContext<ManualCommitContext>();
+        var options = KafkaContextOptions.FromConfiguration(configuration);
+        await using var context = new ManualCommitContext(options);
 
         var order = new ManualCommitOrder
         {
