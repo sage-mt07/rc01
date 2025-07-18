@@ -4,27 +4,27 @@ namespace Kafka.Ksql.Linq.Configuration.Abstractions;
 public class KafkaBatchOptions
 {
     /// <summary>
-    /// バッチ最大サイズ
+    /// Maximum batch size
     /// </summary>
     public int MaxBatchSize { get; set; } = 100;
 
     /// <summary>
-    /// 最大待機時間
+    /// Maximum wait time
     /// </summary>
     public TimeSpan MaxWaitTime { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// 空バッチを許可するか
+    /// Whether to allow empty batches
     /// </summary>
     public bool EnableEmptyBatches { get; set; } = false;
 
     /// <summary>
-    /// 自動コミット有効化
+    /// Enable auto commit
     /// </summary>
     public bool AutoCommit { get; set; } = true;
 
     /// <summary>
-    /// コンシューマーグループID
+    /// Consumer group ID
     /// </summary>
     public string? ConsumerGroupId { get; set; }
 }
