@@ -24,6 +24,7 @@ C#のLINQスタイルで簡潔かつ直感的に記述できる、Entity Framewo
 ```
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Context;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -59,6 +60,7 @@ class Program
             .Build();
 
         var options = KafkaContextOptions.FromConfiguration(configuration);
+
 
         // Contextを直接newする
         await using var context = new ManualCommitContext(options);
