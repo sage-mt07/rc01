@@ -91,7 +91,7 @@ internal static class KeyExtractor
     internal static object BuildTypedKey(IList<CompositeKeyPart> parts, ILogger? logger = null)
     {
         if (parts.Count == 0)
-            return Guid.NewGuid();
+            return Guid.NewGuid().ToString();
 
         if (parts.Count == 1)
         {
