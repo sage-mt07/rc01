@@ -108,6 +108,11 @@ internal class WindowedEntitySet<T> : IWindowedEntitySet<T> where T : class
         await _baseEntitySet.AddAsync(entity, cancellationToken);
     }
 
+    public Task RemoveAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        return _baseEntitySet.RemoveAsync(entity, cancellationToken);
+    }
+
     public async Task<List<T>> ToListAsync(CancellationToken cancellationToken = default)
     {
         // ウィンドウクエリは集約前の生データは通常取得しない

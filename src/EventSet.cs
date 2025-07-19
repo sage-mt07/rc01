@@ -118,6 +118,11 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
 
         await SendEntityAsync(entity, cancellationToken);
     }
+
+    public virtual Task RemoveAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException($"RemoveAsync is not supported for {GetType().Name}.");
+    }
     /// <summary>
     /// REDESIGNED: ForEachAsync supporting continuous Kafka consumption
     /// Design change: ToListAsync() is disallowed; now based on GetAsyncEnumerator
@@ -498,6 +503,11 @@ internal class MappedEventSet<T> : EventSet<T> where T : class
         throw new NotSupportedException(
             $"MappedEventSet<{typeof(T).Name}> does not support AddAsync operations. " +
             "Mapped data is read-only and derived from transformation operations.");
+    }
+
+    public override Task RemoveAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException($"MappedEventSet<{typeof(T).Name}> does not support RemoveAsync operations.");
     }
 
     /// <summary>

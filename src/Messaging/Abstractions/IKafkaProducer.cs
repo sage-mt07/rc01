@@ -29,6 +29,11 @@ public interface IKafkaProducer<T> : IDisposable where T : class
     Task FlushAsync(TimeSpan timeout);
 
     /// <summary>
+    /// Tombstone を送信してメッセージを削除します
+    /// </summary>
+    Task<KafkaDeliveryResult> DeleteAsync(object key, KafkaMessageContext? context = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// トピック名取得
     /// </summary>
     string TopicName { get; }

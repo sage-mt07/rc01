@@ -8,6 +8,7 @@ using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.Cache.Extensions;
 using Kafka.Ksql.Linq.Cache.Core;
+using Kafka.Ksql.Linq.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -342,6 +343,22 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
         catch (Exception ex)
         {
             throw new InvalidOperationException($"Failed to send entity {typeof(T).Name} to Kafka", ex);
+        }
+    }
+
+    public async Task RemoveAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        if (entity == null)
+            throw new ArgumentNullException(nameof(entity));
+
+        try
+        {
+            var producerManager = _ksqlContext.GetProducerManager();
+            await producerManager.DeleteAsync(entity, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to delete entity {typeof(T).Name} from Kafka", ex);
         }
     }
 

@@ -27,6 +27,11 @@ public class JoinableEntitySet<T> : IEntitySet<T>, IJoinableEntitySet<T> where T
         await _baseEntitySet.AddAsync(entity, cancellationToken);
     }
 
+    public async Task RemoveAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        await _baseEntitySet.RemoveAsync(entity, cancellationToken);
+    }
+
     public async Task<List<T>> ToListAsync(CancellationToken cancellationToken = default)
     {
         return await _baseEntitySet.ToListAsync(cancellationToken);

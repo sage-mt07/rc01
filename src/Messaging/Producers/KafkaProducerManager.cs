@@ -328,6 +328,29 @@ internal class KafkaProducerManager : IDisposable
 
         await producer.SendAsync(entity, context, cancellationToken);
     }
+
+    public async Task DeleteAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class
+    {
+        if (entity == null)
+            throw new ArgumentNullException(nameof(entity));
+
+        var producer = await GetProducerAsync<T>();
+        var model = GetEntityModel<T>();
+        var parts = KeyExtractor.ExtractKeyParts(entity, model);
+        var key = KeyExtractor.BuildTypedKey(parts, _logger);
+
+        var context = new KafkaMessageContext
+        {
+            MessageId = Guid.NewGuid().ToString(),
+            Tags = new Dictionary<string, object>
+            {
+                ["entity_type"] = typeof(T).Name,
+                ["method"] = "DeleteAsync"
+            }
+        };
+
+        await producer.DeleteAsync(key, context, cancellationToken);
+    }
     // 既存のメソッドは変更なし（SendAsync, SendRangeAsync, BuildProducerConfig）
 
     // ✅ 修正：Disposeメソッドの更新

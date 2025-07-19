@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Kafka.Ksql.Linq;
 
+
 /// <summary>
 /// Extensions for limiting the number of items in an entity set.
 /// </summary>
@@ -39,5 +40,6 @@ public static class EventSetLimitExtensions
         }
 
         return toKeep;
+
     }
 }

@@ -48,6 +48,11 @@ internal class ReadCachedEntitySet<T> : IEntitySet<T> where T : class
         return _baseSet.AddAsync(entity, cancellationToken);
     }
 
+    public Task RemoveAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        return _baseSet.RemoveAsync(entity, cancellationToken);
+    }
+
     public Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
         return _baseSet.ForEachAsync(action, timeout, cancellationToken);

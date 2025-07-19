@@ -59,6 +59,7 @@ internal class WindowFilteredEntitySet<T> : IEntitySet<T> where T : class
     }
 
     public Task AddAsync(T entity, CancellationToken cancellationToken = default) => _baseSet.AddAsync(entity, cancellationToken);
+    public Task RemoveAsync(T entity, CancellationToken cancellationToken = default) => _baseSet.RemoveAsync(entity, cancellationToken);
     public string GetTopicName() => _baseSet.GetTopicName();
     public EntityModel GetEntityModel() => _baseSet.GetEntityModel();
     public IKsqlContext GetContext() => _baseSet.GetContext();
