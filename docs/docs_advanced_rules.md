@@ -65,9 +65,22 @@ DSLや属性の基本的な使い方、アーキテクチャの理解を終え�
 ## 4. Finalトピック生成とWindow処理のタイマー駆動
 ### 4.1 Window処理
 
-  🚩【最重要パターン宣言】  
-  本OSSのウィンドウ集約設計は「1つのPOCO＋Window属性で多足集約を一元管理」が基本方針です。  
+  🚩【最重要パターン宣言】
+  本OSSのウィンドウ集約設計は「1つのPOCO＋Window属性で多足集約を一元管理」が基本方針です。
   型設計・APIサンプル・高度な応用もまずこの方式を優先してください。
+
+複数時間足を扱う際は専用のPOCOを分ける必要はありません。以下のように `Window()` 拡張と
+`WindowMinutes` プロパティを組み合わせることで、1つのエンティティで任意の足を処理できます。
+
+```csharp
+modelBuilder.Entity<RateCandle>()
+    .HasQueryFrom<Rate>(q =>
+        q.Window(new[] { 1, 5, 15, 60 })
+         .GroupBy(r => r.Symbol)
+         .Select(g => new RateCandle { /* 集約ロジック */ }));
+```
+
+実行時に特定の足だけを処理したい場合は `Set<T>().Window(5)` のように分岐させます。
 
 
 ### 4.2 Finalトピックの命名と作成およびRocksDBとの関係

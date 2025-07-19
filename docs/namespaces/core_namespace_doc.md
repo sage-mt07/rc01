@@ -2,6 +2,7 @@
 
 ## 概要
 Kafka.Ksql.Linq.Coreは、Apache KafkaとKsqlDBを使ったストリーミング処理のためのLINQライクなライブラリのコア層です。
+旧バージョンで使用していた各種Attributeは廃止され、モデル設定は `ModelBuilder` を中心とした Fluent API に統一されました。
 
 ## Namespace構成と責務
 
@@ -11,17 +12,13 @@ Kafka.Ksql.Linq.Coreは、Apache KafkaとKsqlDBを使ったストリーミング
   - `IKsqlContext`: DbContext風の統一インターフェース
   - `IEntitySet<T>`: クエリ・更新共通操作の統一インターフェース
   - `ISerializationManager<T>`: シリアライザ共通インターフェース
-- **主要抽象クラス・属性**:
-  - `TopicAttribute`: Kafkaトピック設定
-  - `KeyAttribute`: エンティティキー定義
-  - `AvroTimestampAttribute`: タイムスタンプ精度・ウィンドウ処理用
-- **エラーハンドリング**: `ErrorAction`, `ErrorHandlingPolicy`, `CircuitBreakerHandler`
+ - **主要クラス**:
+   - `ModelBuilder`: Fluent API設定エントリポイント
+   - `EntityModelBuilder<T>`: エンティティ単位のモデル構築
+   - `KeyExtractor`: キー抽出ヘルパー
+ - **エラーハンドリング**: `ErrorAction`, `ErrorHandlingPolicy`, `CircuitBreakerHandler`
 - **ウィンドウ処理**: `IWindowedEntitySet<T>`, `WindowAggregationConfig`
 
-### `Kafka.Ksql.Linq.Core.Attributes`
-**責務**: エンティティ属性定義
-- `DefaultValueAttribute`: プロパティデフォルト値
-- `MaxLengthAttribute`: 文字列長制限
 
 ### `Kafka.Ksql.Linq.Core.Configuration`
 **責務**: Core層設定管理
