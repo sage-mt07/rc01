@@ -516,4 +516,24 @@ public class WindowedOrderSummary
 ```
 これにより、KSQLの変換処理ログを確認することが可能です。
 
+## 9. 削除と件数制限の操作
+
+### Set<T>().Limit(N)
+`Limit` を付与すると、KSQL の `LIMIT` 句を伴う Pull Query が生成されます。取得数が N
+ 件に達した時点で処理が完了し、それ以降のレコードは自動的に破棄されます。
+
+```csharp
+var latest = await context.Set<Trade>()
+    .Limit(50)
+    .ToListAsync();
+```
+
+### RemoveAsync でトムストーン送信
+`RemoveAsync` はキーを指定して値 `null` のメッセージ（トムストーン）をトピックへ送信し
+ます。これにより KTable やキャッシュに保持された同一キーのデータが削除されます。
+
+```csharp
+await context.Trades.RemoveAsync(tradeId);
+```
+
 ## 10. 代表的な利用パターン

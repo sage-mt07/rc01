@@ -25,5 +25,5 @@ for (int i = 0; i < 100; i++)
     await Task.Delay(1000);
 }
 
-var aggregator = new Aggregator(context);
+var aggregator = new Aggregator(context, null);
 await aggregator.AggregateAsync(DateTime.UtcNow.Date);

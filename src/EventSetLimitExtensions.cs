@@ -8,26 +8,38 @@ using System.Threading.Tasks;
 
 namespace Kafka.Ksql.Linq;
 
+
+/// <summary>
+/// Extensions for limiting the number of items in an entity set.
+/// </summary>
 public static class EventSetLimitExtensions
 {
-    public static async Task<List<T>> Limit<T>(this IEntitySet<T> set, int count, CancellationToken cancellationToken = default) where T : class
+    /// <summary>
+    /// Returns the newest <paramref name="count"/> items ordered by BarTime and removes older items when supported.
+    /// </summary>
+    public static async Task<List<T>> Limit<T>(this IEntitySet<T> entitySet, int count, CancellationToken cancellationToken = default) where T : class
     {
-        if (set == null) throw new ArgumentNullException(nameof(set));
-        if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count));
+        if (entitySet == null) throw new ArgumentNullException(nameof(entitySet));
+        if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
 
-        var list = await set.ToListAsync(cancellationToken);
+        var items = await entitySet.ToListAsync(cancellationToken);
         var barTimeProp = typeof(T).GetProperty("BarTime", BindingFlags.Public | BindingFlags.Instance);
-        if (barTimeProp != null)
-        {
-            list = list.OrderByDescending(x => (DateTime)barTimeProp.GetValue(x)!).ToList();
-        }
-        var limited = list.Take(count).ToList();
+        if (barTimeProp == null)
+            throw new InvalidOperationException($"Type {typeof(T).Name} must have BarTime property.");
 
-        foreach (var extra in list.Skip(count))
+        var ordered = items.OrderByDescending(i => (DateTime)barTimeProp.GetValue(i)!).ToList();
+        var toKeep = ordered.Take(count).ToList();
+        var toRemove = ordered.Skip(count).ToList();
+
+        if (entitySet is IRemovableEntitySet<T> removable)
         {
-            await set.RemoveAsync(extra, cancellationToken);
+            foreach (var item in toRemove)
+            {
+                await removable.RemoveAsync(item, cancellationToken);
+            }
         }
 
-        return limited;
+        return toKeep;
+
     }
 }

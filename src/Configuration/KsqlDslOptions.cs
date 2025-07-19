@@ -42,4 +42,9 @@ public class KsqlDslOptions
     /// Whether reading from the Final topic is enabled by default
     /// </summary>
     public bool ReadFromFinalTopicByDefault { get; set; } = false;
+
+    /// <summary>
+    /// Optional bar limits per symbol and bar type
+    /// </summary>
+    public BarLimitOptions BarLimits { get; init; } = new();
 }
