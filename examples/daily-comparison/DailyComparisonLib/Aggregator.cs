@@ -19,9 +19,7 @@ public class Aggregator
             .Where(d => d.Date == date.Date)
             .ToList();
 
-        var minuteBars = (await _context.Set<RateCandle>()
-            .Window(1)
-            .ToListAsync(ct))
+        var minuteBars = (await _context.Set<RateCandle>().ToListAsync(ct))
             .Where(c => c.BarTime.Date == date.Date)
             .ToList();
 
