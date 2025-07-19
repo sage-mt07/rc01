@@ -31,7 +31,7 @@ var valSer = factory.CreateSerializer<MyEntity>();
 ```
 
 ## 参考文書
-- `restructure_plan/serialization_namespace.md`
+- ~~`restructure_plan/serialization_namespace.md`~~ （計画完了によりファイル削除）
 
 ### 2025-07-13 Interfaces moved
 - `ISerializerFactory` and `IDeserializerFactory` relocated to `Serialization.Abstractions`
