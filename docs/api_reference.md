@@ -24,6 +24,7 @@
 |--------------------------------|-------------------------------|-----------------------------------|---------------|---------|
 | `.Where(predicate)`            | 条件フィルタ                  | `IEventSet<T>`                    | Stream/Table  | ✅      |
 | `.Window(WindowDef \| TimeSpan)` | タイムウィンドウ指定       | `IQueryable<T>`                   | Stream        | ✅      |
+| `.Window(int minutes)`          | `WindowMinutes`によるフィルタ  | `IEntitySet<T>`                  | Stream/Table  | ✅      |
 | `.Window().BaseOn<TSchedule>(keySelector, ?openProp, ?closeProp)` | `[ScheduleRange]` 属性、または `openProp`/`closeProp` パラメータで開始/終了を示すスケジュールPOCOに基づきウィンドウを生成 | `IQueryable<T>` | Stream | ✅ |
 | `.GroupBy(...)`                | グループ化および集約          | `IEventSet<IGrouping<TKey, T>>`   | Stream/Table  | ✅      |
 | `.OnError(ErrorAction)`        | エラー処理方針指定            | `EventSet<T>`                     | Stream        | ✅      |

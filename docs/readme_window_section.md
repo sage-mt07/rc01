@@ -87,8 +87,8 @@ await context.Set<RateCandle>()
 ```csharp
 // 実行時に特定の時間足のみ処理
 await context.Set<RateCandle>()
-    .Where(c => c.WindowMinutes == 5)  // 5分足のみ
-    .ForEachAsync(candle => 
+    .Window(5)  // 5分足のみ
+    .ForEachAsync(candle =>
     {
         Console.WriteLine($"5分足のみ: {candle.Symbol} Close: {candle.Close}");
     });
@@ -109,8 +109,8 @@ await Task.WhenAll(tasks);
 async Task ProcessTimeFrame(int minutes)
 {
     await context.Set<RateCandle>()
-        .Where(c => c.WindowMinutes == minutes)
-        .ForEachAsync(candle => 
+        .Window(minutes)
+        .ForEachAsync(candle =>
         {
             // 時間足別の専用処理
             await ProcessCandle(candle, minutes);
@@ -211,7 +211,7 @@ var config = new WindowConfiguration<Rate>
 ## 🔍 トラブルシューティング
 
 ### Q: 各時間足で異なる処理をしたい場合は？
-A: `Where(c => c.WindowMinutes == 分数)`でフィルタリングして、時間足別メソッドで処理してください。
+A: `Set<T>().Window(分数)` を利用して、時間足別メソッドで処理してください。
 
 ### Q: リアルタイム処理と履歴データ処理を分けたい場合は？
 A: リアルタイムは通常の`ForEachAsync()`、履歴は`WindowFinalConsumer.GetFinalizedWindowsBySize()`を使用してください。
