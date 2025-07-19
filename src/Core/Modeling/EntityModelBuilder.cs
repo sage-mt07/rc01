@@ -118,6 +118,7 @@ public class EntityModelBuilder<T> : IEntityBuilder<T> where T : class
         throw new ArgumentException("Invalid property expression", nameof(property));
     }
 
+
     private static PropertyInfo[] ExtractProperties<TKey>(System.Linq.Expressions.Expression<Func<T, TKey>> expression)
     {
         if (expression.Body is System.Linq.Expressions.MemberExpression memberExpr && memberExpr.Member is PropertyInfo prop)

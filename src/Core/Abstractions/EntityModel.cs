@@ -92,4 +92,5 @@ public class EntityModel
     /// RocksDB キャッシュ利用フラグ
     /// </summary>
     public bool EnableCache { get; set; } = true;
+
 }
