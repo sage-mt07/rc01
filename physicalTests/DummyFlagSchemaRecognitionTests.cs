@@ -18,7 +18,7 @@ public class DummyFlagSchemaRecognitionTests
 {
     private readonly IKsqlClient _client = new KsqlClient(new Uri("http://localhost:8088"));
 
-    private class OrderValue
+    public class OrderValue
     {
         public int CustomerId { get; set; }
         public int Id { get; set; }
@@ -28,32 +28,32 @@ public class DummyFlagSchemaRecognitionTests
         public int Count { get; set; }
     }
 
-    private class Customer
+    public class Customer
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 
-    private class EventLog
+    public class EventLog
     {
         public int Level { get; set; }
         public string Message { get; set; } = string.Empty;
     }
 
-    private class NullableOrder
+    public class NullableOrder
     {
         public int? CustomerId { get; set; }
         public string Region { get; set; } = string.Empty;
         public decimal Amount { get; set; }
     }
 
-    private class NullableKeyOrder
+    public class NullableKeyOrder
     {
         public int? CustomerId { get; set; }
         public decimal Amount { get; set; }
     }
 
-    private class DummyContext : KsqlContext
+    public class DummyContext : KsqlContext
     {
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {

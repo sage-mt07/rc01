@@ -63,7 +63,7 @@ public class DummyFlagMessageTests
         public void SendOffsetsToTransaction(IEnumerable<TopicPartitionOffset> offsets, IConsumerGroupMetadata groupMetadata, TimeSpan timeout) { }
     }
 
-    private class OrderValue
+    public class OrderValue
     {
         public int CustomerId { get; set; }
         public int Id { get; set; }

@@ -16,7 +16,7 @@ public class SchemaNameCaseSensitivityTests
 {
     private readonly IKsqlClient _client = new KsqlClient(new Uri("http://localhost:8088"));
 
-    private class OrderCorrectCase
+    public class OrderCorrectCase
     {
         public int CustomerId { get; set; }
         public int Id { get; set; }
@@ -24,7 +24,7 @@ public class SchemaNameCaseSensitivityTests
         public decimal Amount { get; set; }
     }
 
-    private class OrderWrongCase
+    public class OrderWrongCase
     {
         public int CustomerId { get; set; }
         public int Id { get; set; }
@@ -32,7 +32,7 @@ public class SchemaNameCaseSensitivityTests
         public decimal Amount { get; set; }
     }
 
-    private class OrderContext : KsqlContext
+    public class OrderContext : KsqlContext
     {
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
