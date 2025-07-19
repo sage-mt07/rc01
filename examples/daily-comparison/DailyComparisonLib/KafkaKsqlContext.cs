@@ -1,6 +1,7 @@
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Context;
+using Kafka.Ksql.Linq;
 using DailyComparisonLib.Models;
 
 namespace DailyComparisonLib;
@@ -13,9 +14,31 @@ public class KafkaKsqlContext : KafkaContext
 
     protected override void OnModelCreating(IModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Rate>();
+        modelBuilder.WithWindow<Rate, MarketSchedule>(
+            new[] { 1, 5, 60 },
+            r => r.RateTimestamp,
+            r => new { r.Broker, r.Symbol, Date = r.RateTimestamp.Date },
+            s => new { s.Broker, s.Symbol, s.Date }
+        )
+        .Select<RateCandle>(w =>
+        {
+            dynamic key = w.Key;
+            return new RateCandle
+            {
+                Broker = key.Broker,
+                Symbol = key.Symbol,
+                WindowMinutes = w.BarWidth,
+                WindowStart = w.BarStart,
+                WindowEnd = w.BarStart.AddMinutes(w.BarWidth),
+                High = w.Source.Max(x => x.Bid),
+                Low = w.Source.Min(x => x.Bid),
+                Close = w.Source.OrderByDescending(x => x.RateTimestamp).First().Bid,
+                Open = w.Source.OrderBy(x => x.RateTimestamp).First().Bid
+            };
+        });
+
         modelBuilder.Entity<MarketSchedule>();
-        modelBuilder.Entity<DailyComparison>();
         modelBuilder.Entity<RateCandle>();
+        modelBuilder.Entity<DailyComparison>();
     }
 }

@@ -113,6 +113,9 @@ A. Fluent API での設定を確認でき次第、属性は削除してくださ
 A. `DateTime` もしくは `DateTimeOffset` 型のプロパティを一つだけ定義し、
 `WindowedEntitySet` などの検証で自動的に認識されます。
 
+**Q. Bar や Window の定義場所は?**
+A. `KafkaKsqlContext.OnModelCreating` 内で宣言してください。集計処理側では `Set<T>` を参照するだけにします。`WithWindow<Rate, MarketSchedule>()` に `.Select<RateCandle>()` を組み合わせると、レートからバーを自動生成できます。`timeSelector` 引数でウィンドウを区切る時刻プロパティを必ず指定します。
+
 **Q. 既存トピック名はどこで指定する？**
 A. `builder.WithTopic("orders")` のように `OnModelCreating` 内で指定してください。
 
