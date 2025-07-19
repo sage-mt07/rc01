@@ -29,6 +29,33 @@ protected override void OnModelCreating(IModelBuilder modelBuilder)
             Close = w.Source.OrderByDescending(x => x.RateTimestamp).First().Bid
         };
     });
+
+    // DailyComparison uses a self-join to pull the previous bar
+    // (equivalent to LAG in ksqlDB) so Diff is calculated server-side
+    modelBuilder.Entity<DailyComparison>()
+        .HasQuery<RateCandle>(bars => bars
+            .Select(b => new DailyComparison
+            {
+                Broker = b.Broker,
+                Symbol = b.Symbol,
+                Date = b.BarTime.Date,
+                High = b.High,
+                Low = b.Low,
+                Close = b.Close,
+                PrevClose = bars.Where(p => p.Broker == b.Broker && p.Symbol == b.Symbol && p.BarTime < b.BarTime)
+                    .OrderByDescending(p => p.BarTime)
+                    .Select(p => p.Close)
+                    .FirstOrDefault(),
+                Diff = (b.Close - bars.Where(p => p.Broker == b.Broker && p.Symbol == b.Symbol && p.BarTime < b.BarTime)
+                        .OrderByDescending(p => p.BarTime)
+                        .Select(p => p.Close)
+                        .FirstOrDefault()) /
+                       bars.Where(p => p.Broker == b.Broker && p.Symbol == b.Symbol && p.BarTime < b.BarTime)
+                           .OrderByDescending(p => p.BarTime)
+                           .Select(p => p.Close)
+                           .FirstOrDefault()
+            }))
+        .AsTable();
 }
 ```
 

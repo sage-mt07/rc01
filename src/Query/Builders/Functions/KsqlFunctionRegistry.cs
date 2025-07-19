@@ -128,7 +128,9 @@ internal static class KsqlFunctionRegistry
         ["WindowStart"] = new("WINDOWSTART", 0),
         ["WindowEnd"] = new("WINDOWEND", 0),
         ["RowTime"] = new("ROWTIME", 0),
-        ["RowKey"] = new("ROWKEY", 0)
+        ["RowKey"] = new("ROWKEY", 0),
+        ["Lag"] = new("LAG", 1, 2),
+        ["RowNumber"] = new("ROW_NUMBER", 0)
     };
 
     /// <summary>
@@ -173,7 +175,7 @@ internal static class KsqlFunctionRegistry
             ["URL"] = ["UrlExtractHost", "UrlExtractPath", "UrlExtractQuery", "UrlExtractProtocol"],
             ["GEO"] = ["GeoDistance", "AsGeoJson"],
             ["Crypto"] = ["Md5", "Sha1", "Sha256"],
-            ["Window"] = ["WindowStart", "WindowEnd", "RowTime", "RowKey"]
+            ["Window"] = ["WindowStart", "WindowEnd", "RowTime", "RowKey", "Lag", "RowNumber"]
         };
     }
 
