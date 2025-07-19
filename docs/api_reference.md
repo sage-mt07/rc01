@@ -94,7 +94,7 @@ POCO モデルを Fluent API で構成する際の設計指針と移行フロー
 `IEntityBuilder<T>` を用いて宣言的に設定を行います。
 
 ### 1. 基本方針
-- `docs/core_namespace_redesign_plan.md` で示されたとおり、`TopicAttribute` などの属性は削除予定。
+ - 旧 `[Topic]` などの属性は廃止され、設定は Fluent API へ統合されました。
 - `HasKey` は必須呼び出しとし、複合キーも `HasKey(e => new { e.A, e.B })` で定義します。
 - エンティティ登録時は `readonly` `writeonly` `readwrite` の 3 種類で役割を指定し、未指定時は `readwrite` とみなします。
 
@@ -120,7 +120,7 @@ void OnModelCreating(ModelBuilder builder)
 1. POCO から属性を削除し、純粋なデータクラスとする。
 2. `OnModelCreating` で `builder.Entity<T>()` を呼び出し、`HasKey` と各種設定を定義。
 3. テストを実行してキー順序やトピック設定が正しいか確認する。
-   参考資料: `docs/oss_migration_guide.md` では属性とメソッドの 1:1 対応表を記載。
+   旧属性に関する詳細は `docs/namespaces/core_namespace_doc.md` を参照してください。
 
 ### 4. MappingManager との連携
 `MappingManager` を利用して key/value を抽出する例です。詳細は `docs/architecture/key_value_flow.md` を参照してください。

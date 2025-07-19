@@ -9,7 +9,6 @@
 | **Query**         | LINQ式からKSQLクエリへの変換・クエリ構築                            |
 | **Core**          | Kafka/KsqlDB用エンティティ・モデル管理、基盤設定・属性定義           |
 | **Messaging**     | 型安全なProducer/Consumer抽象、DLQ・エラーハンドリング               |
-| **Serialization** | Avroスキーマ生成・シリアライズ/デシリアライズ、Schema Registry連携   |
 | **Cache**    | ストリーム処理の状態管理（RocksDB等）、ウィンドウ確定データ永続化    |
 | **Window**        | 時間窓（Window）処理と集約・ウィンドウ確定の全体管理                 |
 | **Mapping**       | POCO ⇄ key/value 変換専用ユーティリティ                         |
@@ -73,7 +72,6 @@ Core … エンティティ・モデル管理【core_namespace_doc.md】
 
 Messaging … Producer/Consumer抽象・DLQ【messaging_namespace_doc.md】
 
-Serialization … Avro/Schema Registry対応【serialization_namespace_doc.md】
 
 Cache … ストリーム状態・RocksDB連携【cache_namespace_doc.md】
 
