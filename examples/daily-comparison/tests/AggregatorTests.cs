@@ -78,7 +78,7 @@ public class AggregatorTests
         candleSet.AddItem(new RateCandle { Broker = "b", Symbol = "s", BarTime = new DateTime(2024,1,1,1,0,0), Open = 1.1m, High = 1.1m, Low = 1m, Close = 1.1m });
         candleSet.AddItem(new RateCandle { Broker = "b", Symbol = "s", BarTime = new DateTime(2024,1,1,2,0,0), Open = 2.1m, High = 2.1m, Low = 2m, Close = 2.1m });
 
-        var aggregator = new Aggregator(new KafkaKsqlContextStub(context));
+        var aggregator = new Aggregator(new KafkaKsqlContextStub(context), null);
         var (dailyBars, minuteBars) = await aggregator.AggregateAsync(new DateTime(2024,1,1));
 
         var result = Assert.Single(dailyBars);
