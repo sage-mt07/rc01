@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Xunit;
+using Kafka.Ksql.Linq.Configuration;
 
 namespace Kafka.Ksql.Linq.Tests.Integration;
 
@@ -14,7 +15,7 @@ internal static class TestSchema
             ("CustomerId", "INT"),
             ("Id", "INT"),
             ("Region", "VARCHAR"),
-            ("Amount", "DECIMAL(38, 9)"),
+            ("Amount", $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})"),
             ("IsHighPriority", "BOOLEAN"),
             ("Count", "INT")
         },
@@ -32,12 +33,12 @@ internal static class TestSchema
         {
             ("CustomerId", "INT"),
             ("Region", "VARCHAR"),
-            ("Amount", "DECIMAL(38, 9)")
+            ("Amount", $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})")
         },
         ["orders_nullable_key"] = new[]
         {
             ("CustomerId", "INT"),
-            ("Amount", "DECIMAL(38, 9)")
+            ("Amount", $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})")
         }
     };
 

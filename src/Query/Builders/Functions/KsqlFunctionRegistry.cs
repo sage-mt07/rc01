@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Kafka.Ksql.Linq.Configuration;
 
 namespace Kafka.Ksql.Linq.Query.Builders.Functions;
 
@@ -225,7 +226,7 @@ internal static class KsqlFunctionRegistry
             "TOINT" or "TOINT32" => "INTEGER",
             "TOLONG" or "TOINT64" => "BIGINT",
             "TODOUBLE" => "DOUBLE",
-            "TODECIMAL" => "DECIMAL(38, 9)",
+            "TODECIMAL" => $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})",
             "TOSTRING" => "VARCHAR",
             "TOBOOL" or "TOBOOLEAN" => "BOOLEAN",
             _ => "UNKNOWN"

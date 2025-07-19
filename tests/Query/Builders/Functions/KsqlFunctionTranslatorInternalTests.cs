@@ -1,6 +1,7 @@
 using System;
 using System.Linq.Expressions;
 using Kafka.Ksql.Linq.Query.Builders.Functions;
+using Kafka.Ksql.Linq.Configuration;
 using Xunit;
 using static Kafka.Ksql.Linq.Tests.PrivateAccessor;
 
@@ -20,7 +21,7 @@ public class KsqlFunctionTranslatorInternalTests
     [InlineData(typeof(bool), "BOOLEAN")]
     [InlineData(typeof(DateTime), "TIMESTAMP")]
     [InlineData(typeof(Guid), "VARCHAR")]
-    [InlineData(typeof(decimal), "DECIMAL(38, 9)")]
+    [InlineData(typeof(decimal), $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})")]
     [InlineData(typeof(byte[]), "BYTES")]
     public void MapToKsqlType_ReturnsExpected(Type type, string expected)
     {

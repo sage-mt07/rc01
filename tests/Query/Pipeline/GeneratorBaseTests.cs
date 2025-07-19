@@ -1,5 +1,6 @@
 using System;
 using Kafka.Ksql.Linq.Query.Pipeline;
+using Kafka.Ksql.Linq.Configuration;
 using Xunit;
 
 namespace Kafka.Ksql.Linq.Tests.Query.Pipeline;
@@ -56,7 +57,7 @@ public class GeneratorBaseTests
     [InlineData(typeof(double), "DOUBLE")]
     [InlineData(typeof(bool), "BOOLEAN")]
     [InlineData(typeof(DateTime), "TIMESTAMP")]
-    [InlineData(typeof(decimal), "DECIMAL(38, 9)")]
+    [InlineData(typeof(decimal), $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})")]
     [InlineData(typeof(byte[]), "BYTES")]
     public void MapToKSqlType_ReturnsExpected(Type type, string expected)
     {

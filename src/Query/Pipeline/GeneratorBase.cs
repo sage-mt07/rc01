@@ -1,4 +1,5 @@
 using Kafka.Ksql.Linq.Query.Abstractions;
+using Kafka.Ksql.Linq.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -265,7 +266,7 @@ internal abstract class GeneratorBase
             Type t when t == typeof(long) => "BIGINT",
             Type t when t == typeof(double) => "DOUBLE",
             Type t when t == typeof(float) => "DOUBLE",
-            Type t when t == typeof(decimal) => "DECIMAL(38, 9)",
+            Type t when t == typeof(decimal) => $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})",
             Type t when t == typeof(string) => "VARCHAR",
             Type t when t == typeof(char) => "VARCHAR",
             Type t when t == typeof(bool) => "BOOLEAN",

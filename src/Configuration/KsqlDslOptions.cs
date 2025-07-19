@@ -47,4 +47,16 @@ public class KsqlDslOptions
     /// Optional bar limits per symbol and bar type
     /// </summary>
     public BarLimitOptions BarLimits { get; init; } = new();
+
+    /// <summary>
+    /// Global decimal precision applied when mapping decimal properties.
+    /// </summary>
+    [DefaultValue(38)]
+    public int DecimalPrecision { get; init; } = 38;
+
+    /// <summary>
+    /// Global decimal scale applied when mapping decimal properties.
+    /// </summary>
+    [DefaultValue(9)]
+    public int DecimalScale { get; init; } = 9;
 }

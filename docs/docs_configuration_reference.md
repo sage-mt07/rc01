@@ -17,7 +17,9 @@ Kafka.Ksql.Linq では、`appsettings.json` を通じて柔軟なDSL設定が可
     "DlqTopicName": "dead.letter.queue",
     "DlqConfiguration": { /* DLQ トピック設定 */ },
     "DeserializationErrorPolicy": "Skip|Retry|DLQ",
-    "ReadFromFinalTopicByDefault": false
+    "ReadFromFinalTopicByDefault": false,
+    "DecimalPrecision": 38,
+    "DecimalScale": 9
   }
 }
 ```
@@ -250,6 +252,8 @@ Consumer の設定は `ConsumerSection` クラスにそれぞれマッピング�
 |------|------|
 | `DeserializationErrorPolicy` | `Skip` / `Retry` / `DLQ` のエラーハンドリング方針 |
 | `ReadFromFinalTopicByDefault` | Finalトピックを既定で参照するか |
+| `DecimalPrecision` | decimal型のprecisionを一括設定 |
+| `DecimalScale` | decimal型のscaleを一括設定 |
 
 
 ### 🧩 DSL記述とappsettingsの対応関係
