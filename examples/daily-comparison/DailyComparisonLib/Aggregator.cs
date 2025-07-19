@@ -22,7 +22,7 @@ public class Aggregator
         var minuteBars = (await _context.Set<RateCandle>()
             .Window(1)
             .ToListAsync(ct))
-            .Where(c => c.WindowStart.Date == date.Date)
+            .Where(c => c.BarTime.Date == date.Date)
             .ToList();
 
         return (dailyBars, minuteBars);

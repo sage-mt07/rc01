@@ -27,9 +27,7 @@ public class KafkaKsqlContext : KafkaContext
             {
                 Broker = key.Broker,
                 Symbol = key.Symbol,
-                WindowMinutes = w.BarWidth,
-                WindowStart = w.BarStart,
-                WindowEnd = w.BarStart.AddMinutes(w.BarWidth),
+                BarTime = w.BarStart,
                 High = w.Source.Max(x => x.Bid),
                 Low = w.Source.Min(x => x.Bid),
                 Close = w.Source.OrderByDescending(x => x.RateTimestamp).First().Bid,

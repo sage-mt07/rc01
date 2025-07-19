@@ -12,19 +12,19 @@ var comparisons = await context.Set<DailyComparison>().ToListAsync();
 Console.WriteLine("--- 1 minute bars ---");
 foreach (var c in oneMinBars)
 {
-    Console.WriteLine($"1m {c.WindowStart:t} {c.Symbol} O:{c.Open} H:{c.High} L:{c.Low} C:{c.Close}");
+    Console.WriteLine($"1m {c.BarTime:t} {c.Symbol} O:{c.Open} H:{c.High} L:{c.Low} C:{c.Close}");
 }
 
 Console.WriteLine("--- 5 minute bars ---");
 foreach (var c in fiveMinBars)
 {
-    Console.WriteLine($"5m {c.WindowStart:t} {c.Symbol} O:{c.Open} H:{c.High} L:{c.Low} C:{c.Close}");
+    Console.WriteLine($"5m {c.BarTime:t} {c.Symbol} O:{c.Open} H:{c.High} L:{c.Low} C:{c.Close}");
 }
 
 Console.WriteLine("--- Daily bars ---");
 foreach (var c in dailyBars)
 {
-    Console.WriteLine($"day {c.WindowStart:d} {c.Symbol} O:{c.Open} H:{c.High} L:{c.Low} C:{c.Close}");
+    Console.WriteLine($"day {c.BarTime:d} {c.Symbol} O:{c.Open} H:{c.High} L:{c.Low} C:{c.Close}");
 }
 
 Console.WriteLine("--- Daily comparison ---");
