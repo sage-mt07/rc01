@@ -51,13 +51,6 @@
 
 | 属性                       | 役割                           | 実装状態 |
 |----------------------------|--------------------------------|---------|
-| `TopicAttribute`           | トピック構成指定               | ❌      |
-| `KeyAttribute`             | キー項目指定                   | ❌      |
-| `KsqlTableAttribute`       | テーブル情報指定               | ❌      |
-| `AvroTimestampAttribute`   | Avro タイムスタンプ列指定      | ❌      |
-| `DecimalPrecisionAttribute`| Decimal 精度指定               | ❌      |
-| `RetryAttribute`           | (予定) リトライポリシー指定    | ⏳      |
-| `KsqlColumnAttribute`      | (予定) 列名マッピング          | ⏳      |
 | `DefaultValueAttribute`    | 既定値指定                     | ✅      |
 | `MaxLengthAttribute`       | 文字列長制限                   | ✅      |
 | `ScheduleRangeAttribute`   | 取引開始・終了をまとめて指定する属性 | 🚧 |
@@ -75,6 +68,86 @@
 | `AvroRetryPolicy`          | リトライ回数や遅延などの詳細ポリシー | ✅  |
 
 `KsqlDslOptions.DlqTopicName` は既定で `"dead.letter.queue"` です【F:src/Configuration/KsqlDslOptions.cs†L31-L34】。
+
+<a id="fluent-api-list"></a>
+### Fluent API 一覧
+
+| メソッド | 説明 |
+|----------|------|
+| `Entity<T>(readOnly = false, writeOnly = false)` | エンティティ登録とアクセスモード指定 |
+| `.HasKey(expr)` | 主キーを指定する（必須） |
+| `.WithTopic(name, partitions = 1, replication = 1)` | トピック名と構成を指定 |
+| `.AsStream()` | ストリーム型として登録 |
+| `.AsTable(topicName = null, useCache = true)` | テーブル型として登録 |
+| `.WithManualCommit()` | 手動コミットモード有効化 |
+| `.WithDecimalPrecision(prop, precision, scale)` | Decimal 精度を設定 |
+| `.WithPartitions(partitions)` | パーティション数を設定（拡張） |
+| `.WithReplicationFactor(replicationFactor)` | レプリケーション係数を設定（拡張） |
+| `.WithPartitioner(partitioner)` | カスタムパーティショナーを指定（拡張） |
+| `.HasQuery(query)` | LINQ クエリからモデルを構築 |
+| `DefineQuery<TSource, TTarget>(query)` | ソースとターゲットを指定したクエリ定義 |
+
+<a id="fluent-api-guide"></a>
+## Fluent API ガイドライン
+
+POCO モデルを Fluent API で構成する際の設計指針と移行フローをまとめます。属性ベースからの移行後は
+`IEntityBuilder<T>` を用いて宣言的に設定を行います。
+
+### 1. 基本方針
+- `docs/core_namespace_redesign_plan.md` で示されたとおり、`TopicAttribute` などの属性は削除予定。
+- `HasKey` は必須呼び出しとし、複合キーも `HasKey(e => new { e.A, e.B })` で定義します。
+- エンティティ登録時は `readonly` `writeonly` `readwrite` の 3 種類で役割を指定し、未指定時は `readwrite` とみなします。
+
+### 2. 推奨記述例
+```csharp
+class Order
+{
+    public int Id { get; set; }
+    public decimal Amount { get; set; }
+}
+
+void OnModelCreating(ModelBuilder builder)
+{
+    builder.Entity<Order>(writeOnly: true)
+        .HasKey(o => o.Id)
+        .WithTopic("orders")
+        .WithDecimalPrecision(o => o.Amount, precision: 18, scale: 2);
+}
+```
+旧 `[Topic]` や `DecimalPrecision` 属性を使用せずにトピックや精度を設定できます。
+
+### 3. 既存 POCO → Fluent API 移行フロー
+1. POCO から属性を削除し、純粋なデータクラスとする。
+2. `OnModelCreating` で `builder.Entity<T>()` を呼び出し、`HasKey` と各種設定を定義。
+3. テストを実行してキー順序やトピック設定が正しいか確認する。
+   参考資料: `docs/oss_migration_guide.md` では属性とメソッドの 1:1 対応表を記載。
+
+### 4. MappingManager との連携
+`MappingManager` を利用して key/value を抽出する例です。詳細は `docs/architecture/key_value_flow.md` を参照してください。
+```csharp
+var ctx = new MyKsqlContext(options);
+var mapping = ctx.MappingManager;
+var entity = new Order { Id = 1, Amount = 100 };
+var (key, value) = mapping.ExtractKeyValue(entity);
+await ctx.AddAsync(entity);
+```
+#### ベストプラクティス
+- エンティティ登録は `OnModelCreating` 内で一括定義する。
+- `MappingManager` を毎回 `new` しない。DI コンテナで共有し、モデル登録漏れを防ぐ。
+
+### 5. 追加検討事項
+- `WithTopic` のオプション拡張方法（パーティション数など）の公開方法を検討中。
+- MappingManager のキャッシュ戦略（スレッドセーフな実装範囲）を確定する必要あり。
+
+### 6. サンプル実装での気づき
+- `AddSampleModels` 拡張で `MappingManager` への登録をまとめると漏れ防止になる。
+- 複合キーは `Dictionary<string, object>` として抽出されるため、型安全ラッパーの検討余地あり。
+- 複数エンティティを登録するヘルパーがあると `OnModelCreating` の記述量を抑えられる。
+
+### 7. AddAsync 統一に伴うポイント
+- メッセージ送信 API は `AddAsync` に一本化した。旧 `ProduceAsync` は廃止予定。
+- LINQ クエリ解析から `MappingManager.ExtractKeyValue()` を経由し `AddAsync` を呼び出す流れをサンプル化。
+- 詳細なコード例は [architecture/query_to_addasync_sample.md](architecture/query_to_addasync_sample.md) を参照。
 
 ## エラーハンドリング
 
