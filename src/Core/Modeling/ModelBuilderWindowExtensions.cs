@@ -3,7 +3,7 @@ using Kafka.Ksql.Linq.Core.Abstractions;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace Kafka.Ksql.Linq;
+namespace Kafka.Ksql.Linq.Core.Modeling;
 
 public static class WindowDslExtensions
 {
