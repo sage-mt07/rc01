@@ -258,6 +258,8 @@ internal class KafkaConsumerManager : IDisposable
 
     private IDeserializer<object> CreateKeyDeserializerGeneric<T>()
     {
+        var schema = DynamicSchemaGenerator.GetSchema<T>();
+        _logger?.LogDebug("Generated key schema: {Schema}", schema.ToString());
         var typed = new AvroDeserializer<T>(_schemaRegistryClient.Value, _deserializerConfig).AsSyncOverAsync();
         return SerializerAdapters.ToObjectDeserializer(typed);
     }
@@ -267,7 +269,8 @@ internal class KafkaConsumerManager : IDisposable
         var type = typeof(T);
         if (_valueDeserializerCache.TryGetValue(type, out var cached))
             return cached;
-
+        var schema = DynamicSchemaGenerator.GetSchema<T>();
+        _logger?.LogDebug("Generated value schema: {Schema}", schema.ToString());
         var typed = new AvroDeserializer<T>(_schemaRegistryClient.Value, _deserializerConfig).AsSyncOverAsync();
         var deserializer = SerializerAdapters.ToObjectDeserializer(typed);
         _valueDeserializerCache[type] = deserializer;
