@@ -1,27 +1,24 @@
-# Query -> KsqlContext -> Mapping/Serialization Flow
+# Query から KsqlContext への Mapping/Serialization フロー
 
-🗕 2025-07-13 17:55 JST
-🧐 作成者: assistant
+🗕 2025年7月20日（JST）
+🧐 作成者: くすのき
 
-Query namespace で組み立てた DSL から Messaging 層までの責務分界とデータフローを
-整理する。Messaging 再設計前の基準として、各レイヤーの役割と API 例を明記する。
+このドキュメントでは、Query DSL で組み立てたクエリがどのように `KsqlContext` を経由して `Messaging` 層へ届くのか、流れと役割分担を解説します。各レイヤーの責務を理解することで、実装時に迷わず最適な構成を選択できます。
 
 ## 1. 目的
-- Query は LINQ 式から論理的な Key/Value 分割とメタ情報 (`QuerySchema`) を返す。
-- KsqlContext は `QuerySchema` を受け取り Mapping/Serialization へ変換指示する統括
-  レイヤーとなる。
-- Mapping/Serialization は POCO と Key/Value との相互変換、およびシリアライズ／
-  デシリアライズ処理を担当する。
-- Messaging は key/value の送受信 API のみを担う。
+1. Query では LINQ 式から `QuerySchema` を生成します。
+2. `KsqlContext` は `QuerySchema` を登録し、Mapping と Serialization の初期化を指示します。
+3. Mapping/Serialization レイヤーでは POCO ⇔ Key/Value 変換と Avro シリアライズを担当します。
+4. Messaging ではシリアライズ済みのキーと値を送受信します。
 
-## 2. 責務一覧
+## 2. レイヤー別の責務
 | レイヤー | 主なクラス/IF | 責務概要 |
 | --- | --- | --- |
-| Query | `EntitySet<T>`, `QueryAnalyzer` | LINQ 式解析、`QuerySchema` 提供 |
-| KsqlContext | `KsqlContext`, `KsqlContextBuilder` | `QuerySchema` 登録、Mapping/Serialization への橋渡し |
-| Mapping | `MappingManager`, `PocoMapper` | `QuerySchema` を用いた POCO⇔Key/Value 変換 |
-| Serialization | `AvroSerializerFactory` 等 | Key/Value のシリアライズ／デシリアライズ |
-| Messaging | `KafkaProducerManager`, `KafkaConsumerManager` | POCO を Avro へ変換して送信、受信時は Avro から POCO へ復元 (Serializer/Deserializer はキャッシュ) |
+| Query | `EntitySet<T>`, `QueryAnalyzer` | LINQ 解析と `QuerySchema` 生成 |
+| KsqlContext | `KsqlContext`, `KsqlContextBuilder` | `QuerySchema` 登録と Mapping/Serialization への橋渡し |
+| Mapping | `MappingManager`, `PocoMapper` | POCO ⇔ Key/Value 変換を管理 |
+| Serialization | `AvroSerializerFactory` など | Key/Value のシリアライズ／デシリアライズ |
+| Messaging | `KafkaProducerManager`, `KafkaConsumerManager` | Avro 変換後の送受信 (Serializer/Deserializer をキャッシュ) |
 
 ## 3. データフロー
 ```mermaid
@@ -37,30 +34,36 @@ sequenceDiagram
     Ctx->>Ser: BuildSerializer(QuerySchema)
     Ctx->>Msg: Produce(key,value)
 ```
+1. `EntitySet<T>` から `QueryAnalyzer` が `QuerySchema` を生成します。
+2. `KsqlContext` が `MappingManager` にスキーマを登録します。
+3. `KsqlContext` が `AvroSerializerFactory` へ情報を渡し、Serializer/Deserializer を構築します。
+4. 作成した Key/Value を `Messaging` の `AddAsync` へ渡して送信します。
 
-1. `EntitySet<T>` から `QueryAnalyzer` が `QuerySchema` を生成。
-2. `KsqlContext` が `QuerySchema` を保持し、`MappingManager` へ登録。
-3. `KsqlContext` が `AvroSerializerFactory` へスキーマ情報を渡し、Serializer を生成。
-4. 生成された Key/Value は Messaging の `AddAsync(key,value)` へ渡され送信される。
-
-## 4. API 例
+## 4. サンプルコード
 ```csharp
-// Query 側でメタ情報取得
+// LINQ クエリを解析してスキーマを取得
 var result = QueryAnalyzer.Analyze<User, User>(q => q.Where(u => u.Id == 1));
 var schema = result.Schema!;
 
-// KsqlContext で登録
+// KsqlContext にスキーマを登録
 var ctx = new MyKsqlContext(options);
 ctx.RegisterQuerySchema<User>(schema);
 
-// Mapping/Serialization を通じて送信
+// 変換した Key/Value を送信
 var (key, value) = PocoMapper.ToKeyValue(user, schema);
 await ctx.Messaging.AddAsync(key, value);
 ```
 
-## 5. Messaging 最小 API
-- `Task AddAsync(byte[] key, byte[] value, string topic);`
-- `IAsyncEnumerable<(byte[] Key, byte[] Value)> ConsumeAsync(string topic);`
+## 5. ベストプラクティス
+- `QueryAnalyzer` から得たスキーマは再利用し、毎回解析し直さないようにしましょう。
+- `KsqlContext` はスコープごとに生成し、長時間の使い回しは避けます。
+- 送信前に生成された KSQL 文をログで確認するとデバッグが容易になります。
+- Serializer/Deserializer のキャッシュを有効にし、性能を安定させてください。
+- エラー時は `AddAsync` をリトライポリシー付きで呼び出し、必要に応じて DLQ を活用します。
 
-以前は Messaging 層をシリアライズ済みの key/value 送受信のみに限定していたが、現行設計では `KafkaProducerManager` と `KafkaConsumerManager` が Avro 変換を担当する。これらのマネージャーは `PocoMapper` により POCO と key/value を相互変換し、生成した Serializer/Deserializer をキャッシュして高頻度の送受信に備える。
+## 6. 参考資料
+- [key_value_flow.md](./key_value_flow.md) – 各レイヤーの関係整理
+- [api_reference.md の Fluent API ガイドライン](../api_reference.md#fluent-api-guide)
 
+## 7. 最新更新 (2025-07-20)
+`entityset_to_messaging_story.md` とトーンを統一し、ベストプラクティスを追記しました。

@@ -1,9 +1,9 @@
-# Query to AddAsync Flow Sample
+# Query から AddAsync までのサンプルフロー
 
-🗕 2025年7月27日（JST）
-🧐 作成者: naruse
+🗕 2025年7月20日（JST）
+🧐 作成者: くすのき
 
-`EntitySet<T>` の LINQ クエリを `QueryAnalyzer` で解析し、`PocoMapper` が生成した key/value を `KsqlContext` の `AddAsync` へ渡すまでのサンプルです。DI に登録したサービスのみで完結します。
+このドキュメントでは、`EntitySet<T>` の LINQ クエリを解析して得たスキーマを利用し、`AddAsync` で Kafka にメッセージを送るまでの一連の手順を紹介します。サービス登録さえ済ませれば、そのまま利用できる形でまとめました。
 
 ```csharp
 var services = new ServiceCollection();
@@ -26,4 +26,9 @@ await ctx.Set<Order>().AddAsync(order);
 
 `ExtractKeyParts` で取得した複合キーは Type 情報を保持するため、安全に `BuildTypedKey` で変換できます。
 
-この流れにより、クエリ定義からメッセージ送信までを DI コンテナ上のサービスで完結させることができます。
+このサンプルを参考に、クエリ定義からメッセージ送信までを DI コンテナ上のサービスで完結させてみましょう。以下のポイントも意識すると、より安全に運用できます。
+
+- `QueryAnalyzer` の結果はキャッシュし、何度も解析し直さない
+- `AddAsync` は失敗時にリトライするか、DLQ へ送る仕組みを用意する
+- `KsqlContext` はスコープライフサイクルで生成し、使い回しを避ける
+

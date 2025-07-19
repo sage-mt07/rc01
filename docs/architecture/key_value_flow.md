@@ -1,8 +1,9 @@
 # Key-Value Flow Architecture (POCO ↔ Kafka)
 
-## 1. 概要
+🗕 2025年7月20日（JST）
+🧐 作成者: くすのき
 
-本資料は、Query namespace に定義された POCO および LINQ式から Kafka へ送信するフロー（Produce）と、Kafka から受信して POCO に復元するフロー（Consume）を一貫して設計するための責務分解図である。
+このドキュメントでは、POCO と LINQ クエリから生成した key/value を Kafka へ送信する流れと、受信したデータを POCO へ戻す流れをまとめています。各レイヤーの責務を把握することで、設計の指針を明確にできます。
 
 ---
 
@@ -24,9 +25,6 @@
 [Kafka]
 → Topic送信
 
-yaml
-コピーする
-編集する
 
 ### 🧱 責務一覧
 
@@ -133,9 +131,9 @@ await ctx.AddAsync(entity);
 
 ### ベストプラクティス
 
-- `MappingManager` へ登録するモデルは `OnModelCreating` で一括定義する。
-- `QueryBuilder` から返される KSQL 文はデバッグログで確認しておく。
-- `KsqlContext` のライフサイクルは DI コンテナに任せ、使い回しを避ける。
+- `MappingManager` へ登録するモデルは `OnModelCreating` で一括定義しましょう
+- `QueryBuilder` から返される KSQL 文はデバッグログで確認しておくと安心です
+- `KsqlContext` はスコープライフサイクルで生成し、長期間の使い回しは避けます
 
 ### アンチパターン
 
@@ -253,4 +251,5 @@ mapping.RegisterMeta(typeof(Log), meta);
 ```
 
 これにより Readonly エンティティでも既存の Mapping/Serialization 処理を変更せず
-デシリアライズが可能となる。
+デシリアライズが可能となります。
+以上が Key/Value フロー全体の概要です。疑問点があれば issue へお気軽にご相談ください。
