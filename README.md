@@ -136,6 +136,26 @@ await context.Set<OrderCandle>()
     .ForEachAsync(...);
 ```
 
+### Set<T>().Limit(N)
+`Limit` を指定すると、Pull Query として N 件だけ取得した時点で処理が終了します。余分
+なレコードは内部で破棄されるため、`ForEachAsync` や `ToListAsync` でも N 件で完了しま
+す。
+
+```csharp
+var recent = await context.Set<Order>()
+    .Limit(100)
+    .ToListAsync();
+```
+
+### RemoveAsync とトムストーン
+`RemoveAsync` を呼び出すと、指定キーに対する値 `null` のメッセージ（トムストーン）がト
+ピックに送信されます。トムストーンは KTable やキャッシュに保存された既存レコードを削
+除するために用いられます。
+
+```csharp
+await context.Orders.RemoveAsync(orderId);
+```
+
 
 ## Quick Start
 1. .NET 6 SDKインストール（dotnet --versionで確認）

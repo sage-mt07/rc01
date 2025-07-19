@@ -31,11 +31,14 @@
 | `.WithRetry(int)`              | リトライ設定                  | `EventSet<T>`                     | Stream        | ✅      |
 | `.StartErrorHandling()`        | エラーチェーン開始            | `IErrorHandlingChain<T>`          | Stream        | ✅      |
 | `.WithManualCommit()`          | 手動コミットモード切替        | `IEntityBuilder<T>`               | Subscription  | ✅      |
+| `.Limit(int)`                  | 取得件数を制限する Pull Query | `IEntitySet<T>`                  | Stream/Table  | ✅      |
 
 - `ToList`/`ToListAsync` は Pull Query として実行されます【F:src/Query/Pipeline/DMLQueryGenerator.cs†L27-L34】。
 - `WithManualCommit()` を指定しない `ForEachAsync()` は自動コミット動作となります【F:docs/old/manual_commit.md†L1-L23】。
 - `OnError(ErrorAction.DLQ)` を指定すると DLQ トピックへ送信されます【F:docs/old/defaults.md†L52-L52】。
 - Messaging クラス自体は DLQ 送信処理を持たず、`ErrorOccurred`/`DeserializationError`/`ProduceError` などのイベントを通じて外部で DLQ 送信を行います。
+- `Set<T>().Limit(n)` を指定すると n 件取得後にストリームが終了します。残りのレコードは破棄されます。
+- `RemoveAsync(key)` は値 `null` のトムストーンを送り、KTable やキャッシュから該当キーのデータを削除します。
 - `.Window().BaseOn<TSchedule>` を用いる場合、バーは `[ScheduleRange]` 属性、または `openProp`/`closeProp` パラメータで示された `Open` ～ `Close` の範囲に含まれるデータのみで構成されます。日足生成で `Close` が 6:30 のときは、6:30 未満のデータが当日の終値として扱われます。
 - バーやウィンドウ定義は必ず `KafkaKsqlContext.OnModelCreating` 内で宣言してください。アプリケーション側では定義済みの `Set<T>` を参照するだけです。
 - `WithWindow<Rate, MarketSchedule>()` に続けて `.Select<RateCandle>()` を呼び出すことで、レートからバーエンティティを構成できます。
