@@ -35,8 +35,34 @@ public class KafkaKsqlContext : KafkaContext
             };
         });
 
+        modelBuilder.Entity<DailyComparison>()
+            .HasQuery<DailyComparison, RateCandle>(bars => bars
+                .Select(bar => new DailyComparison
+                {
+                    Broker = bar.Broker,
+                    Symbol = bar.Symbol,
+                    Date = bar.BarTime.Date,
+                    High = bar.High,
+                    Low = bar.Low,
+                    Close = bar.Close,
+                    PrevClose = bars
+                        .Where(p => p.Broker == bar.Broker && p.Symbol == bar.Symbol && p.BarTime < bar.BarTime)
+                        .OrderByDescending(p => p.BarTime)
+                        .Select(p => p.Close)
+                        .FirstOrDefault(),
+                    Diff = (bar.Close - bars
+                        .Where(p => p.Broker == bar.Broker && p.Symbol == bar.Symbol && p.BarTime < bar.BarTime)
+                        .OrderByDescending(p => p.BarTime)
+                        .Select(p => p.Close)
+                        .FirstOrDefault()) /
+                        bars.Where(p => p.Broker == bar.Broker && p.Symbol == bar.Symbol && p.BarTime < bar.BarTime)
+                            .OrderByDescending(p => p.BarTime)
+                            .Select(p => p.Close)
+                            .FirstOrDefault()
+                }))
+            .AsTable();
+
         modelBuilder.Entity<MarketSchedule>();
         modelBuilder.Entity<RateCandle>();
-        modelBuilder.Entity<DailyComparison>();
     }
 }
