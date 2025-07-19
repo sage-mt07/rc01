@@ -2,7 +2,6 @@ using Kafka.Ksql.Linq.Core.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,11 +22,12 @@ public static class EventSetLimitExtensions
         if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
 
         var items = await entitySet.ToListAsync(cancellationToken);
-        var barTimeProp = typeof(T).GetProperty("BarTime", BindingFlags.Public | BindingFlags.Instance);
-        if (barTimeProp == null)
-            throw new InvalidOperationException($"Type {typeof(T).Name} must have BarTime property.");
+        var model = entitySet.GetEntityModel();
+        if (model.BarTimeSelector == null)
+            throw new InvalidOperationException($"Entity {typeof(T).Name} is missing bar time selector configuration.");
 
-        var ordered = items.OrderByDescending(i => (DateTime)barTimeProp.GetValue(i)!).ToList();
+        var selector = (Func<T, DateTime>)model.BarTimeSelector.Compile();
+        var ordered = items.OrderByDescending(selector).ToList();
         var toKeep = ordered.Take(count).ToList();
         var toRemove = ordered.Skip(count).ToList();
 

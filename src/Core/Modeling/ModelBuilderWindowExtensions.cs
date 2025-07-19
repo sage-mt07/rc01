@@ -2,6 +2,7 @@ using System;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Kafka.Ksql.Linq.Core.Modeling;
 
@@ -46,15 +47,42 @@ public static class ModelBuilderWindowExtensions
         where TSchedule : class
     {
         // placeholder for DSL registration
-        return new WindowSelectionBuilder<TEntity, TSchedule>();
+        return new WindowSelectionBuilder<TEntity, TSchedule>(modelBuilder);
     }
 }
 
 public class WindowSelectionBuilder<TEntity, TSchedule>
 {
-    public void Select<TResult>(Func<WindowGrouping<TEntity>, TResult> selector)
+    private readonly IModelBuilder _modelBuilder;
+
+    internal WindowSelectionBuilder(IModelBuilder modelBuilder)
     {
-        // placeholder for DSL registration
+        _modelBuilder = modelBuilder;
+    }
+
+    public void Select<TResult>(Expression<Func<WindowGrouping<TEntity>, TResult>> selector) where TResult : class
+    {
+        var builder = (EntityModelBuilder<TResult>)_modelBuilder.Entity<TResult>();
+        var model = builder.GetModel();
+        model.BarTimeSelector = ExtractBarTimeSelector(selector);
+        // placeholder for DSL registration of window aggregation
+    }
+
+    private static LambdaExpression? ExtractBarTimeSelector<TResult>(Expression<Func<WindowGrouping<TEntity>, TResult>> selector)
+    {
+        if (selector.Body is MemberInitExpression init)
+        {
+            foreach (var binding in init.Bindings.OfType<MemberAssignment>())
+            {
+                if (binding.Expression is MemberExpression member && member.Member.Name == nameof(WindowGrouping<object>.BarStart))
+                {
+                    var param = Expression.Parameter(typeof(TResult), "x");
+                    var prop = Expression.Property(param, (PropertyInfo)binding.Member);
+                    return Expression.Lambda(prop, param);
+                }
+            }
+        }
+        return null;
     }
 }
 

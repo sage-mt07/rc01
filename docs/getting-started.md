@@ -528,6 +528,10 @@ var latest = await context.Set<Trade>()
     .ToListAsync();
 ```
 
+バー生成に `WithWindow().Select<TBar>()` を使用している場合、`BarTime` への
+代入式から自動的にタイムスタンプセレクターが取得され、`Limit` の並び替えに活用
+されます。
+
 ### RemoveAsync でトムストーン送信
 `RemoveAsync` はキーを指定して値 `null` のメッセージ（トムストーン）をトピックへ送信し
 ます。これにより KTable やキャッシュに保持された同一キーのデータが削除されます。

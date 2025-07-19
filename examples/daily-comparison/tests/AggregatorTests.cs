@@ -67,6 +67,7 @@ public class AggregatorTests
         var scheduleSet = new DummySet<MarketSchedule>(context);
         var dailySet = new DummySet<DailyComparison>(context);
         var candleSet = new DummySet<RateCandle>(context);
+        candleSet.GetEntityModel().BarTimeSelector = (Expression<Func<RateCandle, DateTime>>)(x => x.BarTime);
         context.AddSet(rateSet);
         context.AddSet(scheduleSet);
         context.AddSet(dailySet);
