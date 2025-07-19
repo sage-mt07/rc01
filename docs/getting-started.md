@@ -67,7 +67,7 @@ kafkaへの接続エラーはksqlContextのコンストラクタでthrowされ�
 
 > **POCO設計方針**
 > POCO/DTO いずれでも `Key` 属性を使用せず、プロパティ定義順のみで key schema を決定します。
-> 詳細は [docs/poco_design_policy.md](./poco_design_policy.md) を参照してください。
+> 詳細は [architecture_overview.md](./architecture_overview.md#poco%E8%A8%AD%E8%A8%88%E3%83%BBpk%E9%81%8B%E7%94%A8%E3%83%BB%E3%82%B7%E3%83%AA%E3%82%A2%E3%83%A9%E3%82%A4%E3%82%BA%E6%96%B9%E9%87%9D) を参照してください。
 
 ## 3. POCO属性ベースDSL設計ルール（Fluent APIの排除方針）
 

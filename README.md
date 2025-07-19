@@ -273,8 +273,7 @@ NAME_MISMATCH等のエラー時は手動で該当subject削除後に再実行
 | `docs/architecture_overview.md` | [全体アーキテクチャ構造と各層の責務定義](./docs/architecture_overview.md) |
 | `docs/architecture/query_ksql_mapping_flow.md` | [Query→KsqlContext→Mapping/Serialization 連携仕様](./docs/architecture/query_ksql_mapping_flow.md) |
 | `docs/test_guidelines.md` | [ksqlDB仕様準拠のテストガイドライン](./docs/test_guidelines.md) |
-| `docs/poco_design_policy.md` | [POCO設計・PK運用・シリアライズ方針](./docs/poco_design_policy.md) |
-- ドキュメントの重複・矛盾チェック結果は [docs/duplication_check_20250729.md](./docs/duplication_check_20250729.md) を参照
+| `docs/architecture_overview.md` | [POCO設計・PK運用・シリアライズ方針](./docs/architecture_overview.md#poco%E8%A8%AD%E8%A8%88%E3%83%BBpk%E9%81%8B%E7%94%A8%E3%83%BB%E3%82%B7%E3%83%AA%E3%82%A2%E3%83%A9%E3%82%A4%E3%82%BA%E6%96%B9%E9%87%9D) |
 
 ---
 > 本プロジェクトの開発思想・AI協働方法論は[Amagi Protocol統合ドキュメント](./docs/amagiprotocol/amagi_protocol_full.md)、
