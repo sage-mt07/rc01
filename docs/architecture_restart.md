@@ -55,7 +55,7 @@
 
     ## 📤 現状
     鳴瀬が以下のドキュメントとサンプルを作成し、FluentAPI 化の初期実装を完了
-    - `fluent_api_initial_design.md`: 設計ガイドライン、推奨記述例、移行フロー
+    - `api_reference.md` の Fluent API ガイドライン: 設計ガイドライン、推奨記述例、移行フロー
     - `tests/Mapping/FluentSampleIntegrationTests.cs` 等のサンプルコード
     - MappingManager との連携ベストプラクティスを整理
 

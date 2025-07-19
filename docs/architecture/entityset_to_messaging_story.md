@@ -57,7 +57,7 @@ await foreach (var (key, value) in ctx.EntitySet<Payment>().Select(p => p))
 ## 4. 参考資料
 
 - [key_value_flow.md](./key_value_flow.md) – 各レイヤーの責務概要
-- [fluent_api_initial_design.md](../fluent_api_initial_design.md)
+- [api_reference.md の Fluent API ガイドライン](../api_reference.md#fluent-api-guide)
 
 ## 5. 最新更新 (2025-07-13)
 AddAsync API 統一に合わせ、QueryAnalyzer を用いた自動フローを
