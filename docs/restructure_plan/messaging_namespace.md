@@ -1,7 +1,7 @@
 # Messaging Namespace 再設計方針
 
 ## 背景
-`architecture_diff_20250711.md` で指摘された通り、KafkaProducer/Consumer のプール構造が残存し、Confluent 公式実装との整合が不完全な状態です。さらに `architecture_restart_20250711.md` に沿い、公式 AvroSerializer/Deserializer 採用を前提とした構造再構築を行います。`ProducerPoolException` など旧構造の残骸を整理し、責務の明確化とファイル統合を実施します。
+`architecture_diff_20250711.md` で指摘されたプール構造はすでに廃止され、現在の実装では Confluent 公式の `IProducer` / `IConsumer` を直接利用する設計に統一されています。`architecture_restart` で示された方針は実装済みで、`ProducerPoolException` など旧構造の残骸も整理済みです。ここでは最終的な責務範囲を記録します。
 
 ## 主要変更点
 1. **Producer/Consumer のプール構造廃止**: `PooledProducer`, `PooledConsumer` など旧Pool関連クラスを削除し、単一インスタンス利用に統一。

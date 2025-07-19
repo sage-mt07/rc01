@@ -31,7 +31,7 @@ DSLや属性の基本的な使い方、アーキテクチャの理解を終え�
 -### 3.1 POCO → Avro スキーマ変換
 
 - POCOに付与された属性（[DecimalPrecision], [DateTimeFormat] など）を読み取り、Avroスキーマを動的生成する。
-- キー情報は DTO/POCO のプロパティ定義順から自動的に生成され、`Key` 属性は利用しない（詳細は [poco_design_policy.md](./poco_design_policy.md) を参照）。
+- キー情報は DTO/POCO のプロパティ定義順から自動的に生成され、`Key` 属性は利用しない（詳細は [architecture_overview.md](./architecture_overview.md#poco%E8%A8%AD%E8%A8%88%E3%83%BBpk%E9%81%8B%E7%94%A8%E3%83%BB%E3%82%B7%E3%83%AA%E3%82%A2%E3%83%A9%E3%82%A4%E3%82%BA%E6%96%B9%E9%87%9D) を参照）。
 - `SchemaRegistry.AutoRegisterSchemas = true` の場合、Kafka初回送信時に自動登録
 
 ### 3.2 変換時のマッピング規則

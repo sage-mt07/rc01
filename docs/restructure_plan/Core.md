@@ -4,7 +4,7 @@
 Documentation will drop references to `KeyAttribute` and clearly recommend using `EntityModelBuilder.HasKey` with LINQ expressions. Any lingering attribute examples will be removed.
 
 ## Motivation
-`architecture_diff_20250711.md` noted the mismatch between current docs and the LINQ-based implementation. Aligning with `architecture_restart_20250711.md` keeps guidance consistent with the code base.
+`architecture_diff_20250711.md` noted the mismatch between current docs and the LINQ-based implementation. The refresh plan described in `architecture_overview.md` now serves as the canonical guidance.
 
 ## Scope
 The focus is on documentation and example cleanup. If a `KeyAttribute` class still exists, mark it `Obsolete` for eventual removal.
