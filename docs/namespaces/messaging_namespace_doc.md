@@ -40,11 +40,7 @@ Kafka メッセージング機能の型安全な抽象化層を提供する name
 - **`KafkaConsumerManager`**: Consumer の型安全管理
 - **`KafkaBatch<TValue, TKey>`**: バッチ消費結果
 
-#### プール管理（廃止予定）
-- **`PooledConsumer`**: プールされた Consumer（Pool 削除方針）
-- **`ConsumerInstance`**: Consumer インスタンス管理
-
-**設計意図**: Pool 削除によるシンプル化、購読パターンの統一
+プール機構は廃止され、単一インスタンスでの購読管理に統一されている。
 
 ### 5. Contracts - エラーハンドリング契約
 - **`IErrorSink`**: エラーレコード処理インターフェース（DLQ送信等）
