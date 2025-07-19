@@ -126,15 +126,15 @@
 
 ## 外部依存関係
 
-- **IKafkaProducer**: 最終トピックへのメッセージ送信
-- **StreamizCache**: 確定データの永続化
-- **KeyAttribute**: エンティティキー特定（リフレクション使用）
+ - **IKafkaProducer**: 最終トピックへのメッセージ送信
+ - **StreamizCache**: 確定データの永続化
+ - **KeyExtractor**: `EntityModelBuilder.HasKey()` で指定したキーの取得ヘルパー
 
 ---
 
 ## 注意点
 
-1. **KeyAttribute未定義エンティティ**: HashCode使用でキー生成
+1. **キー指定がないエンティティ**: HashCode使用でキー生成
 2. **メモリ使用量**: RetentionHours設定での自動クリーンアップ
 3. **並行処理**: WindowStateでのlockベース同期制御
 4. **タイマー精度**: デフォルト1秒間隔での確定処理チェック

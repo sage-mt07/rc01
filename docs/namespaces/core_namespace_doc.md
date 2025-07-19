@@ -66,8 +66,8 @@ Kafka.Ksql.Linq.Coreは、Apache KafkaとKsqlDBを使ったストリーミング
 - **純粋性重視**: 副作用のない関数型設計を採用
 - **ログフリー**: Infrastructure層でログ処理を実装
 
-### 主要パターン
-- **POCO属性主導**: `[Topic]` 属性によるエンティティ定義（キーはプロパティ定義順から自動生成）
+-### 主要パターン
+- **Fluent API主体**: `EntityModelBuilder<T>` で `HasTopic()` や `HasKey()` を記述
 - **Fluent API**: ModelBuilderによる設定の補完
 - **LINQ互換**: `IAsyncEnumerable<T>`ベースの統一インターフェース
 - **エラーハンドリング**: Skip/Retry/DLQの3段階対応

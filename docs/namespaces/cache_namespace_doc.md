@@ -14,7 +14,8 @@ Streamiz.Kafka.Net の `KafkaStream` を利用し、RocksDB ベースの状態�
    - `ToListAsync()` などデータ取得時に `RUNNING` でなければ例外を返す
    - 通常は `IKsqlContext.Set<T>()` から透過的に利用される
 3. **設定連携**
-   - `appsettings.json` の `TableCache` セクションからキャッシュの有効 / 無効、ディレクトリなどを読み込む
+   - `appsettings.json` の `TableCache` セクションからキャッシュ有効フラグ、`BaseDirectory`、`StoreName` などを読み込む
+   - `StoreName` を省略した場合はトピック名に基づく名前を自動生成する
 
 このキャッシュは Table 型の EntitySet でデフォルト有効となり、高速な再読込を実現します。
 
