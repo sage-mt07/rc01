@@ -75,8 +75,8 @@ public class AggregatorTests
         var daily = new DailyComparison { Broker = "b", Symbol = "s", Date = new DateTime(2024,1,1), High = 2.1m, Low = 1m, Close = 2.1m, PrevClose = 2m, Diff = 0.1m };
         dailySet.AddItem(daily);
 
-        candleSet.AddItem(new RateCandle { Broker = "b", Symbol = "s", WindowStart = new DateTime(2024,1,1,1,0,0), WindowEnd = new DateTime(2024,1,1,1,1,0), WindowMinutes = 1, Open = 1.1m, High = 1.1m, Low = 1m, Close = 1.1m });
-        candleSet.AddItem(new RateCandle { Broker = "b", Symbol = "s", WindowStart = new DateTime(2024,1,1,2,0,0), WindowEnd = new DateTime(2024,1,1,2,1,0), WindowMinutes = 1, Open = 2.1m, High = 2.1m, Low = 2m, Close = 2.1m });
+        candleSet.AddItem(new RateCandle { Broker = "b", Symbol = "s", BarTime = new DateTime(2024,1,1,1,0,0), Open = 1.1m, High = 1.1m, Low = 1m, Close = 1.1m });
+        candleSet.AddItem(new RateCandle { Broker = "b", Symbol = "s", BarTime = new DateTime(2024,1,1,2,0,0), Open = 2.1m, High = 2.1m, Low = 2m, Close = 2.1m });
 
         var aggregator = new Aggregator(new KafkaKsqlContextStub(context));
         var (dailyBars, minuteBars) = await aggregator.AggregateAsync(new DateTime(2024,1,1));

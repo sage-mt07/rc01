@@ -22,9 +22,7 @@ protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
             Broker = key.Broker,
             Symbol = key.Symbol,
-            WindowMinutes = w.BarWidth,
-            WindowStart = w.BarStart,
-            WindowEnd = w.BarStart.AddMinutes(w.BarWidth),
+            BarTime = w.BarStart,
             Open = w.Source.OrderBy(x => x.RateTimestamp).First().Bid,
             High = w.Source.Max(x => x.Bid),
             Low = w.Source.Min(x => x.Bid),
