@@ -1,5 +1,6 @@
 using DailyComparisonLib.Models;
 using Kafka.Ksql.Linq;
+using Kafka.Ksql.Linq.Core.Extensions;
 using System.Linq;
 
 namespace DailyComparisonLib;
@@ -18,7 +19,9 @@ public class Aggregator
             .Where(d => d.Date == date.Date)
             .ToList();
 
-        var minuteBars = (await _context.Set<RateCandle>().ToListAsync(ct))
+        var minuteBars = (await _context.Set<RateCandle>()
+            .Window(1)
+            .ToListAsync(ct))
             .Where(c => c.WindowStart.Date == date.Date)
             .ToList();
 
