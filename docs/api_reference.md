@@ -36,6 +36,9 @@
 - `OnError(ErrorAction.DLQ)` を指定すると DLQ トピックへ送信されます【F:docs/old/defaults.md†L52-L52】。
 - Messaging クラス自体は DLQ 送信処理を持たず、`ErrorOccurred`/`DeserializationError`/`ProduceError` などのイベントを通じて外部で DLQ 送信を行います。
 - `.Window().BaseOn<TSchedule>` を用いる場合、バーは `[ScheduleRange]` 属性、または `openProp`/`closeProp` パラメータで示された `Open` ～ `Close` の範囲に含まれるデータのみで構成されます。日足生成で `Close` が 6:30 のときは、6:30 未満のデータが当日の終値として扱われます。
+- バーやウィンドウ定義は必ず `KafkaKsqlContext.OnModelCreating` 内で宣言してください。アプリケーション側では定義済みの `Set<T>` を参照するだけです。
+- `WithWindow<Rate, MarketSchedule>()` に続けて `.Select<RateCandle>()` を呼び出すことで、レートからバーエンティティを構成できます。
+- `WithWindow<TEntity, TSchedule>(windows, timeSelector, rateKey, scheduleKey)` として `timeSelector` 引数でウィンドウを区切る時刻プロパティを明示します。
 
 これらの戻り値型を把握することで、DSLチェーンにおける次の操作を判断しやすくなります。特に `OnError()` や `WithRetry()` は `EventSet<T>` を返すため、続けて `IEventSet` 系メソッドを利用できます。
 

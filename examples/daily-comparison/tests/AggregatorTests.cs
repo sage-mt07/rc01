@@ -72,20 +72,21 @@ public class AggregatorTests
         context.AddSet(dailySet);
         context.AddSet(candleSet);
 
-        rateSet.AddItem(new Rate { Broker = "b", Symbol = "s", RateId = 1, RateTimestamp = new DateTime(2024,1,1,1,0,0), Bid = 1m, Ask = 1.1m });
-        rateSet.AddItem(new Rate { Broker = "b", Symbol = "s", RateId = 2, RateTimestamp = new DateTime(2024,1,1,2,0,0), Bid = 2m, Ask = 2.1m });
-        scheduleSet.AddItem(new MarketSchedule { Broker="b", Symbol="s", Date = new DateTime(2024,1,1), OpenTime = new DateTime(2024,1,1,0,0,0), CloseTime = new DateTime(2024,1,1,23,59,59)});
+        var daily = new DailyComparison { Broker = "b", Symbol = "s", Date = new DateTime(2024,1,1), High = 2.1m, Low = 1m, Close = 2.1m, PrevClose = 2m, Diff = 0.1m };
+        dailySet.AddItem(daily);
+
+        candleSet.AddItem(new RateCandle { Broker = "b", Symbol = "s", WindowStart = new DateTime(2024,1,1,1,0,0), WindowEnd = new DateTime(2024,1,1,1,1,0), WindowMinutes = 1, Open = 1.1m, High = 1.1m, Low = 1m, Close = 1.1m });
+        candleSet.AddItem(new RateCandle { Broker = "b", Symbol = "s", WindowStart = new DateTime(2024,1,1,2,0,0), WindowEnd = new DateTime(2024,1,1,2,1,0), WindowMinutes = 1, Open = 2.1m, High = 2.1m, Low = 2m, Close = 2.1m });
 
         var aggregator = new Aggregator(new KafkaKsqlContextStub(context));
-        await aggregator.AggregateAsync(new DateTime(2024,1,1));
+        var (dailyBars, minuteBars) = await aggregator.AggregateAsync(new DateTime(2024,1,1));
 
-        var result = Assert.Single(dailySet);
-        Assert.Equal(2.1m, result.High);
-        Assert.Equal(1m, result.Low);
-        Assert.Equal(2.1m, result.Close);
-        Assert.Equal(0m, result.Diff);
+        var result = Assert.Single(dailyBars);
+        Assert.Equal(daily.High, result.High);
+        Assert.Equal(daily.Low, result.Low);
+        Assert.Equal(daily.Close, result.Close);
 
-        Assert.Equal(6, candleSet.ToListAsync().Result.Count);
+        Assert.Equal(2, minuteBars.Count);
     }
 
     private class KafkaKsqlContextStub : KafkaKsqlContext
