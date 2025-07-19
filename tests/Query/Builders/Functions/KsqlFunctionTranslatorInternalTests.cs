@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using Kafka.Ksql.Linq.Query.Builders.Functions;
+using Kafka.Ksql.Linq.Configuration;
 using Xunit;
 using static Kafka.Ksql.Linq.Tests.PrivateAccessor;
 
@@ -11,17 +13,22 @@ public class KsqlFunctionTranslatorInternalTests
     private enum SampleEnum { A }
     private class CustomType { }
 
+    public static IEnumerable<object[]> MapToKsqlTypeData()
+    {
+        yield return new object[] { typeof(string), "VARCHAR" };
+        yield return new object[] { typeof(int), "INTEGER" };
+        yield return new object[] { typeof(long), "BIGINT" };
+        yield return new object[] { typeof(float), "DOUBLE" };
+        yield return new object[] { typeof(double), "DOUBLE" };
+        yield return new object[] { typeof(bool), "BOOLEAN" };
+        yield return new object[] { typeof(DateTime), "TIMESTAMP" };
+        yield return new object[] { typeof(Guid), "VARCHAR" };
+        yield return new object[] { typeof(decimal), $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})" };
+        yield return new object[] { typeof(byte[]), "BYTES" };
+    }
+
     [Theory]
-    [InlineData(typeof(string), "VARCHAR")]
-    [InlineData(typeof(int), "INTEGER")]
-    [InlineData(typeof(long), "BIGINT")]
-    [InlineData(typeof(float), "DOUBLE")]
-    [InlineData(typeof(double), "DOUBLE")]
-    [InlineData(typeof(bool), "BOOLEAN")]
-    [InlineData(typeof(DateTime), "TIMESTAMP")]
-    [InlineData(typeof(Guid), "VARCHAR")]
-    [InlineData(typeof(decimal), "DECIMAL(38, 9)")]
-    [InlineData(typeof(byte[]), "BYTES")]
+    [MemberData(nameof(MapToKsqlTypeData))]
     public void MapToKsqlType_ReturnsExpected(Type type, string expected)
     {
         var result = InvokePrivate<string>(typeof(KsqlFunctionTranslator), "MapToKsqlType", new[] { typeof(Type) }, null, type);

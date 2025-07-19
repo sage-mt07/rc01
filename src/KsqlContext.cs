@@ -43,6 +43,8 @@ public abstract class KsqlContext : KafkaContextCore
     {
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
         _dslOptions = new KsqlDslOptions();
+        DecimalPrecisionConfig.DecimalPrecision = _dslOptions.DecimalPrecision;
+        DecimalPrecisionConfig.DecimalScale = _dslOptions.DecimalScale;
         _adminService = new KafkaAdminService(
         Microsoft.Extensions.Options.Options.Create(_dslOptions),
         null);
@@ -86,6 +88,8 @@ public abstract class KsqlContext : KafkaContextCore
     {
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
         _dslOptions = new KsqlDslOptions();
+        DecimalPrecisionConfig.DecimalPrecision = _dslOptions.DecimalPrecision;
+        DecimalPrecisionConfig.DecimalScale = _dslOptions.DecimalScale;
         _adminService = new KafkaAdminService(
         Microsoft.Extensions.Options.Options.Create(_dslOptions),
         null);

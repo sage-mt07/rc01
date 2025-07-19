@@ -6,6 +6,7 @@ using Kafka.Ksql.Linq.Core.Modeling;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kafka.Ksql.Linq.Configuration;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -187,7 +188,7 @@ internal class DDLQueryGenerator : GeneratorBase, IDDLQueryGenerator
             Type t when t == typeof(long) => "BIGINT",
             Type t when t == typeof(double) => "DOUBLE",
             Type t when t == typeof(float) => "DOUBLE",
-            Type t when t == typeof(decimal) => "DECIMAL(38, 9)",
+            Type t when t == typeof(decimal) => $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})",
             Type t when t == typeof(string) => "VARCHAR",
             Type t when t == typeof(char) => "VARCHAR",
             Type t when t == typeof(bool) => "BOOLEAN",

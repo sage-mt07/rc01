@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Kafka.Ksql.Linq.Query.Pipeline;
+using Kafka.Ksql.Linq.Configuration;
 using Xunit;
 
 namespace Kafka.Ksql.Linq.Tests.Query.Pipeline;
@@ -49,15 +51,20 @@ public class GeneratorBaseTests
                 args: new object[] { new[] { QueryPart.Optional(string.Empty) } }));
     }
 
+    public static IEnumerable<object[]> MapToKSqlTypeData()
+    {
+        yield return new object[] { typeof(string), "VARCHAR" };
+        yield return new object[] { typeof(int), "INTEGER" };
+        yield return new object[] { typeof(long), "BIGINT" };
+        yield return new object[] { typeof(double), "DOUBLE" };
+        yield return new object[] { typeof(bool), "BOOLEAN" };
+        yield return new object[] { typeof(DateTime), "TIMESTAMP" };
+        yield return new object[] { typeof(decimal), $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})" };
+        yield return new object[] { typeof(byte[]), "BYTES" };
+    }
+
     [Theory]
-    [InlineData(typeof(string), "VARCHAR")]
-    [InlineData(typeof(int), "INTEGER")]
-    [InlineData(typeof(long), "BIGINT")]
-    [InlineData(typeof(double), "DOUBLE")]
-    [InlineData(typeof(bool), "BOOLEAN")]
-    [InlineData(typeof(DateTime), "TIMESTAMP")]
-    [InlineData(typeof(decimal), "DECIMAL(38, 9)")]
-    [InlineData(typeof(byte[]), "BYTES")]
+    [MemberData(nameof(MapToKSqlTypeData))]
     public void MapToKSqlType_ReturnsExpected(Type type, string expected)
     {
         var result = PrivateAccessor.InvokePrivate<string>(

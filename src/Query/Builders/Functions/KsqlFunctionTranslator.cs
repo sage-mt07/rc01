@@ -1,4 +1,5 @@
 using Kafka.Ksql.Linq.Query.Builders.Common;
+using Kafka.Ksql.Linq.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -337,7 +338,7 @@ internal static class KsqlFunctionTranslator
             Type t when t == typeof(long) => "BIGINT",
             Type t when t == typeof(double) => "DOUBLE",
             Type t when t == typeof(float) => "DOUBLE",
-            Type t when t == typeof(decimal) => "DECIMAL(38, 9)",
+            Type t when t == typeof(decimal) => $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})",
             Type t when t == typeof(string) => "VARCHAR",
             Type t when t == typeof(bool) => "BOOLEAN",
             Type t when t == typeof(DateTime) => "TIMESTAMP",
@@ -430,7 +431,7 @@ internal static class KsqlFunctionTranslator
             "TOINT" or "TOINT32" => "INTEGER",
             "TOLONG" or "TOINT64" => "BIGINT",
             "TODOUBLE" => "DOUBLE",
-            "TODECIMAL" => "DECIMAL(38, 9)",
+            "TODECIMAL" => $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})",
             "TOSTRING" => "VARCHAR",
             "TOBOOL" or "TOBOOLEAN" => "BOOLEAN",
             _ => "UNKNOWN"
