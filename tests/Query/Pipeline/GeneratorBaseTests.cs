@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Kafka.Ksql.Linq.Query.Pipeline;
 using Kafka.Ksql.Linq.Configuration;
 using Xunit;
