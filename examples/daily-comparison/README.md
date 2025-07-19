@@ -3,7 +3,7 @@
 This example demonstrates a simple rate ingestion and daily aggregation using **Kafka.Ksql.Linq** only.
 All settings including logging and Schema Registry configuration are read from
 `appsettings.json` following `docs/docs_configuration_reference.md`.
-`KsqlContextBuilder` builds a `MyKsqlContext` using these values.
+`MyKsqlContext.FromAppSettings()` builds the context directly from this file.
 
 ## Usage
 
@@ -11,7 +11,7 @@ All settings including logging and Schema Registry configuration are read from
    ```bash
    docker compose up -d
    ```
-2. Run the rate sender which also performs aggregation. It uses `KsqlContextBuilder` to create `MyKsqlContext`:
+2. Run the rate sender which also performs aggregation. It uses `MyKsqlContext.FromAppSettings()`:
    ```bash
    dotnet run --project RateSender
    ```

@@ -23,7 +23,8 @@ public class ScheduleWindowBuilder<T> where T : class
     }
 
     private static readonly MethodInfo BaseOnMethod = typeof(ScheduleWindowBuilder<T>)
-        .GetMethod(nameof(BaseOnImpl), BindingFlags.NonPublic | BindingFlags.Static)!;
+        .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+        .Single(m => m.Name == nameof(BaseOnImpl));
 
     public IQueryable<T> BaseOn<TSchedule>(Expression<Func<T, object>> keySelector) where TSchedule : class
     {
@@ -31,11 +32,28 @@ public class ScheduleWindowBuilder<T> where T : class
         var call = Expression.Call(null,
             BaseOnMethod.MakeGenericMethod(typeof(T), typeof(TSchedule)),
             _source.Expression,
-            keySelector);
+            keySelector,
+            Expression.Constant(null, typeof(string)),
+            Expression.Constant(null, typeof(string)));
         return _source.Provider.CreateQuery<T>(call);
     }
 
-    private static IQueryable<TSource> BaseOnImpl<TSource, TSchedule>(IQueryable<TSource> source, Expression<Func<TSource, object>> keySelector)
+    public IQueryable<T> BaseOn<TSchedule>(Expression<Func<T, object>> keySelector, string openPropertyName, string closePropertyName) where TSchedule : class
+    {
+        if (keySelector == null) throw new ArgumentNullException(nameof(keySelector));
+        if (string.IsNullOrWhiteSpace(openPropertyName) || string.IsNullOrWhiteSpace(closePropertyName))
+            throw new ArgumentException("Property names cannot be null or empty");
+
+        var call = Expression.Call(null,
+            BaseOnMethod.MakeGenericMethod(typeof(T), typeof(TSchedule)),
+            _source.Expression,
+            keySelector,
+            Expression.Constant(openPropertyName, typeof(string)),
+            Expression.Constant(closePropertyName, typeof(string)));
+        return _source.Provider.CreateQuery<T>(call);
+    }
+
+    private static IQueryable<TSource> BaseOnImpl<TSource, TSchedule>(IQueryable<TSource> source, Expression<Func<TSource, object>> keySelector, string? openPropertyName, string? closePropertyName)
         where TSource : class
         where TSchedule : class
     {
@@ -65,20 +83,57 @@ public class ScheduleWindowBuilder<T> where T : class
             Expression.Convert(schKey, typeof(object)),
             Expression.Convert(srcKey, typeof(object)));
 
-        var openProp = typeof(TSchedule).GetProperties()
-            .FirstOrDefault(p => p.GetCustomAttribute<Core.Attributes.ScheduleOpenAttribute>() != null)
-            ?? throw new InvalidOperationException($"{typeof(TSchedule).Name} requires [ScheduleOpen] property");
-        var closeProp = typeof(TSchedule).GetProperties()
-            .FirstOrDefault(p => p.GetCustomAttribute<Core.Attributes.ScheduleCloseAttribute>() != null)
-            ?? throw new InvalidOperationException($"{typeof(TSchedule).Name} requires [ScheduleClose] property");
+        Core.Attributes.ScheduleRangeAttribute? rangeAttr = null;
+        PropertyInfo? rangeProp = null;
+
+        if (!string.IsNullOrWhiteSpace(openPropertyName) && !string.IsNullOrWhiteSpace(closePropertyName))
+        {
+            rangeAttr = new Core.Attributes.ScheduleRangeAttribute(openPropertyName, closePropertyName);
+        }
+        else
+        {
+            rangeAttr = typeof(TSchedule).GetCustomAttribute<Core.Attributes.ScheduleRangeAttribute>();
+            if (rangeAttr == null)
+            {
+                rangeProp = typeof(TSchedule).GetProperties()
+                    .FirstOrDefault(p => p.GetCustomAttribute<Core.Attributes.ScheduleRangeAttribute>() != null)
+                    ?? throw new InvalidOperationException($"{typeof(TSchedule).Name} requires [ScheduleRange] attribute");
+                rangeAttr = rangeProp.GetCustomAttribute<Core.Attributes.ScheduleRangeAttribute>();
+            }
+        }
+
+        PropertyInfo openProp;
+        PropertyInfo closeProp;
+        Expression openExpr;
+        Expression closeExpr;
+
+        if (rangeProp == null)
+        {
+            openProp = typeof(TSchedule).GetProperty(rangeAttr!.OpenPropertyName)
+                ?? throw new InvalidOperationException($"Schedule type missing open property '{rangeAttr.OpenPropertyName}'");
+            closeProp = typeof(TSchedule).GetProperty(rangeAttr.ClosePropertyName)
+                ?? throw new InvalidOperationException($"Schedule type missing close property '{rangeAttr.ClosePropertyName}'");
+            openExpr = Expression.Property(schParam, openProp);
+            closeExpr = Expression.Property(schParam, closeProp);
+        }
+        else
+        {
+            openProp = rangeProp.PropertyType.GetProperty(rangeAttr!.OpenPropertyName)
+                ?? throw new InvalidOperationException($"Schedule range type {rangeProp.PropertyType.Name} missing open property '{rangeAttr.OpenPropertyName}'");
+            closeProp = rangeProp.PropertyType.GetProperty(rangeAttr.ClosePropertyName)
+                ?? throw new InvalidOperationException($"Schedule range type {rangeProp.PropertyType.Name} missing close property '{rangeAttr.ClosePropertyName}'");
+            var rangeExpr = Expression.Property(schParam, rangeProp);
+            openExpr = Expression.Property(rangeExpr, openProp);
+            closeExpr = Expression.Property(rangeExpr, closeProp);
+        }
 
         var timestampProp = typeof(TSource).GetProperties()
             .FirstOrDefault(p => p.PropertyType == typeof(DateTime) || p.PropertyType == typeof(DateTimeOffset))
             ?? throw new InvalidOperationException($"{typeof(TSource).Name} requires a DateTime property for event time");
 
         var eventTime = Expression.Property(srcParam, timestampProp);
-        var openTime = Expression.Property(schParam, openProp);
-        var closeTime = Expression.Property(schParam, closeProp);
+        var openTime = openExpr;
+        var closeTime = closeExpr;
 
         var openCond = Expression.GreaterThanOrEqual(
             Expression.Convert(eventTime, typeof(DateTime)),

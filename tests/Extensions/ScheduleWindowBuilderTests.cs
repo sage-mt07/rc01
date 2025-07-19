@@ -21,15 +21,19 @@ public class ScheduleWindowBuilderTests
         public DateTime Timestamp { get; set; }
     }
 
+    [ScheduleRange(nameof(Open), nameof(Close))]
     private class ScheduleEntity
     {
         public int MarketId { get; set; }
-
-        [ScheduleOpen]
         public DateTime Open { get; set; }
-
-        [ScheduleClose]
         public DateTime Close { get; set; }
+    }
+
+    private class FluentScheduleEntity
+    {
+        public int MarketId { get; set; }
+        public DateTime Start { get; set; }
+        public DateTime End { get; set; }
     }
 
     [Fact]
@@ -62,8 +66,29 @@ public class ScheduleWindowBuilderTests
             .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
             .Single(m => m.Name == "BaseOnImpl")
             .MakeGenericMethod(typeof(TestEntity), typeof(ScheduleEntity));
-        var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { src, selector }));
+        var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object?[] { src, selector, null, null }));
         Assert.IsType<NotSupportedException>(ex.InnerException);
+    }
+
+    [Fact]
+    public void BaseOnImpl_FluentScheduleRange_Works()
+    {
+        var ctx = new DummyContext();
+        var eventModel = new EntityModel { EntityType = typeof(TestEntity), AllProperties = typeof(TestEntity).GetProperties(), KeyProperties = Array.Empty<PropertyInfo>(), ValidationResult = new ValidationResult { IsValid = true } };
+        var scheduleModel = new EntityModel { EntityType = typeof(FluentScheduleEntity), AllProperties = typeof(FluentScheduleEntity).GetProperties(), KeyProperties = new[] { typeof(FluentScheduleEntity).GetProperty(nameof(FluentScheduleEntity.MarketId))! }, ValidationResult = new ValidationResult { IsValid = true } };
+        var events = new DummySet<TestEntity>(new List<TestEntity>(), ctx, eventModel);
+        var schedules = new DummySet<FluentScheduleEntity>(new List<FluentScheduleEntity>(), ctx, scheduleModel);
+        ctx.AddSet(events);
+        ctx.AddSet(schedules);
+        Expression<Func<TestEntity, object>> selector = e => e.MarketId;
+
+        var method = typeof(ScheduleWindowBuilder<TestEntity>)
+            .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+            .Single(m => m.Name == "BaseOnImpl")
+            .MakeGenericMethod(typeof(TestEntity), typeof(FluentScheduleEntity));
+
+        var result = method.Invoke(null, new object?[] { events, selector, "Start", "End" });
+        Assert.NotNull(result);
     }
 
     private class DummyContext : IKsqlContext
@@ -110,7 +135,7 @@ public class ScheduleWindowBuilderTests
     }
 
     [Fact]
-    public void BaseOnImpl_MissingScheduleOpen_Throws()
+    public void BaseOnImpl_MissingScheduleRange_Throws()
     {
         var ctx = new DummyContext();
         var eventModel = new EntityModel { EntityType = typeof(TestEntity), AllProperties = typeof(TestEntity).GetProperties(), KeyProperties = Array.Empty<PropertyInfo>(), ValidationResult = new ValidationResult { IsValid = true } };
@@ -125,7 +150,7 @@ public class ScheduleWindowBuilderTests
             .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
             .Single(m => m.Name == "BaseOnImpl")
             .MakeGenericMethod(typeof(TestEntity), typeof(BadSchedule));
-        var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { events, selector }));
+        var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object?[] { events, selector, null, null }));
         Assert.IsType<InvalidOperationException>(ex.InnerException);
     }
 

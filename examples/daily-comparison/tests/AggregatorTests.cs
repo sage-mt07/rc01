@@ -2,6 +2,7 @@ using DailyComparisonLib;
 using DailyComparisonLib.Models;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Modeling;
+using Kafka.Ksql.Linq.Core.Context;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -86,7 +87,7 @@ public class AggregatorTests
     private class KafkaKsqlContextStub : KafkaKsqlContext
     {
         private readonly IKsqlContext _inner;
-        public KafkaKsqlContextStub(IKsqlContext inner) { _inner = inner; }
+        public KafkaKsqlContextStub(IKsqlContext inner) : base(new KafkaContextOptions()) { _inner = inner; }
         protected override bool SkipSchemaRegistration => true;
         protected override IEntitySet<T> CreateEntitySet<T>(EntityModel entityModel) where T : class
         {
