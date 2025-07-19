@@ -20,6 +20,7 @@ DSLや属性の基本的な使い方、アーキテクチャの理解を終え�
 
 - `.OnError()` `.WithRetry()` `.WithManualCommit()` は `IQueryable` 拡張で構成
 - Window関連のDSLは `.Window(x)` 拡張として `IQueryable<POCO>` に統合
+- 実行時のウィンドウ選択は `Set<T>().Window(x)` を使い `WindowMinutes` 直接指定は不要
 
 ---
 
