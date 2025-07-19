@@ -111,7 +111,7 @@
         - ドキュメント・テスト・実装すべてでこのルールを徹底
         - 例外対応（Close含む等）は明示的なAPI/DSL指定で管理
         - `Window().BaseOn<MarketSchedulePoco>(keySelector)` 型のスケジュール連動ウィンドウ設計を正式にOSS API拡張議題とする。
-            - `MarketSchedulePoco` は複数の主キーを許容し、日時範囲を `[ScheduleOpen]` / `[ScheduleClose]` 属性で示すプロパティを必須とする。
+            - `MarketSchedulePoco` は複数の主キーを許容し、日時範囲を `[ScheduleRange]` 属性または `BaseOn(..., openProp, closeProp)` のパラメータで示すプロパティを必須とする。
             - Fluent API は `IQueryable<T>.Window().BaseOn<TSchedule>(keySelector)` 形式で提供する。
 ```csharp
 modelBuilder.Entity<Order>()
@@ -120,7 +120,7 @@ modelBuilder.Entity<Order>()
 ```
         - Open/Close で可変長のウィンドウを実現（サマータイム・特別日・24 時間市場なども対応可能）。
         - 5 分足など 1 分より長い足は、`Open` から `Close` までの範囲内でのみ生成する。
-        - 日足生成時に `ScheduleClose` が 6:30 など翌朝にまたがる場合、6:30 未満の
+        - 日足生成時に `Close` が 6:30 など翌朝にまたがる場合、6:30 未満の
           データを当日の終値として扱い、6:30 以降は次の日の足に含める。
         - MarketSchedule 以外のカスタムスケジューラや他カレンダーとの連携も将来見据えた拡張構造にする。
         - 等間隔 Window（従来型 `.Window(x)`）との共存・切替設計も含めて検討。
