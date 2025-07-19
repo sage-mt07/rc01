@@ -16,5 +16,6 @@ public class KafkaKsqlContext : KafkaContext
         modelBuilder.Entity<Rate>();
         modelBuilder.Entity<MarketSchedule>();
         modelBuilder.Entity<DailyComparison>();
+        modelBuilder.Entity<RateCandle>();
     }
 }

@@ -66,9 +66,11 @@ public class AggregatorTests
         var rateSet = new DummySet<Rate>(context);
         var scheduleSet = new DummySet<MarketSchedule>(context);
         var dailySet = new DummySet<DailyComparison>(context);
+        var candleSet = new DummySet<RateCandle>(context);
         context.AddSet(rateSet);
         context.AddSet(scheduleSet);
         context.AddSet(dailySet);
+        context.AddSet(candleSet);
 
         rateSet.AddItem(new Rate { Broker = "b", Symbol = "s", RateId = 1, RateTimestamp = new DateTime(2024,1,1,1,0,0), Bid = 1m, Ask = 1.1m });
         rateSet.AddItem(new Rate { Broker = "b", Symbol = "s", RateId = 2, RateTimestamp = new DateTime(2024,1,1,2,0,0), Bid = 2m, Ask = 2.1m });
@@ -82,6 +84,8 @@ public class AggregatorTests
         Assert.Equal(1m, result.Low);
         Assert.Equal(2.1m, result.Close);
         Assert.Equal(0m, result.Diff);
+
+        Assert.Equal(6, candleSet.ToListAsync().Result.Count);
     }
 
     private class KafkaKsqlContextStub : KafkaKsqlContext
