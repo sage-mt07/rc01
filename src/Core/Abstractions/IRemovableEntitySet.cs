@@ -7,5 +7,5 @@ namespace Kafka.Ksql.Linq.Core.Abstractions;
 /// </summary>
 public interface IRemovableEntitySet<T> : IEntitySet<T> where T : class
 {
-    Task RemoveAsync(T entity, CancellationToken cancellationToken = default);
+    new Task RemoveAsync(T entity, CancellationToken cancellationToken = default);
 }

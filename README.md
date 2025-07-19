@@ -147,6 +147,10 @@ var recent = await context.Set<Order>()
     .ToListAsync();
 ```
 
+`Limit` がバーエンティティに適用される場合、`WithWindow().Select<TBar>()`
+で `BarTime` プロパティへ代入した式が自動的に抽出され、並び替えに利用されます。
+追加の設定は不要です。
+
 ### RemoveAsync とトムストーン
 `RemoveAsync` を呼び出すと、指定キーに対する値 `null` のメッセージ（トムストーン）がト
 ピックに送信されます。トムストーンは KTable やキャッシュに保存された既存レコードを削

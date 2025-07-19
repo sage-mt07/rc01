@@ -4,6 +4,7 @@ using Kafka.Ksql.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -40,6 +41,7 @@ public class EventSetLimitExtensionsTests
         public DummySet(IEnumerable<RateCandle> items)
         {
             _items = items.ToList();
+            _model.BarTimeSelector = (Expression<Func<RateCandle, DateTime>>)(x => x.BarTime);
         }
         public Task AddAsync(RateCandle entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<List<RateCandle>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(_items.ToList());

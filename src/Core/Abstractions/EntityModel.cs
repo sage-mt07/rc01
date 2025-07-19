@@ -2,6 +2,7 @@ using Kafka.Ksql.Linq.Query.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq.Expressions;
 
 namespace Kafka.Ksql.Linq.Core.Abstractions;
 
@@ -16,6 +17,14 @@ public class EntityModel
     public PropertyInfo[] KeyProperties { get; set; } = Array.Empty<PropertyInfo>();
 
     public PropertyInfo[] AllProperties { get; set; } = Array.Empty<PropertyInfo>();
+
+    /// <summary>
+    /// Optional selector expression identifying the bar timestamp used for
+    /// ordering or limiting operations. This is automatically populated when
+    /// <c>Select&lt;TResult&gt;()</c> is used with Window DSL and a property assignment
+    /// from <c>WindowGrouping.BarStart</c> is detected.
+    /// </summary>
+    public LambdaExpression? BarTimeSelector { get; set; }
 
     /// <summary>
     /// Indicates whether this entity is used for reading, writing, or both.

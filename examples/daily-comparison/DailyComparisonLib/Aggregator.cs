@@ -23,13 +23,20 @@ public class Aggregator
             .Where(d => d.Date == date.Date)
             .ToList();
 
-        var minuteBars = (await _context.Set<RateCandle>().ToListAsync(ct))
-            .Where(c => c.BarTime.Date == date.Date)
+        var candleSet = _context.Set<RateCandle>();
+        var model = candleSet.GetEntityModel();
+        if (model.BarTimeSelector == null)
+            throw new InvalidOperationException("RateCandle model is missing bar time selector.");
+
+        var barTime = (Func<RateCandle, DateTime>)model.BarTimeSelector.Compile();
+
+        var minuteBars = (await candleSet.ToListAsync(ct))
+            .Where(c => barTime(c).Date == date.Date)
             .GroupBy(c => c.Symbol)
             .SelectMany(g =>
             {
                 var limit = _limitOptions.GetLimit(g.Key, nameof(RateCandle));
-                return g.OrderByDescending(b => b.BarTime).Take(limit);
+                return g.OrderByDescending(barTime).Take(limit);
             })
             .ToList();
 
