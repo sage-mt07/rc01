@@ -92,6 +92,51 @@ internal class KafkaProducer<T> : IKafkaProducer<T> where T : class
         }
     }
 
+    public async Task<KafkaDeliveryResult> DeleteAsync(object key, KafkaMessageContext? context = null, CancellationToken cancellationToken = default)
+    {
+        if (key == null)
+            throw new ArgumentNullException(nameof(key));
+
+        try
+        {
+            var kafkaMessage = new Message<object, object?>
+            {
+                Key = key,
+                Value = null,
+                Headers = BuildHeaders(context),
+                Timestamp = new Timestamp(DateTime.UtcNow)
+            };
+
+            var topicPartition = context?.TargetPartition.HasValue == true
+                ? new TopicPartition(TopicName, new Partition(context.TargetPartition.Value))
+                : new TopicPartition(TopicName, Partition.Any);
+
+            var deliveryResult = await _producer.ProduceAsync(topicPartition, kafkaMessage, cancellationToken);
+
+            _logger?.LogDebug("Tombstone sent: {EntityType} -> {Topic}, Partition: {Partition}, Offset: {Offset}",
+                typeof(T).Name, deliveryResult.Topic, deliveryResult.Partition.Value, deliveryResult.Offset.Value);
+
+            return new KafkaDeliveryResult
+            {
+                Topic = deliveryResult.Topic,
+                Partition = deliveryResult.Partition.Value,
+                Offset = deliveryResult.Offset.Value,
+                Timestamp = deliveryResult.Timestamp.UtcDateTime,
+                Status = deliveryResult.Status,
+                Latency = TimeSpan.Zero
+            };
+        }
+        catch (System.Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to send tombstone: {EntityType} -> {Topic}", typeof(T).Name, TopicName);
+            if (SendError != null)
+            {
+                SendError.Invoke(default!, context, ex).GetAwaiter().GetResult();
+            }
+            throw;
+        }
+    }
+
 
     public async Task FlushAsync(TimeSpan timeout)
     {

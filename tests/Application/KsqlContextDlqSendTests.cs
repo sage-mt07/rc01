@@ -29,6 +29,8 @@ public class KsqlContextDlqSendTests
             Sent = true;
             return Task.FromResult(new KafkaDeliveryResult());
         }
+        public Task<KafkaDeliveryResult> DeleteAsync(object key, KafkaMessageContext? context = null, CancellationToken cancellationToken = default)
+            => Task.FromResult(new KafkaDeliveryResult());
         // Batch sending removed
         public Task FlushAsync(TimeSpan timeout) => Task.CompletedTask;
         public void Dispose() { }

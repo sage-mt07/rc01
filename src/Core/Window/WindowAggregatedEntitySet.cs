@@ -67,6 +67,11 @@ internal class WindowAggregatedEntitySet<TSource, TKey, TResult> : IEntitySet<TR
         throw new NotSupportedException("Cannot add entities to a window aggregated result set");
     }
 
+    public Task RemoveAsync(TResult entity, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Cannot remove entities from a window aggregated result set");
+    }
+
     public async Task<List<TResult>> ToListAsync(CancellationToken cancellationToken = default)
     {
         try

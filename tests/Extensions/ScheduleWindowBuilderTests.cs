@@ -117,6 +117,7 @@ public class ScheduleWindowBuilderTests
         public Expression Expression => _query.Expression;
         public IQueryProvider Provider => _query.Provider;
         public Task AddAsync(T entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task RemoveAsync(T entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<List<T>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(_query.ToList());
         public Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.WhenAll(_query.Select(action));
         public string GetTopicName() => _model.TopicName ?? typeof(T).Name.ToLowerInvariant();

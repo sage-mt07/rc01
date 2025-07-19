@@ -13,6 +13,7 @@ public interface IEntitySet<T> : IAsyncEnumerable<T> where T : class
 {
     // Producer operations
     Task AddAsync(T entity, CancellationToken cancellationToken = default);
+    Task RemoveAsync(T entity, CancellationToken cancellationToken = default);
 
     // Consumer operations
     Task<List<T>> ToListAsync(CancellationToken cancellationToken = default);

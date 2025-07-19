@@ -60,6 +60,11 @@ internal class TypedThreeWayJoinResultEntitySet<TOuter, TInner, TThird, TResult>
         throw new NotSupportedException("Cannot add entities to a three-way join result set");
     }
 
+    public Task RemoveAsync(TResult entity, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("Cannot remove entities from a three-way join result set");
+    }
+
     public Task ForEachAsync(Func<TResult, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException("ForEachAsync not supported on three-way join result sets");
