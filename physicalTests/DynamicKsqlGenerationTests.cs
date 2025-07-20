@@ -126,7 +126,7 @@ public class DynamicKsqlGenerationTests
             {
                 g.Key,
                 Total = g.Sum(o => (double)o.Amount),
-                HighPriorityTotal = g.Sum(o => o.IsHighPriority ? (double)o.Amount : 0d)
+                HighPriorityTotal = g.Sum(o => o.IsHighPriority ? (double)o.Amount : 0.0)
             });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", conditionalSum.Expression, false).ToUpperInvariant());
 

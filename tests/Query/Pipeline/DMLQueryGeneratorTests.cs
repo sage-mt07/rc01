@@ -335,7 +335,7 @@ public class DMLQueryGeneratorTests
             {
                 g.Key,
                 Total = g.Sum(o => o.Amount),
-                HighPriorityTotal = g.Sum(o => o.IsHighPriority ? o.Amount : 0)
+                HighPriorityTotal = g.Sum(o => o.IsHighPriority ? o.Amount : 0.0)
             });
 
         var generator = new DMLQueryGenerator();
