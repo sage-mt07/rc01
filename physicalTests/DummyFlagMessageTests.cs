@@ -34,6 +34,7 @@ public class DummyFlagMessageTests
         }
     }
 
+    // KafkaProducer が is_dummy ヘッダーを追加するか確認
     [KsqlDbFact]
     public async Task SendAsync_AddsDummyFlagHeader()
     {

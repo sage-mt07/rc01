@@ -71,6 +71,7 @@ public class SchemaNameCaseSensitivityTests
         await ctx.DisposeAsync();
     }
 
+    // スキーマ定義と異なるフィールド名の大文字小文字違いを送信した場合に例外が発生するか確認
     [KsqlDbFact]
     [Trait("Category", "Integration")]
     public async Task MismatchedFieldCase_ShouldThrowException()

@@ -222,6 +222,7 @@ public class DynamicKsqlGenerationTests
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", exprKey.Expression, false).ToUpperInvariant());
     }
 
+    // OnModelCreating で生成したモデルから DDL/DML が正しく実行できるか検証
     [KsqlDbFact]
     [Trait("Category", "Integration")]
     public async Task CreateAllObjectsByOnModelCreating()
@@ -277,6 +278,7 @@ public class DynamicKsqlGenerationTests
                 yield return new object[] { q };
     }
 
+    // 生成したすべてのDMLクエリがksqlDBで有効か確認
     [KsqlDbTheory]
     [Trait("Category", "Integration")]
     [MemberData(nameof(AllDmlQueries), MemberType = typeof(DynamicKsqlGenerationTests))]
