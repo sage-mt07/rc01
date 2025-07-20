@@ -1,13 +1,8 @@
-using Confluent.Kafka;
-using Confluent.Kafka.SyncOverAsync;
-using Confluent.SchemaRegistry;
-using Chr.Avro.Confluent;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Application;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -133,31 +128,14 @@ public class DummyFlagSchemaRecognitionTests
         await TestEnvironment.ResetAsync();
 
         await ProduceDummyRecordsAsync();
+        await Task.Delay(1000);
 
-        var consumerConfig = new ConsumerConfig
-        {
-            BootstrapServers = "localhost:9093",
-            GroupId = Guid.NewGuid().ToString(),
-            AutoOffsetReset = AutoOffsetReset.Earliest
-        };
+        await using var ctx = TestEnvironment.CreateContext();
+        var list = await ctx.Set<OrderValue>().ToListAsync();
+        Assert.Empty(list);
 
-        using var schema = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = "http://localhost:8081" });
-        using var consumer = new ConsumerBuilder<int, OrderValue>(consumerConfig)
-            .SetValueDeserializer(new AsyncSchemaRegistryDeserializer<OrderValue>(schema).AsSyncOverAsync())
-            .SetKeyDeserializer(Deserializers.Int32)
-            .Build();
-
-        consumer.Subscribe("orders");
-        var result = consumer.Consume(TimeSpan.FromSeconds(10));
-        Assert.NotNull(result);
-        var headerBytes = result.Message.Headers?.GetLastBytes("is_dummy");
-        Assert.NotNull(headerBytes);
-        var isDummy = Encoding.UTF8.GetString(headerBytes!) == "true";
-
-        var records = new List<OrderValue>();
-        if (!isDummy)
-            records.Add(result.Message.Value);
-
-        Assert.Empty(records);
+        var forEachList = new List<OrderValue>();
+        await ctx.Set<OrderValue>().ForEachAsync(o => { forEachList.Add(o); return Task.CompletedTask; }, TimeSpan.FromSeconds(1));
+        Assert.Empty(forEachList);
     }
 }

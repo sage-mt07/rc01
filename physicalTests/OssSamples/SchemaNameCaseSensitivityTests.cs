@@ -1,13 +1,8 @@
-using Confluent.Kafka;
 using Confluent.SchemaRegistry;
-using Chr.Avro.Confluent;
-using Confluent.Kafka.SyncOverAsync;
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -40,56 +35,12 @@ public class SchemaNameCaseSensitivityTests
         }
     }
 
-    // Context using custom serialization for OrderWrongCase
+    // Context for OrderWrongCase using default serialization
     public class WrongCaseContext : KsqlContext
     {
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
             modelBuilder.Entity<OrderWrongCase>().WithTopic("orders");
-        }
-
-        protected override IEntitySet<T> CreateEntitySet<T>(EntityModel entityModel)
-        {
-            if (typeof(T) == typeof(OrderWrongCase))
-            {
-                return (IEntitySet<T>)new ManualSerializeEventSet(this, entityModel);
-            }
-
-            return base.CreateEntitySet<T>(entityModel);
-        }
-
-        private class ManualSerializeEventSet : EventSet<OrderWrongCase>
-        {
-            public ManualSerializeEventSet(IKsqlContext context, EntityModel model) : base(context, model) { }
-
-            public override IAsyncEnumerator<OrderWrongCase> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-            {
-                throw new NotSupportedException();
-            }
-
-            public override Task<List<OrderWrongCase>> ToListAsync(CancellationToken cancellationToken = default)
-            {
-                throw new NotSupportedException();
-            }
-
-            protected override async Task SendEntityAsync(OrderWrongCase entity, Dictionary<string, string>? headers, CancellationToken cancellationToken)
-            {
-                var config = new ProducerConfig { BootstrapServers = "localhost:9093" };
-                using var schema = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = "http://localhost:8081" });
-                using var producer = new ProducerBuilder<int, OrderWrongCase>(config)
-                    .SetKeySerializer(Serializers.Int32)
-                    .SetValueSerializer(new AsyncSchemaRegistrySerializer<OrderWrongCase>(schema).AsSyncOverAsync())
-                    .Build();
-
-                var msg = new Message<int, OrderWrongCase>
-                {
-                    Key = 1,
-                    Value = entity,
-                    Headers = new Headers { new Header("is_dummy", Encoding.UTF8.GetBytes("true")) }
-                };
-
-                await producer.ProduceAsync("orders", msg, cancellationToken);
-            }
         }
     }
 
@@ -129,6 +80,19 @@ public class SchemaNameCaseSensitivityTests
 
         await EnsureTablesAsync();
         await ProduceValidDummyAsync();
+
+        var verifyCtx = KsqlContextBuilder.Create()
+            .UseSchemaRegistry("http://localhost:8081")
+            .BuildContext<OrderContext>();
+
+        var list = await verifyCtx.Set<OrderCorrectCase>().ToListAsync();
+        Assert.Single(list);
+
+        var forEachList = new List<OrderCorrectCase>();
+        await verifyCtx.Set<OrderCorrectCase>().ForEachAsync(o => { forEachList.Add(o); return Task.CompletedTask; }, TimeSpan.FromSeconds(1));
+        Assert.Single(forEachList);
+
+        await verifyCtx.DisposeAsync();
 
         var ctx = KsqlContextBuilder.Create()
             .UseSchemaRegistry("http://localhost:8081")
