@@ -1,4 +1,5 @@
 using Kafka.Ksql.Linq.Messaging.Configuration;
+using Kafka.Ksql.Linq.Core.Configuration;
 using Xunit;
 
 namespace Kafka.Ksql.Linq.Tests.Configuration;

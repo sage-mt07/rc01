@@ -1,7 +1,7 @@
 ﻿using Confluent.Kafka;
 using System.Collections.Generic;
 
-namespace Kafka.Ksql.Linq.Messaging.Configuration;
+namespace Kafka.Ksql.Linq.Core.Configuration;
 public class CommonSection
 {
     /// <summary>

@@ -31,6 +31,8 @@ public abstract class KafkaContextCore : IKsqlContext
         Options = options ?? throw new ArgumentNullException(nameof(options));
         InitializeEntityModels();
     }
+
+    public KafkaContextOptions GetOptions() => Options;
     protected virtual void OnModelCreating(IModelBuilder modelBuilder) { }
     // ✅ IKsqlContext実装: エンティティセット取得（純粋関数）
     public IEntitySet<T> Set<T>() where T : class

@@ -7,6 +7,7 @@ using Confluent.Kafka;
 using Confluent.SchemaRegistry;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Messaging.Configuration;
+using Kafka.Ksql.Linq.Core.Configuration;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

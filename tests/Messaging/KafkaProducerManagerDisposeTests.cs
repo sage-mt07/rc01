@@ -2,6 +2,7 @@ using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Configuration;
+using Kafka.Ksql.Linq.Core.Configuration;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
 using Microsoft.Extensions.Logging.Abstractions;

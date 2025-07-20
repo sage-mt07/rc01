@@ -6,6 +6,7 @@ using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Messaging.Configuration;
+using Kafka.Ksql.Linq.Core.Configuration;
 using Kafka.Ksql.Linq.Infrastructure.Admin;
 using Xunit;
 using static Kafka.Ksql.Linq.Tests.PrivateAccessor;

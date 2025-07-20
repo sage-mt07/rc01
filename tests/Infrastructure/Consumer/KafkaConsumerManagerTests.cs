@@ -14,6 +14,7 @@ using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Messaging.Configuration;
+using Kafka.Ksql.Linq.Core.Configuration;
 using Microsoft.Extensions.Options;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
