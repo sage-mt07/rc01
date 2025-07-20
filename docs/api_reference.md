@@ -11,7 +11,7 @@
 - `GROUP BY` を含む Pull Query はサポートせず、Push Query (`EMIT CHANGES`) のみ利用可能です。
 - `WINDOW` 句は `GROUP BY` の直後に配置してください。
 - `CASE` 式では `THEN`/`ELSE` の型を必ず一致させる必要があります。
-- `MIN`/`MAX` 集計はテーブルに対して行わず、STREAM クエリで検証します。
+- `MIN`/`MAX` などのストリーム専用集計関数を含む場合、クエリは自動的に `CREATE STREAM` として生成されます。`CREATE TABLE` を明示するとエラーになります。
 
 ## Context クラスとベースインタフェース
 
