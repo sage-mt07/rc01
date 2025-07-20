@@ -25,6 +25,7 @@ public class KsqlSyntaxTests
         }
     }
 
+    // 生成されたクエリがksqlDBで解釈可能か確認
     [KsqlDbTheory]
     [Trait("Category", "Integration")]
     [InlineData("CREATE STREAM test_stream AS SELECT * FROM source EMIT CHANGES;")]

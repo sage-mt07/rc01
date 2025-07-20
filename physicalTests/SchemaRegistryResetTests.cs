@@ -12,6 +12,7 @@ public class SchemaRegistryResetTests
 {
     private static readonly HttpClient Http = new();
 
+    // Reset 後に全テーブルのスキーマが登録されているか確認
     [KsqlDbFact]
     [Trait("Category", "Integration")]
     public async Task Setup_ShouldRegisterAllSchemas()
@@ -29,6 +30,7 @@ public class SchemaRegistryResetTests
         Assert.Contains("source-value", subjects);
     }
 
+    // 既存スキーマを再登録しても成功するか確認
     [KsqlDbFact]
     [Trait("Category", "Integration")]
     public async Task DuplicateSchemaRegistration_ShouldSucceed()
@@ -41,6 +43,7 @@ public class SchemaRegistryResetTests
         resp.EnsureSuccessStatusCode();
     }
 
+    // 大文字のサブジェクト名が存在しないことを確認
     [KsqlDbFact]
     [Trait("Category", "Integration")]
     public async Task UpperCaseSubjects_ShouldNotExist()

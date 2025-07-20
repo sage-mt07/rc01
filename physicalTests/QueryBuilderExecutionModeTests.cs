@@ -13,6 +13,7 @@ public class QueryBuilderExecutionModeTests
         public double Amount { get; set; }
     }
 
+    // QueryBuilder.AsPull の動作確認: PullQuery が設定されるかを検証
     [Fact]
     public void AsPull_SetsExecutionModePull()
     {
@@ -25,6 +26,7 @@ public class QueryBuilderExecutionModeTests
         Assert.Equal(QueryExecutionMode.PullQuery, schema.ExecutionMode);
     }
 
+    // QueryBuilder.AsPush の動作確認: PushQuery が設定されるかを検証
     [Fact]
     public void AsPush_SetsExecutionModePush()
     {

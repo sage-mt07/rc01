@@ -95,6 +95,7 @@ public class DummyFlagSchemaRecognitionTests
         await ctx.DisposeAsync();
     }
 
+    // ダミーメッセージを送信しスキーマを登録後、各クエリが実行可能か確認
     [KsqlDbFact]
     [Trait("Category", "Integration")]
     public async Task DummyMessages_EnableQueries()
@@ -130,6 +131,7 @@ public class DummyFlagSchemaRecognitionTests
         }
     }
 
+    // is_dummy ヘッダー付きメッセージがコンシューマで無視されるか確認
     [KsqlDbFact]
     [Trait("Category", "Integration")]
     public async Task Consumer_SkipsDummyMessages()
