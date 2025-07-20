@@ -1,4 +1,5 @@
 using Kafka.Ksql.Linq.Configuration;
+using Kafka.Ksql.Linq.Core.Configuration;
 using Microsoft.Extensions.Configuration;
 
 namespace Kafka.Ksql.Linq.Core.Context;
@@ -6,9 +7,18 @@ namespace Kafka.Ksql.Linq.Core.Context;
 public class KafkaContextOptions
 {
     /// <summary>
+    /// Common Kafka settings (BootstrapServers, ClientId, etc.)
+    /// </summary>
+    public CommonSection Common { get; set; } = new();
+
+    /// <summary>
     /// Kafka bootstrap servers
     /// </summary>
-    public string BootstrapServers { get; set; } = "localhost:9092";
+    public string BootstrapServers
+    {
+        get => Common.BootstrapServers;
+        set => Common = new CommonSection { BootstrapServers = value };
+    }
 
     /// <summary>
     /// Schema Registry base URL (see docs_configuration_reference.md)
