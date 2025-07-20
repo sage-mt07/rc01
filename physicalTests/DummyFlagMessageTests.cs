@@ -1,11 +1,13 @@
 using Confluent.Kafka;
+using Confluent.Kafka.SyncOverAsync;
+using Confluent.SchemaRegistry;
+using Chr.Avro.Confluent;
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Messaging.Producers.Core;
-using Microsoft.Extensions.Logging.Abstractions;
+using Kafka.Ksql.Linq.Application;
+using Kafka.Ksql.Linq.Messaging.Producers;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -13,55 +15,6 @@ namespace Kafka.Ksql.Linq.Tests.Integration;
 
 public class DummyFlagMessageTests
 {
-    private class DummySerializer : ISerializer<object>
-    {
-        public byte[] Serialize(object data, SerializationContext context) => Array.Empty<byte>();
-    }
-
-    private class DummyProducer : IProducer<object, object>
-    {
-        public List<(TopicPartition Partition, Message<object, object> Message)> Produced { get; } = new();
-        public string Name => "dummy";
-        public Handle Handle => throw new NotImplementedException();
-        public int AddBrokers(string brokers) => 0;
-        public void SetSaslCredentials(string username, string password) { }
-        public void Dispose() { }
-        public void Flush(CancellationToken cancellationToken = default) { }
-        public int Flush(TimeSpan timeout) => 0;
-        public void Produce(string topic, Message<object, object> message, Action<DeliveryReport<object, object>>? handler = null) => throw new NotImplementedException();
-        public void Produce(TopicPartition topicPartition, Message<object, object> message, Action<DeliveryReport<object, object>>? handler = null)
-        {
-            Produced.Add((topicPartition, message));
-            handler?.Invoke(new DeliveryReport<object, object>
-            {
-                Topic = topicPartition.Topic,
-                Partition = topicPartition.Partition,
-                Offset = new Offset(1),
-                Message = message
-            });
-        }
-        public int Poll(TimeSpan timeout) => 0;
-        public Task<DeliveryResult<object, object>> ProduceAsync(string topic, Message<object, object> message, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task<DeliveryResult<object, object>> ProduceAsync(TopicPartition topicPartition, Message<object, object> message, CancellationToken cancellationToken = default)
-        {
-            Produced.Add((topicPartition, message));
-            return Task.FromResult(new DeliveryResult<object, object>
-            {
-                Topic = topicPartition.Topic,
-                Partition = topicPartition.Partition,
-                Offset = new Offset(1),
-                Status = PersistenceStatus.Persisted,
-                Message = message
-            });
-        }
-        public void InitTransactions(TimeSpan timeout) { }
-        public void BeginTransaction() { }
-        public void CommitTransaction(TimeSpan timeout) { }
-        public void CommitTransaction() { }
-        public void AbortTransaction(TimeSpan timeout) { }
-        public void AbortTransaction() { }
-        public void SendOffsetsToTransaction(IEnumerable<TopicPartitionOffset> offsets, IConsumerGroupMetadata groupMetadata, TimeSpan timeout) { }
-    }
 
     public class OrderValue
     {
@@ -73,19 +26,12 @@ public class DummyFlagMessageTests
         public int Count { get; set; }
     }
 
-    private static EntityModel CreateModel()
+    public class DummyContext : KsqlContext
     {
-        return new EntityModel
+        protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
-            EntityType = typeof(OrderValue),
-            TopicName = "orders",
-            AllProperties = typeof(OrderValue).GetProperties(),
-            KeyProperties = new[]
-            {
-                typeof(OrderValue).GetProperty(nameof(OrderValue.CustomerId))!,
-                typeof(OrderValue).GetProperty(nameof(OrderValue.Id))!
-            }
-        };
+            modelBuilder.Entity<OrderValue>().WithTopic("orders");
+        }
     }
 
     [KsqlDbFact]
@@ -93,20 +39,46 @@ public class DummyFlagMessageTests
     {
         await TestEnvironment.ResetAsync();
 
-        var producer = new DummyProducer();
-        var kp = new KafkaProducer<OrderValue>(producer, new DummySerializer(), new DummySerializer(), "orders", CreateModel(), NullLoggerFactory.Instance);
+        var ctx = KsqlContextBuilder.Create()
+            .UseSchemaRegistry("http://localhost:8081")
+            .BuildContext<DummyContext>();
 
-        var context = new KafkaMessageContext
+        var manager = Kafka.Ksql.Linq.Tests.PrivateAccessor.InvokePrivate<KafkaProducerManager>(ctx, "GetProducerManager", Type.EmptyTypes);
+        var messageContext = new KafkaMessageContext
         {
             Headers = new Dictionary<string, object> { ["is_dummy"] = true }
         };
 
-        var entity = new OrderValue { CustomerId = 1, Id = 1, Region = "west", Amount = 10d, IsHighPriority = false, Count = 1 };
-        await kp.SendAsync(entity, context);
+        await (await manager.GetProducerAsync<OrderValue>()).SendAsync(new OrderValue
+        {
+            CustomerId = 1,
+            Id = 1,
+            Region = "west",
+            Amount = 10d,
+            IsHighPriority = false,
+            Count = 1
+        }, messageContext);
 
-        Assert.Single(producer.Produced);
-        var headers = producer.Produced[0].Message.Headers;
-        Assert.NotNull(headers);
-        Assert.Equal("true", Encoding.UTF8.GetString(headers.GetLastBytes("is_dummy")));
+        var consumerConfig = new ConsumerConfig
+        {
+            BootstrapServers = "localhost:9093",
+            GroupId = Guid.NewGuid().ToString(),
+            AutoOffsetReset = AutoOffsetReset.Earliest
+        };
+
+        using var schema = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = "http://localhost:8081" });
+        using var consumer = new ConsumerBuilder<int, OrderValue>(consumerConfig)
+            .SetValueDeserializer(new AsyncSchemaRegistryDeserializer<OrderValue>(schema).AsSyncOverAsync())
+            .SetKeyDeserializer(Deserializers.Int32)
+            .Build();
+
+        consumer.Subscribe("orders");
+        var result = consumer.Consume(TimeSpan.FromSeconds(10));
+        Assert.NotNull(result);
+        var headerBytes = result.Message.Headers?.GetLastBytes("is_dummy");
+        Assert.NotNull(headerBytes);
+        Assert.Equal("true", Encoding.UTF8.GetString(headerBytes!));
+
+        await ctx.DisposeAsync();
     }
 }
