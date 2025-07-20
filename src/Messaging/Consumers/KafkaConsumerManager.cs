@@ -6,7 +6,7 @@ using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Configuration;
 using Kafka.Ksql.Linq.Messaging.Consumers.Core;
-using Confluent.SchemaRegistry.Serdes;
+using Chr.Avro.Confluent;
 using Confluent.Kafka.SyncOverAsync;
 using Kafka.Ksql.Linq.Messaging.Internal;
 using Kafka.Ksql.Linq.Core.Models;
@@ -34,7 +34,6 @@ internal class KafkaConsumerManager : IDisposable
     private readonly ConcurrentDictionary<Type, object> _consumers = new();
     private readonly ConcurrentDictionary<Type, IDeserializer<object>> _keyDeserializerCache = new();
     private readonly ConcurrentDictionary<Type, IDeserializer<object>> _valueDeserializerCache = new();
-    private readonly AvroDeserializerConfig _deserializerConfig = new();
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
     private bool _disposed = false;
 
@@ -260,7 +259,7 @@ internal class KafkaConsumerManager : IDisposable
     {
         var schema = DynamicSchemaGenerator.GetSchema<T>();
         _logger?.LogDebug("Generated key schema: {Schema}", schema.ToString());
-        var typed = new AvroDeserializer<T>(_schemaRegistryClient.Value, _deserializerConfig).AsSyncOverAsync();
+        var typed = new AsyncSchemaRegistryDeserializer<T>(_schemaRegistryClient.Value).AsSyncOverAsync();
         return SerializerAdapters.ToObjectDeserializer(typed);
     }
 
@@ -271,7 +270,7 @@ internal class KafkaConsumerManager : IDisposable
             return cached;
         var schema = DynamicSchemaGenerator.GetSchema<T>();
         _logger?.LogDebug("Generated value schema: {Schema}", schema.ToString());
-        var typed = new AvroDeserializer<T>(_schemaRegistryClient.Value, _deserializerConfig).AsSyncOverAsync();
+        var typed = new AsyncSchemaRegistryDeserializer<T>(_schemaRegistryClient.Value).AsSyncOverAsync();
         var deserializer = SerializerAdapters.ToObjectDeserializer(typed);
         _valueDeserializerCache[type] = deserializer;
         return deserializer;
