@@ -294,6 +294,8 @@ internal static class KsqlFunctionTranslator
     /// </summary>
     private static string TranslateConditionalExpression(ConditionalExpression conditional)
     {
+        BuilderValidation.ValidateConditionalTypes(conditional.IfTrue, conditional.IfFalse);
+
         var test = TranslateExpression(conditional.Test);
         var ifTrue = TranslateExpression(conditional.IfTrue);
         var ifFalse = TranslateExpression(conditional.IfFalse);

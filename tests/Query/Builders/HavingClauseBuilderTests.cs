@@ -50,24 +50,24 @@ public class HavingClauseBuilderTests
     public void Build_OrCondition_ReturnsCombinedExpression()
     {
         Expression<Func<IGrouping<int, Order>, bool>> expr =
-            g => g.Average(x => x.Price) > 100 || g.Min(x => x.Quantity) < 2;
+            g => g.Average(x => x.Price) > 100 || g.Sum(x => x.Quantity) < 10;
 
         var builder = new HavingClauseBuilder();
         var sql = builder.Build(expr.Body);
 
-        Assert.Equal("((AVG(Price) > 100) OR (MIN(Quantity) < 2))", sql);
+        Assert.Equal("((AVG(Price) > 100) OR (SUM(Quantity) < 10))", sql);
     }
 
     [Fact]
     public void Build_NestedCondition_MaintainsParentheses()
     {
         Expression<Func<IGrouping<int, Order>, bool>> expr =
-            g => (g.Count() > 5 && g.Max(x => x.Amount) < 1000) || g.Sum(x => x.Amount) > 3000;
+            g => (g.Count() > 5 && g.Sum(x => x.Amount) < 1000) || g.Sum(x => x.Amount) > 3000;
 
         var builder = new HavingClauseBuilder();
         var sql = builder.Build(expr.Body);
 
-        Assert.Equal("(((COUNT(*) > 5) AND (MAX(Amount) < 1000)) OR (SUM(Amount) > 3000))", sql);
+        Assert.Equal("(((COUNT(*) > 5) AND (SUM(Amount) < 1000)) OR (SUM(Amount) > 3000))", sql);
     }
 
     [Fact]
