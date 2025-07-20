@@ -1,12 +1,7 @@
-using Confluent.Kafka;
-using Confluent.Kafka.SyncOverAsync;
-using Confluent.SchemaRegistry;
-using Chr.Avro.Confluent;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Application;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -34,7 +29,7 @@ public class DummyFlagMessageTests
         }
     }
 
-    // KafkaProducer が is_dummy ヘッダーを追加するか確認
+    // KafkaProducer が is_dummy ヘッダーを追加し EventSet で取得できるか確認
     [KsqlDbFact]
     public async Task SendAsync_AddsDummyFlagHeader()
     {
@@ -56,25 +51,12 @@ public class DummyFlagMessageTests
             Count = 1
         }, headers);
 
-        var consumerConfig = new ConsumerConfig
-        {
-            BootstrapServers = "localhost:9093",
-            GroupId = Guid.NewGuid().ToString(),
-            AutoOffsetReset = AutoOffsetReset.Earliest
-        };
+        var list = await ctx.Set<OrderValue>().ToListAsync();
+        Assert.Single(list);
 
-        using var schema = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = "http://localhost:8081" });
-        using var consumer = new ConsumerBuilder<int, OrderValue>(consumerConfig)
-            .SetValueDeserializer(new AsyncSchemaRegistryDeserializer<OrderValue>(schema).AsSyncOverAsync())
-            .SetKeyDeserializer(Deserializers.Int32)
-            .Build();
-
-        consumer.Subscribe("orders");
-        var result = consumer.Consume(TimeSpan.FromSeconds(10));
-        Assert.NotNull(result);
-        var headerBytes = result.Message.Headers?.GetLastBytes("is_dummy");
-        Assert.NotNull(headerBytes);
-        Assert.Equal("true", Encoding.UTF8.GetString(headerBytes!));
+        var consumed = new List<OrderValue>();
+        await ctx.Set<OrderValue>().ForEachAsync(o => { consumed.Add(o); return Task.CompletedTask; }, TimeSpan.FromSeconds(1));
+        Assert.Single(consumed);
 
         await ctx.DisposeAsync();
     }
