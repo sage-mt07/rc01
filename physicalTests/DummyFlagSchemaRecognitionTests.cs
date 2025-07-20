@@ -4,7 +4,6 @@ using Confluent.SchemaRegistry;
 using Chr.Avro.Confluent;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Application;
-using Kafka.Ksql.Linq.Messaging.Producers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,13 +69,12 @@ public class DummyFlagSchemaRecognitionTests
             .UseSchemaRegistry("http://localhost:8081")
             .BuildContext<DummyContext>();
 
-        var manager = Kafka.Ksql.Linq.Tests.PrivateAccessor.InvokePrivate<KafkaProducerManager>(ctx, "GetProducerManager", Type.EmptyTypes);
         var dummyCtx = new KafkaMessageContext
         {
             Headers = new Dictionary<string, object> { ["is_dummy"] = true }
         };
 
-        await (await manager.GetProducerAsync<OrderValue>()).SendAsync(new OrderValue
+        await ctx.Set<OrderValue>().AddAsync(new OrderValue
         {
             CustomerId = 1,
             Id = 1,
@@ -85,11 +83,10 @@ public class DummyFlagSchemaRecognitionTests
             IsHighPriority = false,
             Count = 1
         }, dummyCtx);
-
-        await (await manager.GetProducerAsync<Customer>()).SendAsync(new Customer { Id = 1, Name = "alice" }, dummyCtx);
-        await (await manager.GetProducerAsync<EventLog>()).SendAsync(new EventLog { Level = 1, Message = "init" }, dummyCtx);
-        await (await manager.GetProducerAsync<NullableOrder>()).SendAsync(new NullableOrder { CustomerId = 1, Region = "east", Amount = 10d }, dummyCtx);
-        await (await manager.GetProducerAsync<NullableKeyOrder>()).SendAsync(new NullableKeyOrder { CustomerId = 1, Amount = 10d }, dummyCtx);
+        await ctx.Set<Customer>().AddAsync(new Customer { Id = 1, Name = "alice" }, dummyCtx);
+        await ctx.Set<EventLog>().AddAsync(new EventLog { Level = 1, Message = "init" }, dummyCtx);
+        await ctx.Set<NullableOrder>().AddAsync(new NullableOrder { CustomerId = 1, Region = "east", Amount = 10d }, dummyCtx);
+        await ctx.Set<NullableKeyOrder>().AddAsync(new NullableKeyOrder { CustomerId = 1, Amount = 10d }, dummyCtx);
 
         await Task.Delay(500);
         await ctx.DisposeAsync();

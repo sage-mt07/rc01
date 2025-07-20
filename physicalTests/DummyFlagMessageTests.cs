@@ -4,7 +4,6 @@ using Confluent.SchemaRegistry;
 using Chr.Avro.Confluent;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Application;
-using Kafka.Ksql.Linq.Messaging.Producers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -44,13 +43,12 @@ public class DummyFlagMessageTests
             .UseSchemaRegistry("http://localhost:8081")
             .BuildContext<DummyContext>();
 
-        var manager = Kafka.Ksql.Linq.Tests.PrivateAccessor.InvokePrivate<KafkaProducerManager>(ctx, "GetProducerManager", Type.EmptyTypes);
         var messageContext = new KafkaMessageContext
         {
             Headers = new Dictionary<string, object> { ["is_dummy"] = true }
         };
 
-        await (await manager.GetProducerAsync<OrderValue>()).SendAsync(new OrderValue
+        await ctx.Set<OrderValue>().AddAsync(new OrderValue
         {
             CustomerId = 1,
             Id = 1,
