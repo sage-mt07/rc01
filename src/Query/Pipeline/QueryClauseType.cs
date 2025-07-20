@@ -10,8 +10,8 @@ internal enum QueryClauseType
     Join,
     Where,
     GroupBy,
-    Having,
     Window,
+    Having,
     OrderBy,
     Limit,
     EmitChanges

@@ -89,7 +89,7 @@ public class SchemaNameCaseSensitivityTests
         var msg = new Message<int, OrderWrongCase>
         {
             Key = 1,
-            Value = new OrderWrongCase { CustomerId = 1, Id = 1, region = "west", Amount = 5m },
+            Value = new OrderWrongCase { CustomerId = 1, Id = 1, region = "west", Amount = 5d },
             Headers = new Headers { new Header("is_dummy", Encoding.UTF8.GetBytes("true")) }
         };
 
