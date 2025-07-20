@@ -1,6 +1,7 @@
 ## ⚙️ Kafka.Ksql.Linq appsettings.json 構成仕様
 
 Kafka.Ksql.Linq では、`appsettings.json` を通じて柔軟なDSL設定が可能です。以下はその構成要素と意味です。
+標準的なデフォルト値は `examples/configuration/appsettings.json` にまとめられています。
 
 ---
 

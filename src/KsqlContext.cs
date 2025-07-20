@@ -72,7 +72,7 @@ public abstract class KsqlContext : KafkaContextCore
 
             _dlqProducer = new DlqProducer(
                 _producerManager,
-                new DlqOptions { TopicName = _dslOptions.DlqTopicName });
+                _dslOptions.DlqOptions);
             _dlqProducer.InitializeAsync().GetAwaiter().GetResult();
 
             _consumerManager = new KafkaConsumerManager(
@@ -117,7 +117,7 @@ public abstract class KsqlContext : KafkaContextCore
 
             _dlqProducer = new DlqProducer(
                 _producerManager,
-                new DlqOptions { TopicName = _dslOptions.DlqTopicName });
+                _dslOptions.DlqOptions);
             _dlqProducer.InitializeAsync().GetAwaiter().GetResult();
 
             _consumerManager = new KafkaConsumerManager(

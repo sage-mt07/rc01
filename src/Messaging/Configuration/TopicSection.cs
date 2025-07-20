@@ -1,4 +1,3 @@
-using Kafka.Ksql.Linq.Core.Attributes;
 using System.Collections.Generic;
 
 namespace Kafka.Ksql.Linq.Messaging.Configuration;
@@ -37,13 +36,11 @@ public class TopicCreationSection
     /// <summary>
     /// Number of partitions
     /// </summary>
-    [DefaultValue(1)]
     public int NumPartitions { get; init; } = 1;
 
     /// <summary>
     /// Replication factor
     /// </summary>
-    [DefaultValue(1)]
     public short ReplicationFactor { get; init; } = 1;
 
     /// <summary>

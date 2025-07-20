@@ -1,4 +1,3 @@
-using Kafka.Ksql.Linq.Core.Attributes;
 using System;
 using System.Collections.Generic;
 
@@ -10,28 +9,24 @@ public class DlqTopicConfiguration
     /// DLQ data retention in milliseconds.
     /// Default: 5000 (5 seconds) - functions as temporary storage.
     /// </summary>
-    [DefaultValue(5000)]
     public long RetentionMs { get; set; } = 5000;
 
     /// <summary>
     /// Number of partitions for the DLQ topic.
     /// Default: 1 (for observability rather than performance)
     /// </summary>
-    [DefaultValue(1)]
     public int NumPartitions { get; set; } = 1;
 
     /// <summary>
     /// Replication factor for the DLQ topic.
     /// Default: 1 (suitable for single-broker environments)
     /// </summary>
-    [DefaultValue(1)]
     public short ReplicationFactor { get; set; } = 1;
 
     /// <summary>
     /// Whether to enable automatic DLQ topic creation.
     /// Default: true (avoids fail-fast on missing topic)
     /// </summary>
-    [DefaultValue(true)]
     public bool EnableAutoCreation { get; set; } = true;
 
     /// <summary>

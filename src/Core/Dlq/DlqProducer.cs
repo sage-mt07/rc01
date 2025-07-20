@@ -1,6 +1,5 @@
 using Confluent.Kafka;
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Core.Attributes;
 using Kafka.Ksql.Linq.Core.Models;
 using System;
 using System.Collections.Generic;
@@ -252,13 +251,10 @@ public class DlqOptions
     /// <summary>
     /// 共通DLQトピック名
     /// </summary>
-    [DefaultValue("dead.letter.queue")]
     public string TopicName { get; set; } = "dead.letter.queue";
 
     public bool EnableCompression { get; set; } = true;
-    [DefaultValue(3)]
     public int MaxRetryAttempts { get; set; } = 3;
-    [DefaultValue("00:00:01")]
     public TimeSpan RetryInterval { get; set; } = TimeSpan.FromSeconds(1);
     public Action<DlqMetrics>? MetricsCallback { get; set; }
 }

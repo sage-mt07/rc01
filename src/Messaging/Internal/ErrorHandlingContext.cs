@@ -1,5 +1,4 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Core.Attributes;
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -10,7 +9,6 @@ public class ErrorHandlingContext
     /// <summary>
     /// Action to take when an error occurs
     /// </summary>
-    [DefaultValue(ErrorAction.Skip)]
     public ErrorAction ErrorAction { get; set; } = ErrorAction.Skip;
 
     private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<ErrorHandlingContext>();
@@ -18,13 +16,11 @@ public class ErrorHandlingContext
     /// <summary>
     /// Number of retry attempts
     /// </summary>
-    [DefaultValue(3)]
     public int RetryCount { get; set; } = 3;
 
     /// <summary>
     /// Interval between retries
     /// </summary>
-    [DefaultValue("00:00:01")]
     public TimeSpan RetryInterval { get; set; } = TimeSpan.FromSeconds(1);
 
     /// <summary>
