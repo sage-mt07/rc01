@@ -8,6 +8,7 @@ using Kafka.Ksql.Linq.Messaging.Producers;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -37,6 +38,59 @@ public class SchemaNameCaseSensitivityTests
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
             modelBuilder.Entity<OrderCorrectCase>().WithTopic("orders");
+        }
+    }
+
+    // Context using custom serialization for OrderWrongCase
+    public class WrongCaseContext : KsqlContext
+    {
+        protected override void OnModelCreating(IModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<OrderWrongCase>().WithTopic("orders");
+        }
+
+        protected override IEntitySet<T> CreateEntitySet<T>(EntityModel entityModel)
+        {
+            if (typeof(T) == typeof(OrderWrongCase))
+            {
+                return (IEntitySet<T>)new ManualSerializeEventSet(this, entityModel);
+            }
+
+            return base.CreateEntitySet<T>(entityModel);
+        }
+
+        private class ManualSerializeEventSet : EventSet<OrderWrongCase>
+        {
+            public ManualSerializeEventSet(IKsqlContext context, EntityModel model) : base(context, model) { }
+
+            public override IAsyncEnumerator<OrderWrongCase> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override Task<List<OrderWrongCase>> ToListAsync(CancellationToken cancellationToken = default)
+            {
+                throw new NotSupportedException();
+            }
+
+            protected override async Task SendEntityAsync(OrderWrongCase entity, CancellationToken cancellationToken)
+            {
+                var config = new ProducerConfig { BootstrapServers = "localhost:9093" };
+                using var schema = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = "http://localhost:8081" });
+                using var producer = new ProducerBuilder<int, OrderWrongCase>(config)
+                    .SetKeySerializer(Serializers.Int32)
+                    .SetValueSerializer(new AsyncSchemaRegistrySerializer<OrderWrongCase>(schema).AsSyncOverAsync())
+                    .Build();
+
+                var msg = new Message<int, OrderWrongCase>
+                {
+                    Key = 1,
+                    Value = entity,
+                    Headers = new Headers { new Header("is_dummy", Encoding.UTF8.GetBytes("true")) }
+                };
+
+                await producer.ProduceAsync("orders", msg, cancellationToken);
+            }
         }
     }
 
@@ -80,20 +134,21 @@ public class SchemaNameCaseSensitivityTests
         await EnsureTablesAsync();
         await ProduceValidDummyAsync();
 
-        var config = new ProducerConfig { BootstrapServers = "localhost:9093" };
-        using var schema = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = "http://localhost:8081" });
-        using var producer = new ProducerBuilder<int, OrderWrongCase>(config)
-            .SetKeySerializer(Serializers.Int32)
-            .SetValueSerializer(new AsyncSchemaRegistrySerializer<OrderWrongCase>(schema).AsSyncOverAsync())
-            .Build();
+        var ctx = KsqlContextBuilder.Create()
+            .UseSchemaRegistry("http://localhost:8081")
+            .BuildContext<WrongCaseContext>();
 
-        var msg = new Message<int, OrderWrongCase>
-        {
-            Key = 1,
-            Value = new OrderWrongCase { CustomerId = 1, Id = 1, region = "west", Amount = 5d },
-            Headers = new Headers { new Header("is_dummy", Encoding.UTF8.GetBytes("true")) }
-        };
+        var set = ctx.Set<OrderWrongCase>();
 
-        await Assert.ThrowsAsync<SchemaRegistryException>(() => producer.ProduceAsync("orders", msg));
+        await Assert.ThrowsAsync<SchemaRegistryException>(() =>
+            set.AddAsync(new OrderWrongCase
+            {
+                CustomerId = 1,
+                Id = 1,
+                region = "west",
+                Amount = 5d
+            }));
+
+        await ctx.DisposeAsync();
     }
 }
