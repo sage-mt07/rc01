@@ -22,7 +22,7 @@ public class WindowFilterExtensionsTests
             _model = model;
         }
         public void AddItem(T item) => _items.Add(item);
-        public Task AddAsync(T entity, CancellationToken cancellationToken = default) { _items.Add(entity); return Task.CompletedTask; }
+        public Task AddAsync(T entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default) { _items.Add(entity); return Task.CompletedTask; }
         public Task RemoveAsync(T entity, CancellationToken cancellationToken = default) { _items.Remove(entity); return Task.CompletedTask; }
         public Task<List<T>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<T>(_items));
         public Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.WhenAll(_items.Select(action));

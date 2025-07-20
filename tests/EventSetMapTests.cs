@@ -41,7 +41,7 @@ public class EventSetMapTests
             _items = items;
         }
 
-        protected override Task SendEntityAsync(Sample entity, CancellationToken cancellationToken) => Task.CompletedTask;
+        protected override Task SendEntityAsync(Sample entity, Dictionary<string, string>? headers, CancellationToken cancellationToken) => Task.CompletedTask;
 
         public override async IAsyncEnumerator<Sample> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {

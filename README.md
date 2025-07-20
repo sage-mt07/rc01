@@ -84,7 +84,9 @@ class Program
             Amount = 10m
         };
 
-        await context.Set<ManualCommitOrder>().AddAsync(order);
+        await context.Set<ManualCommitOrder>().AddAsync(
+            order,
+            headers: new Dictionary<string, string> { ["is_dummy"] = "true" });
         await Task.Delay(500);
 
         await context.Set<ManualCommitOrder>().ForEachAsync(async (IManualCommitMessage<ManualCommitOrder> msg) =>
@@ -102,6 +104,13 @@ class Program
     }
 }
 
+
+
+```
+
+// Build a Consumer with matching serializers automatically
+var consumer = context.CreateConsumerBuilder<ManualCommitOrder>()
+    .Build();
 
 ```
 

@@ -28,7 +28,7 @@ public class ForEachAsyncErrorHandlingTests
             _items = items;
         }
 
-        protected override Task SendEntityAsync(TestEntity entity, CancellationToken cancellationToken) => Task.CompletedTask;
+        protected override Task SendEntityAsync(TestEntity entity, Dictionary<string, string>? headers, CancellationToken cancellationToken) => Task.CompletedTask;
 
         private class FaultyEnumerator : IAsyncEnumerator<TestEntity>
         {

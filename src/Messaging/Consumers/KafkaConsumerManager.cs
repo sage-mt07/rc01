@@ -110,6 +110,22 @@ internal class KafkaConsumerManager : IDisposable
         }
     }
 
+    public ConsumerBuilder<object, T> CreateConsumerBuilder<T>(KafkaSubscriptionOptions? options = null) where T : class
+    {
+        var model = GetEntityModel<T>();
+        var topicName = (model.TopicName ?? typeof(T).Name).ToLowerInvariant();
+        var config = BuildConsumerConfig(topicName, options);
+
+        var keyType = KeyExtractor.DetermineKeyType(model);
+        var keyDeserializer = CreateKeyDeserializer(keyType);
+
+        var typedValueDeserializer = new AsyncSchemaRegistryDeserializer<T>(_schemaRegistryClient.Value).AsSyncOverAsync();
+
+        return new ConsumerBuilder<object, T>(config)
+            .SetKeyDeserializer(keyDeserializer)
+            .SetValueDeserializer(typedValueDeserializer);
+    }
+
     /// <summary>
     /// エンティティ取得 - EventSetから使用
     /// </summary>

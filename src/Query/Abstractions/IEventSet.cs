@@ -15,7 +15,7 @@ namespace Kafka.Ksql.Linq.Query.Abstractions;
 internal interface IEventSet<T> : IQueryable<T>, IAsyncEnumerable<T> where T : class
 {
     // Core Operations
-    Task AddAsync(T entity, CancellationToken cancellationToken = default);
+    Task AddAsync(T entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default);
     Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
     // Query Operations  

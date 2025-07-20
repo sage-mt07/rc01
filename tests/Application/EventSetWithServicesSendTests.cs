@@ -73,7 +73,7 @@ public class EventSetWithServicesSendTests
         dict[typeof(Sample)] = stub;
 
         var set = new EventSetWithServices<Sample>(ctx, CreateModel());
-        await set.AddAsync(new Sample(), CancellationToken.None);
+        await set.AddAsync(new Sample(), null, CancellationToken.None);
         Assert.True(stub.Sent);
     }
 }

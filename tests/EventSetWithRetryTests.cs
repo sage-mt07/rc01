@@ -48,7 +48,7 @@ public class EventSetWithRetryTests
             return new TestSet(_items, context, model, errorCtx, dlq);
         }
 
-        protected override Task SendEntityAsync(TestEntity entity, CancellationToken cancellationToken)
+        protected override Task SendEntityAsync(TestEntity entity, Dictionary<string, string>? headers, CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }

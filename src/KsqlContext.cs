@@ -9,6 +9,8 @@ using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.Cache.Extensions;
 using Kafka.Ksql.Linq.Cache.Core;
 using Kafka.Ksql.Linq.Core.Models;
+using Kafka.Ksql.Linq.Configuration.Abstractions;
+using Confluent.Kafka;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -267,6 +269,12 @@ public abstract class KsqlContext : KafkaContextCore
         return typeof(T).Name.ToLowerInvariant();
     }
 
+    public ConsumerBuilder<object, T> CreateConsumerBuilder<T>(KafkaSubscriptionOptions? options = null) where T : class
+        => _consumerManager.CreateConsumerBuilder<T>(options);
+
+    public ProducerBuilder<object, T> CreateProducerBuilder<T>(string? topicName = null) where T : class
+        => _producerManager.CreateProducerBuilder<T>(topicName);
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)
@@ -326,23 +334,13 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
     /// <summary>
     /// Producer機能：エンティティをKafkaに送信
     /// </summary>
-    public async Task AddAsync(T entity, CancellationToken cancellationToken = default)
+    public async Task AddAsync(T entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default)
     {
         try
         {
             var producerManager = _ksqlContext.GetProducerManager();
 
-            var context = new KafkaMessageContext
-            {
-                MessageId = Guid.NewGuid().ToString(),
-                Tags = new Dictionary<string, object>
-                {
-                    ["entity_type"] = typeof(T).Name,
-                    ["method"] = "EventSetWithServices.AddAsync"
-                }
-            };
-
-            await producerManager.SendAsync(entity, cancellationToken);
+            await producerManager.SendAsync(entity, headers, cancellationToken);
         }
         catch (Exception ex)
         {

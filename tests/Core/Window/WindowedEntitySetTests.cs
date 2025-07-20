@@ -30,7 +30,7 @@ public class WindowedEntitySetTests
             _context = context;
             _model = model;
         }
-        public Task AddAsync(T entity, CancellationToken cancellationToken = default) { Items.Add(entity); return Task.CompletedTask; }
+        public Task AddAsync(T entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default) { Items.Add(entity); return Task.CompletedTask; }
         public Task RemoveAsync(T entity, CancellationToken cancellationToken = default) { Items.Remove(entity); return Task.CompletedTask; }
         public Task<List<T>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<T>(Items));
         public Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.WhenAll(Items.Select(action));

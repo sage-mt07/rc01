@@ -136,6 +136,22 @@ internal class KafkaProducerManager : IDisposable
         _topicProducers.TryAdd(key, producer);
         return Task.FromResult<IKafkaProducer<T>>(producer);
     }
+
+    public ProducerBuilder<object, T> CreateProducerBuilder<T>(string? topicName = null) where T : class
+    {
+        var model = GetEntityModel<T>();
+        var name = topicName ?? (model.TopicName ?? typeof(T).Name).ToLowerInvariant();
+
+        var config = BuildProducerConfig(name);
+        var keyType = KeyExtractor.DetermineKeyType(model);
+        var keySerializer = CreateKeySerializer(keyType);
+
+        var typedValueSerializer = new AsyncSchemaRegistrySerializer<T>(_schemaRegistryClient.Value, AutomaticRegistrationBehavior.Always).AsSyncOverAsync();
+
+        return new ProducerBuilder<object, T>(config)
+            .SetKeySerializer(keySerializer)
+            .SetValueSerializer(typedValueSerializer);
+    }
     /// <summary>
     /// Producer設定構築
     /// </summary>
@@ -293,7 +309,7 @@ internal class KafkaProducerManager : IDisposable
         _valueSerializerCache[type] = serializer;
         return serializer;
     }
-    public async Task SendAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class
+    public async Task SendAsync<T>(T entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default) where T : class
     {
         if (entity == null)
             throw new ArgumentNullException(nameof(entity));
@@ -308,11 +324,16 @@ internal class KafkaProducerManager : IDisposable
                 ["method"] = "SendAsync"
             }
         };
+        if (headers != null)
+        {
+            foreach (var kvp in headers)
+                context.Headers[kvp.Key] = kvp.Value;
+        }
 
         await producer.SendAsync(entity, context, cancellationToken);
     }
 
-    public async Task SendAsync<T>(string topicName, T entity, CancellationToken cancellationToken = default) where T : class
+    public async Task SendAsync<T>(string topicName, T entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default) where T : class
     {
         if (entity == null)
             throw new ArgumentNullException(nameof(entity));
@@ -327,6 +348,11 @@ internal class KafkaProducerManager : IDisposable
                 ["method"] = "SendAsync"
             }
         };
+        if (headers != null)
+        {
+            foreach (var kvp in headers)
+                context.Headers[kvp.Key] = kvp.Value;
+        }
 
         await producer.SendAsync(entity, context, cancellationToken);
     }

@@ -58,7 +58,7 @@ internal class WindowFilteredEntitySet<T> : IEntitySet<T> where T : class
         }
     }
 
-    public Task AddAsync(T entity, CancellationToken cancellationToken = default) => _baseSet.AddAsync(entity, cancellationToken);
+    public Task AddAsync(T entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default) => _baseSet.AddAsync(entity, headers, cancellationToken);
     public Task RemoveAsync(T entity, CancellationToken cancellationToken = default) => _baseSet.RemoveAsync(entity, cancellationToken);
     public string GetTopicName() => _baseSet.GetTopicName();
     public EntityModel GetEntityModel() => _baseSet.GetEntityModel();

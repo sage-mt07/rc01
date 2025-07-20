@@ -43,7 +43,7 @@ public class EventSetLimitExtensionsTests
             _items = items.ToList();
             _model.BarTimeSelector = (Expression<Func<RateCandle, DateTime>>)(x => x.BarTime);
         }
-        public Task AddAsync(RateCandle entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task AddAsync(RateCandle entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<List<RateCandle>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(_items.ToList());
         public Task ForEachAsync(Func<RateCandle, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.WhenAll(_items.Select(action));
         public string GetTopicName() => _model.TopicName!;

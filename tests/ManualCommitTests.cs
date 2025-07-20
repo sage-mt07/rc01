@@ -31,7 +31,7 @@ public class ManualCommitTests
             _items = items;
         }
 
-        protected override Task SendEntityAsync(TestEntity entity, CancellationToken cancellationToken)
+        protected override Task SendEntityAsync(TestEntity entity, Dictionary<string, string>? headers, CancellationToken cancellationToken)
             => Task.CompletedTask;
 
         public override async IAsyncEnumerator<TestEntity> GetAsyncEnumerator(CancellationToken cancellationToken = default)

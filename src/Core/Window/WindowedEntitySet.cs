@@ -103,9 +103,9 @@ internal class WindowedEntitySet<T> : IWindowedEntitySet<T> where T : class
     }
 
     // ✅ IEntitySet<T> インターフェース実装 - ベースEntitySetに委譲
-    public async Task AddAsync(T entity, CancellationToken cancellationToken = default)
+    public async Task AddAsync(T entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default)
     {
-        await _baseEntitySet.AddAsync(entity, cancellationToken);
+        await _baseEntitySet.AddAsync(entity, headers, cancellationToken);
     }
 
     public Task RemoveAsync(T entity, CancellationToken cancellationToken = default)

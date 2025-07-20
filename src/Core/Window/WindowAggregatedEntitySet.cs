@@ -61,7 +61,7 @@ internal class WindowAggregatedEntitySet<TSource, TKey, TResult> : IEntitySet<TR
     }
 
     // ✅ IEntitySet<TResult> インターフェース実装
-    public async Task AddAsync(TResult entity, CancellationToken cancellationToken = default)
+    public async Task AddAsync(TResult entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
         throw new NotSupportedException("Cannot add entities to a window aggregated result set");

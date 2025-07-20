@@ -136,7 +136,7 @@ var ctx = new MyKsqlContext(options);
 var mapping = ctx.MappingManager;
 var entity = new Order { Id = 1, Amount = 100 };
 var (key, value) = mapping.ExtractKeyValue(entity);
-await ctx.AddAsync(entity);
+await ctx.AddAsync(entity, headers: new Dictionary<string, string> { ["is_dummy"] = "true" });
 ```
 #### ベストプラクティス
 - エンティティ登録は `OnModelCreating` 内で一括定義する。

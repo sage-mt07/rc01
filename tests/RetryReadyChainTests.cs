@@ -27,7 +27,7 @@ public class RetryReadyChainTests
     {
         public ErrorHandlingPolicy? LastPolicy { get; private set; }
         public TestSet() : base(new DummyContext(), CreateModel()) { }
-        protected override Task SendEntityAsync(TestEntity entity, CancellationToken cancellationToken) => Task.CompletedTask;
+        protected override Task SendEntityAsync(TestEntity entity, Dictionary<string, string>? headers, CancellationToken cancellationToken) => Task.CompletedTask;
         public override async IAsyncEnumerator<TestEntity> GetAsyncEnumerator(CancellationToken cancellationToken = default) { await Task.CompletedTask; yield break; }
         internal override EventSet<TestEntity> WithErrorPolicy(ErrorHandlingPolicy policy) { LastPolicy = policy; return this; }
     }

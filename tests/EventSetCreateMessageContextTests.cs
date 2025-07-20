@@ -26,7 +26,7 @@ public class EventSetCreateMessageContextTests
         {
         }
 
-        protected override Task SendEntityAsync(TestEntity entity, CancellationToken cancellationToken) => Task.CompletedTask;
+        protected override Task SendEntityAsync(TestEntity entity, Dictionary<string, string>? headers, CancellationToken cancellationToken) => Task.CompletedTask;
 
         public override async IAsyncEnumerator<TestEntity> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
