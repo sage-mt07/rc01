@@ -36,7 +36,7 @@ public class KsqlContextBuilderTests
     {
         var factory = Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
         var builder = KsqlContextBuilder.Create()
-            .UseSchemaRegistry("http://localhost:8081")
+            .UseSchemaRegistry("http://localhost:8088")
             .EnableLogging(factory)
             .ConfigureValidation(autoRegister: false, failOnErrors: false, enablePreWarming: false)
             .WithTimeouts(System.TimeSpan.FromSeconds(5));
@@ -56,7 +56,7 @@ public class KsqlContextBuilderTests
 
         var options = KsqlContextBuilder.Create()
             .UseConfiguration(config)
-            .UseSchemaRegistry("http://localhost:8081")
+            .UseSchemaRegistry("http://localhost:8088")
             .Build();
 
         Assert.Equal(config, options.Configuration);

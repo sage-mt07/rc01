@@ -66,7 +66,7 @@ public class DummyFlagSchemaRecognitionTests
         var options = new KafkaContextOptions
         {
             BootstrapServers = "localhost:9092",
-            SchemaRegistryUrl = "http://localhost:8081"
+            SchemaRegistryUrl = "http://localhost:8088"
         };
 
         await using var ctx = new DummyContext(options);

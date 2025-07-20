@@ -10,7 +10,7 @@ public class KsqlContextOptionsExtensionsTests
     public void UseSchemaRegistry_WithUrl_ConfiguresClient()
     {
         var options = new KsqlContextOptions();
-        options.UseSchemaRegistry("http://localhost:8081");
+        options.UseSchemaRegistry("http://localhost:8088");
         Assert.NotNull(options.SchemaRegistryClient);
     }
 

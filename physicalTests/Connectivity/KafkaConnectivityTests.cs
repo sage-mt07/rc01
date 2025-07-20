@@ -44,7 +44,7 @@ public class KafkaConnectivityTests
         Assert.True(result.IsSuccess);
 
         using var http = new HttpClient();
-        var resp = await http.GetAsync("http://localhost:8081/subjects");
+        var resp = await http.GetAsync("http://localhost:8088/subjects");
         Assert.True(resp.IsSuccessStatusCode);
     }
 }
