@@ -60,7 +60,7 @@ public class SchemaNameCaseSensitivityTests
     {
         var options = new KafkaContextOptions
         {
-            BootstrapServers = "localhost:9093",
+            BootstrapServers = "localhost:9092",
             SchemaRegistryUrl = "http://localhost:8081"
         };
 
@@ -92,7 +92,7 @@ public class SchemaNameCaseSensitivityTests
 
         var verifyOptions = new KafkaContextOptions
         {
-            BootstrapServers = "localhost:9093",
+            BootstrapServers = "localhost:9092",
             SchemaRegistryUrl = "http://localhost:8081"
         };
 
@@ -109,7 +109,7 @@ public class SchemaNameCaseSensitivityTests
 
         var options = new KafkaContextOptions
         {
-            BootstrapServers = "localhost:9093",
+            BootstrapServers = "localhost:9092",
             SchemaRegistryUrl = "http://localhost:8081"
         };
 

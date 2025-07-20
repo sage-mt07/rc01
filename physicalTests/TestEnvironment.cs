@@ -16,7 +16,7 @@ namespace Kafka.Ksql.Linq.Tests.Integration;
 internal static class TestEnvironment
 {
     private const string SchemaRegistryUrl = "http://localhost:8081";
-    private const string KafkaBootstrapServers = "localhost:9093";
+    private const string KafkaBootstrapServers = "localhost:9092";
     private const string DlqTopic = "dead.letter.queue";
     private static readonly HttpClient Http = new();
     private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger("TestEnvironment");
