@@ -55,7 +55,7 @@ internal class TypedThreeWayJoinResultEntitySet<TOuter, TInner, TThird, TResult>
         return new List<TResult>();
     }
 
-    public Task AddAsync(TResult entity, CancellationToken cancellationToken = default)
+    public Task AddAsync(TResult entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException("Cannot add entities to a three-way join result set");
     }

@@ -43,9 +43,9 @@ internal class ReadCachedEntitySet<T> : IEntitySet<T> where T : class
         return await Task.FromResult(all);
     }
 
-    public Task AddAsync(T entity, CancellationToken cancellationToken = default)
+    public Task AddAsync(T entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default)
     {
-        return _baseSet.AddAsync(entity, cancellationToken);
+        return _baseSet.AddAsync(entity, headers, cancellationToken);
     }
 
     public Task RemoveAsync(T entity, CancellationToken cancellationToken = default)

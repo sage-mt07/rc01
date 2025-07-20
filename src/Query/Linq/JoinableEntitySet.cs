@@ -22,9 +22,9 @@ public class JoinableEntitySet<T> : IEntitySet<T>, IJoinableEntitySet<T> where T
     }
 
     // ✅ IEntitySet<T>の必須実装
-    public async Task AddAsync(T entity, CancellationToken cancellationToken = default)
+    public async Task AddAsync(T entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default)
     {
-        await _baseEntitySet.AddAsync(entity, cancellationToken);
+        await _baseEntitySet.AddAsync(entity, headers, cancellationToken);
     }
 
     public async Task RemoveAsync(T entity, CancellationToken cancellationToken = default)

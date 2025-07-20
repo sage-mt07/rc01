@@ -106,17 +106,17 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
     /// <summary>
     /// ABSTRACT: Producer functionality - implemented in derived classes
     /// </summary>
-    protected abstract Task SendEntityAsync(T entity, CancellationToken cancellationToken);
+    protected abstract Task SendEntityAsync(T entity, Dictionary<string, string>? headers, CancellationToken cancellationToken);
 
     /// <summary>
     /// IEntitySet<T> implementation: producer operations
     /// </summary>
-    public virtual async Task AddAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual async Task AddAsync(T entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default)
     {
         if (entity == null)
             throw new ArgumentNullException(nameof(entity));
 
-        await SendEntityAsync(entity, cancellationToken);
+        await SendEntityAsync(entity, headers, cancellationToken);
     }
 
     public virtual Task RemoveAsync(T entity, CancellationToken cancellationToken = default)
@@ -498,7 +498,7 @@ internal class MappedEventSet<T> : EventSet<T> where T : class
     /// <summary>
     /// Data after Map cannot be sent via Producer
     /// </summary>
-    protected override Task SendEntityAsync(T entity, CancellationToken cancellationToken)
+    protected override Task SendEntityAsync(T entity, Dictionary<string, string>? headers, CancellationToken cancellationToken)
     {
         throw new NotSupportedException(
             $"MappedEventSet<{typeof(T).Name}> does not support AddAsync operations. " +

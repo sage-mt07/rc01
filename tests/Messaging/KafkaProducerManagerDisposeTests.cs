@@ -105,7 +105,7 @@ public class KafkaProducerManagerDisposeTests
         var stub = new StubProducer<Sample>();
         producers[typeof(Sample)] = stub;
 
-        await manager.SendAsync(new Sample());
+        await manager.SendAsync(new Sample(), null);
         Assert.True(stub.Sent);
 
         manager.Dispose();

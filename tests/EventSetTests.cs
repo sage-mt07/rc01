@@ -30,7 +30,7 @@ public class EventSetTests
             _items = items;
         }
 
-        protected override Task SendEntityAsync(TestEntity entity, CancellationToken cancellationToken)
+        protected override Task SendEntityAsync(TestEntity entity, Dictionary<string, string>? headers, CancellationToken cancellationToken)
         {
             Sent = true;
             return Task.CompletedTask;
