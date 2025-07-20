@@ -56,7 +56,8 @@ public abstract class KsqlContext : KafkaContextCore
             return new Uri($"http://{host}:{port}");
         }
 
-        return new Uri("http://localhost:8088");
+        throw new InvalidOperationException(
+            "FATAL: ksqlDB URL could not be determined. Configure BootstrapServers or SchemaRegistry Url.");
     }
 
     /// <summary>
