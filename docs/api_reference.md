@@ -58,7 +58,6 @@
 
 | 属性                       | 役割                           | 実装状態 |
 |----------------------------|--------------------------------|---------|
-| `DefaultValueAttribute`    | 既定値指定                     | ✅      |
 | `MaxLengthAttribute`       | 文字列長制限                   | ✅      |
 | `ScheduleRangeAttribute`   | 取引開始・終了をまとめて指定する属性 | 🚧 |
 
@@ -74,7 +73,7 @@
 | `AvroOperationRetrySettings`| Avro操作ごとのリトライ設定     | ✅      |
 | `AvroRetryPolicy`          | リトライ回数や遅延などの詳細ポリシー | ✅  |
 
-`KsqlDslOptions.DlqTopicName` は既定で `"dead.letter.queue"` です【F:src/Configuration/KsqlDslOptions.cs†L31-L34】。
+`KsqlDslOptions.DlqTopicName` は既定で `"dead.letter.queue"` です【F:src/Core/Dlq/DlqProducer.cs†L249-L255】。
 
 <a id="fluent-api-list"></a>
 ### Fluent API 一覧

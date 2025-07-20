@@ -1,7 +1,7 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Core.Attributes;
 using Kafka.Ksql.Linq.Core.Configuration;
 using Kafka.Ksql.Linq.Messaging.Configuration;
+using Kafka.Ksql.Linq.Core.Dlq;
 using System.Collections.Generic;
 
 namespace Kafka.Ksql.Linq.Configuration;
@@ -29,8 +29,13 @@ public class KsqlDslOptions
 
     public List<EntityConfiguration> Entities { get; init; } = new();
 
-    [DefaultValue("dead.letter.queue")]
-    public string DlqTopicName { get; set; } = "dead.letter.queue";
+    public DlqOptions DlqOptions { get; init; } = new();
+
+    public string DlqTopicName
+    {
+        get => DlqOptions.TopicName;
+        set => DlqOptions.TopicName = value;
+    }
 
     public DlqTopicConfiguration DlqConfiguration { get; init; } = new();
 
@@ -52,12 +57,10 @@ public class KsqlDslOptions
     /// <summary>
     /// Global decimal precision applied when mapping decimal properties.
     /// </summary>
-    [DefaultValue(38)]
     public int DecimalPrecision { get; init; } = 38;
 
     /// <summary>
     /// Global decimal scale applied when mapping decimal properties.
     /// </summary>
-    [DefaultValue(9)]
     public int DecimalScale { get; init; } = 9;
 }

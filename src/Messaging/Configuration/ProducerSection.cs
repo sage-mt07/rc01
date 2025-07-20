@@ -1,4 +1,3 @@
-using Kafka.Ksql.Linq.Core.Attributes;
 using System.Collections.Generic;
 
 namespace Kafka.Ksql.Linq.Messaging.Configuration;
@@ -7,19 +6,16 @@ public class ProducerSection
     /// <summary>
     /// Acknowledgement level (All, Leader, None)
     /// </summary>
-    [DefaultValue("All")]
     public string Acks { get; init; } = "All";
 
     /// <summary>
     /// Compression type
     /// </summary>
-    [DefaultValue("Snappy")]
     public string CompressionType { get; init; } = "Snappy";
 
     /// <summary>
     /// Enable idempotence
     /// </summary>
-    [DefaultValue(true)]
     public bool EnableIdempotence { get; init; } = true;
 
     /// <summary>

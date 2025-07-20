@@ -100,7 +100,6 @@ C#型
 [KafkaIgnore]	|スキーマ定義・KSQL変換から除外される
 [DecimalPrecision(precision, scale)]	|decimal型の精度指定（例：18,4）
 [DateTimeFormat("format")]	|KSQL上でのDateTimeの文字列フォーマット
-[DefaultValue(value)]	|定義時のデフォルト値（スキーマ定義上のみ）
 [MaxLength(n)]	|文字列長の制約。Avroスキーマにも反映
 
 💡 サンプル：Orderエンティティの定義
