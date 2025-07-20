@@ -4,7 +4,6 @@ using Chr.Avro.Confluent;
 using Confluent.Kafka.SyncOverAsync;
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Messaging.Producers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -53,13 +52,12 @@ public class SchemaNameCaseSensitivityTests
             .UseSchemaRegistry("http://localhost:8081")
             .BuildContext<OrderContext>();
 
-        var manager = Kafka.Ksql.Linq.Tests.PrivateAccessor.InvokePrivate<KafkaProducerManager>(ctx, "GetProducerManager", Type.EmptyTypes);
         var dummyCtx = new KafkaMessageContext
         {
             Headers = new Dictionary<string, object> { ["is_dummy"] = true }
         };
 
-        await (await manager.GetProducerAsync<OrderCorrectCase>()).SendAsync(new OrderCorrectCase
+        await ctx.Set<OrderCorrectCase>().AddAsync(new OrderCorrectCase
         {
             CustomerId = 1,
             Id = 1,
