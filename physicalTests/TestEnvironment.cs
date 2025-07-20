@@ -7,13 +7,14 @@ using System.Linq;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
+using Kafka.Ksql.Linq.Application;
 using System.Threading.Tasks;
 
 namespace Kafka.Ksql.Linq.Tests.Integration;
 
 internal static class TestEnvironment
 {
-    private static readonly IKsqlClient KsqlClient = new KsqlClient(new Uri("http://localhost:8088"));
+    private const string KsqlDbUrl = "http://localhost:8088";
     private const string SchemaRegistryUrl = "http://localhost:8081";
     private const string KafkaBootstrapServers = "localhost:9093";
     private const string DlqTopic = "dead.letter.queue";
@@ -32,6 +33,18 @@ internal static class TestEnvironment
         "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+nullablekeyorder-key",
         "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+nullablekeyorder-value"
     };
+
+    internal static KsqlContext CreateContext()
+    {
+        return KsqlContextBuilder.Create()
+            .UseSchemaRegistry(SchemaRegistryUrl)
+            .BuildContext<AdminContext>();
+    }
+
+    internal class AdminContext : KsqlContext
+    {
+        protected override bool SkipSchemaRegistration => true;
+    }
 
     /// <summary>
     /// テスト開始時の初期化処理
@@ -58,13 +71,14 @@ internal static class TestEnvironment
         }
 
         // create required stream/table objects
-        await KsqlClient.ExecuteStatementAsync(
+        await using var ctx = CreateContext();
+        await ctx.ExecuteStatementAsync(
             "CREATE STREAM IF NOT EXISTS source (id INT) WITH (KAFKA_TOPIC='source', VALUE_FORMAT='AVRO', PARTITIONS=1);"
         );
 
         foreach (var ddl in TestSchema.GenerateTableDdls())
         {
-            await KsqlClient.ExecuteStatementAsync(ddl);
+            await ctx.ExecuteStatementAsync(ddl);
         }
 
         await ValidateSchemaRegistrationAsync();
@@ -85,15 +99,18 @@ internal static class TestEnvironment
             "DROP TABLE IF EXISTS orders_nullable_key DELETE TOPIC;",
         };
 
-        foreach (var stmt in ksqlStatements)
+        await using (var ctx = CreateContext())
         {
-            try
+            foreach (var stmt in ksqlStatements)
             {
-                await KsqlClient.ExecuteStatementAsync(stmt);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Failed to execute: {Stmt}", stmt);
+                try
+                {
+                    await ctx.ExecuteStatementAsync(stmt);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Failed to execute: {Stmt}", stmt);
+                }
             }
         }
 
@@ -154,9 +171,12 @@ internal static class TestEnvironment
             }
 
             // ksqlDB connectivity check
-            var r = await KsqlClient.ExecuteStatementAsync("SHOW TOPICS;");
-            if (!r.IsSuccess)
-                throw new InvalidOperationException("ksqlDB unreachable");
+            await using (var ctx = CreateContext())
+            {
+                var r = await ctx.ExecuteStatementAsync("SHOW TOPICS;");
+                if (!r.IsSuccess)
+                    throw new InvalidOperationException("ksqlDB unreachable");
+            }
 
             // Schema Registry check
             var resp = await Http.GetAsync($"{SchemaRegistryUrl}/subjects");

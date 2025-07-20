@@ -14,7 +14,6 @@ namespace Kafka.Ksql.Linq.Tests.Integration;
 
 public class DynamicKsqlGenerationTests
 {
-    private readonly IKsqlClient _client = new KsqlClient(new Uri("http://localhost:8088"));
 
     private static void ConfigureModel(IModelBuilder builder)
     {
@@ -233,31 +232,37 @@ public class DynamicKsqlGenerationTests
         var ddls = GenerateDdlQueries(models).ToList();
 
         // drop all objects first
-        foreach (var ddl in ddls)
+        await using (var ctx = TestEnvironment.CreateContext())
         {
-            var drop = ddl.StartsWith("CREATE STREAM")
-                ? ddl.Replace("CREATE STREAM", "DROP STREAM IF EXISTS") + " DELETE TOPIC;"
-                : ddl.Replace("CREATE TABLE", "DROP TABLE IF EXISTS") + " DELETE TOPIC;";
-            await _client.ExecuteStatementAsync(drop);
-        }
+            foreach (var ddl in ddls)
+            {
+                var drop = ddl.StartsWith("CREATE STREAM")
+                    ? ddl.Replace("CREATE STREAM", "DROP STREAM IF EXISTS") + " DELETE TOPIC;"
+                    : ddl.Replace("CREATE TABLE", "DROP TABLE IF EXISTS") + " DELETE TOPIC;";
+                await ctx.ExecuteStatementAsync(drop);
+            }
 
-        // then create all objects
-        foreach (var ddl in ddls)
-        {
-            var result = await _client.ExecuteStatementAsync(ddl);
-            var success = result.IsSuccess ||
-                (result.Message?.Contains("already exists", StringComparison.OrdinalIgnoreCase) ?? false);
-            Assert.True(success, $"DDL failed: {result.Message}");
+            // then create all objects
+            foreach (var ddl in ddls)
+            {
+                var result = await ctx.ExecuteStatementAsync(ddl);
+                var success = result.IsSuccess ||
+                    (result.Message?.Contains("already exists", StringComparison.OrdinalIgnoreCase) ?? false);
+                Assert.True(success, $"DDL failed: {result.Message}");
+            }
         }
 
         // insert dummy records so ksqlDB can materialize schemas
         await ProduceDummyRecordsAsync();
 
         // validate that all DML queries are executable
-        foreach (var dml in GenerateDmlQueries(models))
+        await using (var ctx = TestEnvironment.CreateContext())
         {
-            var response = await _client.ExecuteExplainAsync(dml);
-            Assert.True(response.IsSuccess, $"{dml} failed: {response.Message}");
+            foreach (var dml in GenerateDmlQueries(models))
+            {
+                var response = await ctx.ExecuteExplainAsync(dml);
+                Assert.True(response.IsSuccess, $"{dml} failed: {response.Message}");
+            }
         }
     }
 
@@ -283,7 +288,8 @@ public class DynamicKsqlGenerationTests
             return; // skip unsupported queries
 
         TestSchema.ValidateDmlQuery(ksql);
-        var response = await _client.ExecuteExplainAsync(ksql);
+        await using var ctx = TestEnvironment.CreateContext();
+        var response = await ctx.ExecuteExplainAsync(ksql);
         Assert.True(response.IsSuccess, $"{ksql} failed: {response.Message}");
     }
 
