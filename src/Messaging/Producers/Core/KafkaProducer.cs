@@ -99,10 +99,10 @@ internal class KafkaProducer<T> : IKafkaProducer<T> where T : class
 
         try
         {
-            var kafkaMessage = new Message<object, object?>
+            var kafkaMessage = new Message<object, object>
             {
                 Key = key,
-                Value = null,
+                Value = null!,
                 Headers = BuildHeaders(context),
                 Timestamp = new Timestamp(DateTime.UtcNow)
             };

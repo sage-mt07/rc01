@@ -72,7 +72,7 @@ public class SchemaNameCaseSensitivityTests
                 throw new NotSupportedException();
             }
 
-            protected override async Task SendEntityAsync(OrderWrongCase entity, CancellationToken cancellationToken)
+            protected override async Task SendEntityAsync(OrderWrongCase entity, Dictionary<string, string>? headers, CancellationToken cancellationToken)
             {
                 var config = new ProducerConfig { BootstrapServers = "localhost:9093" };
                 using var schema = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = "http://localhost:8081" });
