@@ -138,9 +138,21 @@ public static class EntityBuilderQueryExtensions
         }
 
         // Stream/Table設定
-        var streamTableType = schema.IsKeyless 
-            ? Query.Abstractions.StreamTableType.Stream 
+        var streamTableType = schema.IsKeyless
+            ? Query.Abstractions.StreamTableType.Stream
             : Query.Abstractions.StreamTableType.Table;
+
+        // Override to Stream when stream-only aggregates are used
+        if (schema.UsesStreamOnlyAggregates)
+        {
+            if (entityModel.GetExplicitStreamTableType() == Query.Abstractions.StreamTableType.Table)
+            {
+                throw new InvalidOperationException("ksqlDBの仕様上、これらの集計関数はTableで利用できません");
+            }
+
+            streamTableType = Query.Abstractions.StreamTableType.Stream;
+        }
+
         entityModel.SetStreamTableType(streamTableType);
 
         StoreQuerySchema(entityModel, schema);

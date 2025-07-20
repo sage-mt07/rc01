@@ -19,6 +19,11 @@ public class QuerySchema
     /// </summary>
     public QueryExecutionMode ExecutionMode { get; set; } = QueryExecutionMode.Unspecified;
 
+    /// <summary>
+    /// Indicates if MIN/MAX or other stream-only aggregate functions are used.
+    /// </summary>
+    public bool UsesStreamOnlyAggregates { get; set; }
+
     public PropertyMeta[] KeyProperties
     {
         get => KeyInfo.Properties;
