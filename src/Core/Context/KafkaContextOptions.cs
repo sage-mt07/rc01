@@ -11,9 +11,9 @@ public class KafkaContextOptions
     public string BootstrapServers { get; set; } = "localhost:9092";
 
     /// <summary>
-    /// Schema Registry base URL
+    /// Schema Registry base URL (see docs_configuration_reference.md)
     /// </summary>
-    public string SchemaRegistryUrl { get; set; } = "http://localhost:8081";
+    public string SchemaRegistryUrl { get; set; } = string.Empty;
 
     public ValidationMode ValidationMode { get; set; } = ValidationMode.Strict;
 

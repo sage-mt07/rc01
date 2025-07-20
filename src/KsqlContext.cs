@@ -199,11 +199,12 @@ public abstract class KsqlContext : KafkaContextCore
     /// </summary>
     private ConfluentSchemaRegistry.ISchemaRegistryClient CreateSchemaRegistryClient()
     {
+        var options = _dslOptions.SchemaRegistry;
         var config = new ConfluentSchemaRegistry.SchemaRegistryConfig
         {
-            Url = "http://localhost:8081", // デフォルト値、実際は設定から取得
-            MaxCachedSchemas = 1000,
-            RequestTimeoutMs = 30000
+            Url = options.Url,
+            MaxCachedSchemas = options.MaxCachedSchemas,
+            RequestTimeoutMs = options.RequestTimeoutMs
         };
 
         return new ConfluentSchemaRegistry.CachedSchemaRegistryClient(config);

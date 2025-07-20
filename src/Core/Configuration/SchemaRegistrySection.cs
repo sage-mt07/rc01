@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Kafka.Ksql.Linq.Messaging.Configuration;
+namespace Kafka.Ksql.Linq.Core.Configuration;
 
 /// <summary>
 /// Schema Registry configuration (follows Confluent.Kafka specifications)
@@ -10,7 +10,7 @@ public class SchemaRegistrySection
     /// <summary>
     /// A comma-separated list of URLs for schema registry instances
     /// </summary>
-    public string Url { get; init; } = "http://localhost:8081";
+    public string Url { get; init; } = string.Empty;
 
     /// <summary>
     /// Maximum number of schemas to cache locally
