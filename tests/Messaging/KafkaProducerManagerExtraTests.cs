@@ -2,6 +2,7 @@ using Confluent.SchemaRegistry;
 using Confluent.Kafka;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Messaging.Configuration;
+using Kafka.Ksql.Linq.Core.Configuration;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using System.Collections.Generic;
 using System.Collections.Concurrent;

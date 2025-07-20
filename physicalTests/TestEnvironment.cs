@@ -15,7 +15,6 @@ namespace Kafka.Ksql.Linq.Tests.Integration;
 
 internal static class TestEnvironment
 {
-    private const string KsqlDbUrl = "http://localhost:8088";
     private const string SchemaRegistryUrl = "http://localhost:8081";
     private const string KafkaBootstrapServers = "localhost:9093";
     private const string DlqTopic = "dead.letter.queue";

@@ -255,7 +255,6 @@ Consumer の設定は `ConsumerSection` クラスにそれぞれマッピング�
 | `DecimalPrecision` | decimal型のprecisionを一括設定 |
 | `DecimalScale` | decimal型のscaleを一括設定 |
 
-
 ### 🧩 DSL記述とappsettingsの対応関係
 
 | Kafka設定項目             | DSLでの指定                          | appsettings.jsonキー                         | 補足説明 |
