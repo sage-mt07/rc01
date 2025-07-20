@@ -10,7 +10,7 @@ public class QueryBuilderExecutionModeTests
     private class SimpleEntity
     {
         public int Id { get; set; }
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
     }
 
     [Fact]

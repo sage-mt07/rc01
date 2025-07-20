@@ -15,7 +15,7 @@ internal static class TestSchema
             ("CustomerId", "INT"),
             ("Id", "INT"),
             ("Region", "VARCHAR"),
-            ("Amount", $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})"),
+            ("Amount", "DOUBLE"),
             ("IsHighPriority", "BOOLEAN"),
             ("Count", "INT")
         },
@@ -33,12 +33,12 @@ internal static class TestSchema
         {
             ("CustomerId", "INT"),
             ("Region", "VARCHAR"),
-            ("Amount", $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})")
+            ("Amount", "DOUBLE")
         },
         ["orders_nullable_key"] = new[]
         {
             ("CustomerId", "INT"),
-            ("Amount", $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})")
+            ("Amount", "DOUBLE")
         }
     };
 
