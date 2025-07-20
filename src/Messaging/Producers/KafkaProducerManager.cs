@@ -276,6 +276,8 @@ internal class KafkaProducerManager : IDisposable
 
     private ISerializer<object> CreateKeySerializerGeneric<T>()
     {
+        var schema = DynamicSchemaGenerator.GetSchema<T>();
+        _logger?.LogDebug("Generated key schema: {Schema}", schema.ToString());
         var typed = new AvroSerializer<T>(_schemaRegistryClient.Value, _serializerConfig).AsSyncOverAsync();
         return SerializerAdapters.ToObjectSerializer(typed);
     }
@@ -285,7 +287,8 @@ internal class KafkaProducerManager : IDisposable
         var type = typeof(T);
         if (_valueSerializerCache.TryGetValue(type, out var cached))
             return cached;
-
+        var schema = DynamicSchemaGenerator.GetSchema<T>();
+        _logger?.LogDebug("Generated value schema: {Schema}", schema.ToString());
         var typed = new AvroSerializer<T>(_schemaRegistryClient.Value, _serializerConfig).AsSyncOverAsync();
         var serializer = SerializerAdapters.ToObjectSerializer(typed);
         _valueSerializerCache[type] = serializer;
