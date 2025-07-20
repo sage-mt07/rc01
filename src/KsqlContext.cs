@@ -419,6 +419,20 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
         }
     }
 
+    public async Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var consumerManager = _ksqlContext.GetConsumerManager();
+
+            await Task.Delay(100, cancellationToken); // シミュレート
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to stream entities {typeof(T).Name} from Kafka", ex);
+        }
+    }
+
     /// <summary>
     /// IAsyncEnumerable実装：ストリーミング消費
     /// </summary>

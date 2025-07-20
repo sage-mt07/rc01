@@ -70,6 +70,11 @@ internal class TypedThreeWayJoinResultEntitySet<TOuter, TInner, TThird, TResult>
         throw new NotSupportedException("ForEachAsync not supported on three-way join result sets");
     }
 
+    public Task ForEachAsync(Func<TResult, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("ForEachAsync not supported on three-way join result sets");
+    }
+
     public string GetTopicName() => (_entityModel.TopicName ?? typeof(TResult).Name).ToLowerInvariant();
     public EntityModel GetEntityModel() => _entityModel;
     public IKsqlContext GetContext() => _context;

@@ -58,6 +58,11 @@ internal class ReadCachedEntitySet<T> : IEntitySet<T> where T : class
         return _baseSet.ForEachAsync(action, timeout, cancellationToken);
     }
 
+    public Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        return _baseSet.ForEachAsync(action, timeout, cancellationToken);
+    }
+
     public string GetTopicName() => (_model.TopicName ?? typeof(T).Name).ToLowerInvariant();
     public EntityModel GetEntityModel() => _model;
     public IKsqlContext GetContext() => _context;

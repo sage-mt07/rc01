@@ -30,6 +30,7 @@ public class TypedJoinResultEntitySetTests
         public Task RemoveAsync(T entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<List<T>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<T>());
         public Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public string GetTopicName() => typeof(T).Name;
         public EntityModel GetEntityModel() => new EntityModel { EntityType = typeof(T), TopicName = typeof(T).Name.ToLowerInvariant(), AllProperties = typeof(T).GetProperties(), KeyProperties = Array.Empty<System.Reflection.PropertyInfo>(), ValidationResult = new ValidationResult { IsValid = true } };
         public IKsqlContext GetContext() => _context;
