@@ -13,11 +13,15 @@ using Kafka.Ksql.Linq.Configuration.Abstractions;
 using Confluent.Kafka;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ConfluentSchemaRegistry = Confluent.SchemaRegistry;
 using Microsoft.Extensions.Logging;
+using Kafka.Ksql.Linq.Core.Configuration;
 
 namespace Kafka.Ksql.Linq.Application;
 /// <summary>
@@ -35,6 +39,7 @@ public abstract class KsqlContext : KafkaContextCore
     private readonly KsqlDslOptions _dslOptions;
     private TableCacheRegistry? _cacheRegistry;
     private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<KsqlContext>();
+    private static readonly Uri DefaultKsqlDbUrl = new("http://localhost:8088");
 
     /// <summary>
     /// Hook to decide whether schema registration should be skipped for tests
@@ -202,6 +207,60 @@ public abstract class KsqlContext : KafkaContextCore
         };
 
         return new ConfluentSchemaRegistry.CachedSchemaRegistryClient(config);
+    }
+
+    private static CommonSection GetCommonSection(KsqlContext context)
+    {
+        return context._dslOptions.Common;
+    }
+
+    private static Uri GetKsqlDbUrl(KsqlContext context)
+    {
+        var schemaUrl = context._dslOptions.SchemaRegistry.Url;
+        if (!string.IsNullOrWhiteSpace(schemaUrl) &&
+            Uri.TryCreate(schemaUrl, UriKind.Absolute, out var uri))
+        {
+            var port = uri.IsDefaultPort ? DefaultKsqlDbUrl.Port : uri.Port;
+            return new Uri($"{uri.Scheme}://{uri.Host}:{port}");
+        }
+
+        var bootstrap = GetCommonSection(context).BootstrapServers;
+        if (!string.IsNullOrWhiteSpace(bootstrap))
+        {
+            var first = bootstrap.Split(',')[0];
+            var hostParts = first.Split(':');
+            var host = hostParts[0];
+            int port = DefaultKsqlDbUrl.Port;
+            if (hostParts.Length > 1 && int.TryParse(hostParts[1], out var parsed))
+            {
+                port = parsed;
+            }
+            return new Uri($"http://{host}:{port}");
+        }
+
+        return DefaultKsqlDbUrl;
+    }
+
+    private static HttpClient CreateClient(KsqlContext context)
+    {
+        return new HttpClient { BaseAddress = GetKsqlDbUrl(context) };
+    }
+
+    public async Task<KsqlDbResponse> ExecuteStatementAsync(string statement)
+    {
+        using var client = CreateClient(this);
+        var payload = new { ksql = statement, streamsProperties = new { } };
+        var json = JsonSerializer.Serialize(payload);
+        using var content = new StringContent(json, Encoding.UTF8, "application/json");
+        using var response = await client.PostAsync("/ksql", content);
+        var body = await response.Content.ReadAsStringAsync();
+        var success = response.IsSuccessStatusCode && !body.Contains("\"error_code\"");
+        return new KsqlDbResponse(success, body);
+    }
+
+    public Task<KsqlDbResponse> ExecuteExplainAsync(string ksql)
+    {
+        return ExecuteStatementAsync($"EXPLAIN {ksql}");
     }
 
 
