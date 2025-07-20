@@ -228,6 +228,27 @@ SQLServer には Push/Pull クエリという明確な区別は存在しませ�
 | 非KTable参照 | STREAM からの Pull Query | `SELECT * FROM STREAM;` | ❌（TABLEのみ可） |
 | 非キー検索 | 主キー以外での `WHERE` 検索 | `SELECT * FROM TABLE WHERE COL2 = 'x';` | ❌ |
 
+### ksqlDBにおける句の並び順（重要）
+
+ksqlDB のクエリでは、句の記述順序が固定されています。以下の順序に従うことで構文エラーを防げます。
+
+1. `WHERE`
+2. `GROUP BY`
+3. `WINDOW`
+4. `HAVING`
+5. `EMIT CHANGES`
+
+**例:**
+```sql
+SELECT CUSTOMERID, COUNT(*) AS COUNT
+FROM ORDERS
+WHERE (AMOUNT > 100)
+GROUP BY CUSTOMERID
+WINDOW TUMBLING (SIZE 5 MINUTES)
+HAVING (COUNT(*) > 1)
+EMIT CHANGES;
+```
+
 ## 6. 永続性と耐久性
 
 **SQLServer**:
@@ -339,7 +360,7 @@ SQL Server視点	|Kafka/KSQL視点	|解説
 |---|---|---|
 GROUP BY + DATEPART() などで「時間単位で集約」	|TUMBLING WINDOW や HOPPING WINDOW によるウィンドウ集約	|Kafkaでは「連続的な流れ」を一定間隔で切り取る
 ストアドプロシージャや集計ビューで処理	|ストリーム内で自動的にウィンドウ適用・出力トピックへ集約書き込み	|結果はKafkaトピックとして自動生成・書き込みされる
-SQL: SELECT customer, COUNT(*) FROM orders WHERE ... GROUP BY customer, DATEPART(...)|	KSQL: SELECT customer, COUNT(*) FROM orders WINDOW TUMBLING (SIZE 5 MINUTES) GROUP BY customer;	|ウィンドウサイズ指定が構文の中に明示される
+SQL: SELECT customer, COUNT(*) FROM orders WHERE ... GROUP BY customer, DATEPART(...)|	KSQL: SELECT customer, COUNT(*) FROM orders GROUP BY customer WINDOW TUMBLING (SIZE 5 MINUTES);	|ウィンドウサイズ指定が構文の中に明示される
 
 ### 🧠 知っておきたい設計上の考慮点
 - ウィンドウの種類：
