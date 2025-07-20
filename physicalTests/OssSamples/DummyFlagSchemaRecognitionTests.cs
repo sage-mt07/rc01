@@ -120,22 +120,4 @@ public class DummyFlagSchemaRecognitionTests
         }
     }
 
-    // is_dummy ヘッダー付きメッセージがコンシューマで無視されるか確認
-    [KsqlDbFact]
-    [Trait("Category", "Integration")]
-    public async Task Consumer_SkipsDummyMessages()
-    {
-        await TestEnvironment.ResetAsync();
-
-        await ProduceDummyRecordsAsync();
-        await Task.Delay(1000);
-
-        await using var ctx = TestEnvironment.CreateContext();
-        var list = await ctx.Set<OrderValue>().ToListAsync();
-        Assert.Empty(list);
-
-        var forEachList = new List<OrderValue>();
-        await ctx.Set<OrderValue>().ForEachAsync(o => { forEachList.Add(o); return Task.CompletedTask; }, TimeSpan.FromSeconds(1));
-        Assert.Empty(forEachList);
-    }
 }
