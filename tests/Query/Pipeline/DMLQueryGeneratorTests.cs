@@ -755,4 +755,36 @@ public class DMLQueryGeneratorTests
 
         Assert.Contains("Where/GroupBy/Select", ex.Message);
     }
+
+    [Fact]
+    public void GenerateLinqQuery_GroupByPullQuery_Throws()
+    {
+        var src = new List<Order>().AsQueryable();
+        var query = src
+            .GroupBy(o => o.CustomerId)
+            .Select(g => new { g.Key, Count = g.Count() });
+
+        var generator = new DMLQueryGenerator();
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            ExecuteInScope(() => generator.GenerateLinqQuery("orders", query.Expression, true)));
+
+        Assert.Contains("GROUP BY is not supported in pull or table queries", ex.Message);
+    }
+
+    [Fact]
+    public void GenerateLinqQuery_GroupByTableQuery_Throws()
+    {
+        var src = new List<Order>().AsQueryable();
+        var query = src
+            .GroupBy(o => o.CustomerId)
+            .Select(g => new { g.Key, Count = g.Count() });
+
+        var generator = new DMLQueryGenerator();
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            ExecuteInScope(() => generator.GenerateLinqQuery("orders", query.Expression, true, true)));
+
+        Assert.Contains("GROUP BY is not supported in pull or table queries", ex.Message);
+    }
 }
