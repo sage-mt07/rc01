@@ -15,6 +15,7 @@ internal class SelectExpressionVisitor : ExpressionVisitor
 {
     private readonly List<string> _columns = new();
     private readonly HashSet<string> _usedAliases = new();
+    private readonly HashSet<string> _selectedGroupKeys = new();
 
     public string GetResult()
     {
@@ -38,10 +39,7 @@ internal class SelectExpressionVisitor : ExpressionVisitor
 
             if (IsGroupKeyAccess(arg))
             {
-                foreach (var key in GetGroupKeyColumns())
-                {
-                    _columns.Add(key);
-                }
+                AddGroupKeyColumns();
             }
             else
             {
@@ -72,10 +70,7 @@ internal class SelectExpressionVisitor : ExpressionVisitor
     {
         if (IsGroupKeyAccess(node))
         {
-            foreach (var key in GetGroupKeyColumns())
-            {
-                _columns.Add(key);
-            }
+            AddGroupKeyColumns();
         }
         else
         {
@@ -294,6 +289,19 @@ internal class SelectExpressionVisitor : ExpressionVisitor
         visitor.Visit(expr);
         var result = visitor.GetResult();
         return result.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0);
+    }
+
+    private void AddGroupKeyColumns()
+    {
+        foreach (var key in GetGroupKeyColumns())
+        {
+            if (_selectedGroupKeys.Contains(key))
+            {
+                continue; // skip duplicates
+            }
+            _selectedGroupKeys.Add(key);
+            _columns.Add(key);
+        }
     }
 
     private static void ValidateGroupKeyDtoOrder(NewExpression node)
