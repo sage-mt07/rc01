@@ -28,11 +28,15 @@ public static class QueryAnalyzer
             var visitor = new QueryAnalysisVisitor();
             visitor.Visit(queryExpression.Body);
 
+            var streamOnlyVisitor = new StreamOnlyAggregateVisitor();
+            streamOnlyVisitor.Visit(queryExpression.Body);
+
             var schema = new QuerySchema
             {
                 SourceType = typeof(TSource),
                 TargetType = typeof(TTarget),
-                TopicName = typeof(TTarget).Name.ToLowerInvariant()
+                TopicName = typeof(TTarget).Name.ToLowerInvariant(),
+                UsesStreamOnlyAggregates = streamOnlyVisitor.HasStreamOnlyAggregate
             };
 
             schema.KeyInfo.ClassName = $"{typeof(TTarget).Name}Key";

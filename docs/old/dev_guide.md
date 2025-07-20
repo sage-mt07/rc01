@@ -131,6 +131,7 @@ await windowedOrders.ToListAsync();
 - **EF風API**: DbContextライクな親しみやすいインターフェース
 - **型安全性**: ジェネリクス活用によるコンパイル時型チェック
 - **Fail-Fast**: 初期化時エラーの即座終了
+- **Stream専用関数**: `MIN`/`MAX` を含むクエリは自動的に `CREATE STREAM` として扱います。`CREATE TABLE` を指定するとエラーとなります。
 
 ### 🔧 コーディング規約
 - **nullable reference types**: 有効化必須
