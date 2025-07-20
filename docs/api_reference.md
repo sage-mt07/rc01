@@ -8,7 +8,7 @@
 
 ### テスト設計上の注意
 - Kafka メッセージ送信は `Chr.Avro.Confluent` を利用した POCO 型の自動スキーマ連携を推奨します。
-- `GROUP BY` を含む Pull Query はサポートせず、Push Query (`EMIT CHANGES`) のみ利用可能です。
+- `GROUP BY` を指定した場合は Push Query として `EMIT CHANGES` が自動付与されます。Pull Query や TABLE クエリで `GROUP BY` を利用するとエラーとなります。
 - `WINDOW` 句は `GROUP BY` の直後に配置してください。
 - `CASE` 式では `THEN`/`ELSE` の型を必ず一致させる必要があります。
 - `MIN`/`MAX` 集計はテーブルに対して行わず、STREAM クエリで検証します。

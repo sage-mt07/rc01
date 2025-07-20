@@ -26,7 +26,7 @@ C#のLINQスタイルで簡潔かつ直感的に記述できる、Entity Framewo
 
 - Kafka へのメッセージ送信は `Chr.Avro.Confluent` を用いた POCO 型自動スキーマ連携を前提とします。`ISpecificRecord` 依存は不要です。
 - ksqlDB テーブルでは `MIN` / `MAX` 集計を用いず、STREAM クエリで検証します。
-- `GROUP BY` を含む Pull Query は禁止し、必ず `EMIT CHANGES` を付与した Push Query を用います。
+- `GROUP BY` を指定した場合は Push Query として `EMIT CHANGES` が自動付与されます。Pull Query や TABLE クエリで `GROUP BY` を使うとエラーとなり、Push Query への切替を促すメッセージが表示されます。
 - `WINDOW` 句は必ず `GROUP BY` の直後に配置してください。
 - `CASE` 式では `THEN` と `ELSE` の戻り型を一致させる必要があります。
 
