@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Kafka.Ksql.Linq.Tests.Integration;
 
-internal static class TestEnvironment
+public static class TestEnvironment
 {
     private const string KsqlDbUrl = "http://localhost:8088";
     private const string SchemaRegistryUrl = "http://localhost:8081";
@@ -34,7 +34,7 @@ internal static class TestEnvironment
         "kafka.ksql.linq.tests.integration.dummyflagschemarecognitiontests+nullablekeyorder-value"
     };
 
-    internal static KsqlContext CreateContext()
+    public static KsqlContext CreateContext()
     {
         return KsqlContextBuilder.Create()
             .UseSchemaRegistry(SchemaRegistryUrl)

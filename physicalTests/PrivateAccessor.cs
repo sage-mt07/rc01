@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Kafka.Ksql.Linq.Tests;
 
-internal static class PrivateAccessor
+public static class PrivateAccessor
 {
     internal static object? InvokePrivate(
         object target,

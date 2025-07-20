@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Kafka.Ksql.Linq.Tests.Integration;
 
-internal static class TestQueryableExtensions
+public static class TestQueryableExtensions
 {
     private static readonly MethodInfo HavingMethodInfo = typeof(TestQueryableExtensions)
         .GetMethod(nameof(Having), BindingFlags.Static | BindingFlags.Public)!

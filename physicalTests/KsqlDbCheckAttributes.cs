@@ -4,7 +4,7 @@ using Kafka.Ksql.Linq.Application;
 
 namespace Kafka.Ksql.Linq.Tests.Integration;
 
-internal static class KsqlDbAvailability
+public static class KsqlDbAvailability
 {
     public const string SkipReason = "Skipped in CI due to missing ksqlDB instance or schema setup failure";
     private static bool _checked;

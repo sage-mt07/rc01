@@ -6,7 +6,7 @@ using Kafka.Ksql.Linq.Configuration;
 
 namespace Kafka.Ksql.Linq.Tests.Integration;
 
-internal static class TestSchema
+public static class TestSchema
 {
     public static readonly Dictionary<string, (string Name, string Type)[]> Tables = new()
     {
