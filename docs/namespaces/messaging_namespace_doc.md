@@ -15,7 +15,7 @@ Kafka メッセージング機能の型安全な抽象化層を提供する name
 - **`CommonSection`**: Kafka ブローカー共通設定（接続、セキュリティ）
 - **`ProducerSection`**: Producer 固有設定（確認応答、圧縮、冪等性）
 - **`ConsumerSection`**: Consumer 固有設定（グループ、オフセット、フェッチ）
-- **`SchemaRegistrySection`**: Schema Registry 接続設定
+- **`SchemaRegistrySection`** (Core namespace): Schema Registry 接続設定
 - **`TopicSection`**: トピック別設定（Producer/Consumer 両方を含む）
 
 **設計意図**: 設定の階層化、運用時の柔軟性確保

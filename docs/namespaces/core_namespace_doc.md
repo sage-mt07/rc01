@@ -24,6 +24,7 @@ Kafka.Ksql.Linq.Coreは、Apache KafkaとKsqlDBを使ったストリーミング
 **責務**: Core層設定管理
 - `CoreSettings`: Kafka接続・検証モード設定
 - `CoreSettingsProvider`: 設定変更の監視・通知
+- `SchemaRegistrySection`: Schema Registry 接続設定
 
 ### `Kafka.Ksql.Linq.Core.Context`
 **責務**: コンテキスト基底実装
