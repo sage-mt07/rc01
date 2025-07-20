@@ -3,6 +3,7 @@ using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq.Query.Pipeline;
 using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.Application;
+using Kafka.Ksql.Linq.Core.Context;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -333,6 +334,8 @@ public class DynamicKsqlGenerationTests
 
     public class DummyContext : KsqlContext
     {
+        public DummyContext() : base() { }
+        public DummyContext(KafkaContextOptions options) : base(options) { }
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
             DynamicKsqlGenerationTests.ConfigureModel(modelBuilder);
@@ -341,9 +344,13 @@ public class DynamicKsqlGenerationTests
 
     private async Task ProduceDummyRecordsAsync()
     {
-        var ctx = KsqlContextBuilder.Create()
-            .UseSchemaRegistry("http://localhost:8081")
-            .BuildContext<DummyContext>();
+        var options = new KafkaContextOptions
+        {
+            BootstrapServers = "localhost:9093",
+            SchemaRegistryUrl = "http://localhost:8081"
+        };
+
+        await using var ctx = new DummyContext(options);
 
         await ctx.Set<OrderValue>().AddAsync(new OrderValue
         {
