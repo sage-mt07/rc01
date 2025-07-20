@@ -21,7 +21,7 @@ public class SchemaNameCaseSensitivityTests
         public int CustomerId { get; set; }
         public int Id { get; set; }
         public string Region { get; set; } = string.Empty;
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
     }
 
     public class OrderWrongCase
@@ -29,7 +29,7 @@ public class SchemaNameCaseSensitivityTests
         public int CustomerId { get; set; }
         public int Id { get; set; }
         public string region { get; set; } = string.Empty; // lowercase r
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
     }
 
     public class OrderContext : KsqlContext
@@ -63,7 +63,7 @@ public class SchemaNameCaseSensitivityTests
             CustomerId = 1,
             Id = 1,
             Region = "east",
-            Amount = 10m
+            Amount = 10d
         }, dummyCtx);
 
         await Task.Delay(500);

@@ -68,7 +68,7 @@ public class DummyFlagMessageTests
         public int CustomerId { get; set; }
         public int Id { get; set; }
         public string? Region { get; set; }
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
         public bool IsHighPriority { get; set; }
         public int Count { get; set; }
     }
@@ -101,7 +101,7 @@ public class DummyFlagMessageTests
             Headers = new Dictionary<string, object> { ["is_dummy"] = true }
         };
 
-        var entity = new OrderValue { CustomerId = 1, Id = 1, Region = "west", Amount = 10m, IsHighPriority = false, Count = 1 };
+        var entity = new OrderValue { CustomerId = 1, Id = 1, Region = "west", Amount = 10d, IsHighPriority = false, Count = 1 };
         await kp.SendAsync(entity, context);
 
         Assert.Single(producer.Produced);

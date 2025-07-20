@@ -23,7 +23,7 @@ public class DummyFlagSchemaRecognitionTests
         public int CustomerId { get; set; }
         public int Id { get; set; }
         public string Region { get; set; } = string.Empty;
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
         public bool IsHighPriority { get; set; }
         public int Count { get; set; }
     }
@@ -44,13 +44,13 @@ public class DummyFlagSchemaRecognitionTests
     {
         public int? CustomerId { get; set; }
         public string Region { get; set; } = string.Empty;
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
     }
 
     public class NullableKeyOrder
     {
         public int? CustomerId { get; set; }
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
     }
 
     public class DummyContext : KsqlContext
@@ -82,15 +82,15 @@ public class DummyFlagSchemaRecognitionTests
             CustomerId = 1,
             Id = 1,
             Region = "east",
-            Amount = 10m,
+            Amount = 10d,
             IsHighPriority = false,
             Count = 1
         }, dummyCtx);
 
         await (await manager.GetProducerAsync<Customer>()).SendAsync(new Customer { Id = 1, Name = "alice" }, dummyCtx);
         await (await manager.GetProducerAsync<EventLog>()).SendAsync(new EventLog { Level = 1, Message = "init" }, dummyCtx);
-        await (await manager.GetProducerAsync<NullableOrder>()).SendAsync(new NullableOrder { CustomerId = 1, Region = "east", Amount = 10m }, dummyCtx);
-        await (await manager.GetProducerAsync<NullableKeyOrder>()).SendAsync(new NullableKeyOrder { CustomerId = 1, Amount = 10m }, dummyCtx);
+        await (await manager.GetProducerAsync<NullableOrder>()).SendAsync(new NullableOrder { CustomerId = 1, Region = "east", Amount = 10d }, dummyCtx);
+        await (await manager.GetProducerAsync<NullableKeyOrder>()).SendAsync(new NullableKeyOrder { CustomerId = 1, Amount = 10d }, dummyCtx);
 
         await Task.Delay(500);
         await ctx.DisposeAsync();
