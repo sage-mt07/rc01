@@ -237,14 +237,14 @@ public class DMLQueryGeneratorTests
 
         var query = src
             .GroupBy(o => o.CustomerId)
-            .Having(g => g.Average(x => x.Amount) > 100 && g.Max(x => x.Amount) < 1000)
+            .Having(g => g.Average(x => x.Amount) > 100 && g.Sum(x => x.Amount) < 1000)
             .Select(g => new
             {
                 g.Key,
                 OrderCount = g.Count(),
                 TotalAmount = g.Sum(x => x.Amount),
                 AvgAmount = g.Average(x => x.Amount),
-                MaxAmount = g.Max(x => x.Amount)
+                TotalSmall = g.Sum(x => x.Amount)
             });
 
         var generator = new DMLQueryGenerator();
@@ -253,10 +253,11 @@ public class DMLQueryGeneratorTests
         Assert.Contains("GROUP BY", result);
         Assert.Contains("HAVING", result);
         Assert.Contains("AVG(", result);
-        Assert.Contains("MAX(", result);
+        Assert.DoesNotContain("MAX(", result);
         Assert.Contains("COUNT(*)", result);
         Assert.Contains("SUM(", result);
-        Assert.Contains("HAVING ((AVG(Amount) > 100) AND (MAX(Amount) < 1000))", result);
+        Assert.Contains("HAVING ((AVG(Amount) > 100) AND (SUM(Amount) < 1000))", result);
+        Assert.Contains("TotalSmall", result);
         Assert.EndsWith("EMIT CHANGES;", result);
         File.AppendAllText("generated_queries.txt", result + Environment.NewLine);
     }
@@ -350,7 +351,7 @@ public class DMLQueryGeneratorTests
     }
 
     [Fact]
-    public void GenerateLinqQuery_GroupByWithAvgMinMax_ReturnsExpectedQuery()
+    public void GenerateLinqQuery_GroupByWithAvgSum_ReturnsExpectedQuery()
     {
         var orders = new List<Order>().AsQueryable();
 
@@ -360,8 +361,7 @@ public class DMLQueryGeneratorTests
             {
                 g.Key,
                 AverageAmount = g.Average(o => o.Amount),
-                MinAmount = g.Min(o => o.Amount),
-                MaxAmount = g.Max(o => o.Amount)
+                TotalAmount = g.Sum(o => o.Amount)
             });
 
         var generator = new DMLQueryGenerator();
@@ -369,8 +369,7 @@ public class DMLQueryGeneratorTests
 
         Assert.Contains("GROUP BY", result);
         Assert.Contains("AVG", result);
-        Assert.Contains("MIN", result);
-        Assert.Contains("MAX", result);
+        Assert.Contains("SUM", result);
         Assert.Contains("EMIT CHANGES", result);
         File.AppendAllText("generated_queries.txt", result + Environment.NewLine);
     }

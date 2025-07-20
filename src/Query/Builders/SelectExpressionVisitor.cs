@@ -111,6 +111,7 @@ internal class SelectExpressionVisitor : ExpressionVisitor
     protected override Expression VisitConditional(ConditionalExpression node)
     {
         // CASE式の処理
+        BuilderValidation.ValidateConditionalTypes(node.IfTrue, node.IfFalse);
         var test = ProcessExpression(node.Test);
         var ifTrue = ProcessExpression(node.IfTrue);
         var ifFalse = ProcessExpression(node.IfFalse);

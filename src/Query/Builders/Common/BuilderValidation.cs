@@ -151,6 +151,17 @@ internal static class BuilderValidation
     }
 
     /// <summary>
+    /// CASE式の THEN/ELSE 型一致を検証
+    /// </summary>
+    public static void ValidateConditionalTypes(Expression ifTrue, Expression ifFalse)
+    {
+        if (ifTrue.Type != ifFalse.Type)
+        {
+            throw new NotSupportedException($"CASE expression type mismatch: {ifTrue.Type} and {ifFalse.Type}");
+        }
+    }
+
+    /// <summary>
     /// ネストした集約関数の使用禁止チェック
     /// </summary>
     public static void ValidateNoNestedAggregates(Expression expression)
