@@ -1,7 +1,7 @@
 using Confluent.Kafka;
 using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry;
-using Confluent.SchemaRegistry.Serdes;
+using Chr.Avro.Confluent;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Messaging.Producers;
@@ -142,7 +142,7 @@ public class DummyFlagSchemaRecognitionTests
 
         using var schema = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = "http://localhost:8081" });
         using var consumer = new ConsumerBuilder<int, OrderValue>(consumerConfig)
-            .SetValueDeserializer(new AvroDeserializer<OrderValue>(schema).AsSyncOverAsync())
+            .SetValueDeserializer(new AsyncSchemaRegistryDeserializer<OrderValue>(schema).AsSyncOverAsync())
             .SetKeyDeserializer(Deserializers.Int32)
             .Build();
 

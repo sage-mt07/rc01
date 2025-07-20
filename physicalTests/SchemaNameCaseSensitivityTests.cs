@@ -1,6 +1,7 @@
 using Confluent.Kafka;
 using Confluent.SchemaRegistry;
-using Confluent.SchemaRegistry.Serdes;
+using Chr.Avro.Confluent;
+using Confluent.Kafka.SyncOverAsync;
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Producers;
@@ -83,7 +84,7 @@ public class SchemaNameCaseSensitivityTests
         using var schema = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = "http://localhost:8081" });
         using var producer = new ProducerBuilder<int, OrderWrongCase>(config)
             .SetKeySerializer(Serializers.Int32)
-            .SetValueSerializer(new AvroSerializer<OrderWrongCase>(schema))
+            .SetValueSerializer(new AsyncSchemaRegistrySerializer<OrderWrongCase>(schema).AsSyncOverAsync())
             .Build();
 
         var msg = new Message<int, OrderWrongCase>

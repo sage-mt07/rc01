@@ -5,7 +5,7 @@ using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Configuration;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
-using Confluent.SchemaRegistry.Serdes;
+using Chr.Avro.Confluent;
 using Confluent.Kafka.SyncOverAsync;
 using Kafka.Ksql.Linq.Messaging.Internal;
 using Kafka.Ksql.Linq.Core.Models;
@@ -32,7 +32,6 @@ internal class KafkaProducerManager : IDisposable
     private readonly ConcurrentDictionary<(Type, string), object> _topicProducers = new();
     private readonly ConcurrentDictionary<Type, ISerializer<object>> _keySerializerCache = new();
     private readonly ConcurrentDictionary<Type, ISerializer<object>> _valueSerializerCache = new();
-    private readonly AvroSerializerConfig _serializerConfig = new();
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
     private bool _disposed = false;
 
@@ -278,7 +277,7 @@ internal class KafkaProducerManager : IDisposable
     {
         var schema = DynamicSchemaGenerator.GetSchema<T>();
         _logger?.LogDebug("Generated key schema: {Schema}", schema.ToString());
-        var typed = new AvroSerializer<T>(_schemaRegistryClient.Value, _serializerConfig).AsSyncOverAsync();
+        var typed = new AsyncSchemaRegistrySerializer<T>(_schemaRegistryClient.Value, AutomaticRegistrationBehavior.Always).AsSyncOverAsync();
         return SerializerAdapters.ToObjectSerializer(typed);
     }
 
@@ -289,7 +288,7 @@ internal class KafkaProducerManager : IDisposable
             return cached;
         var schema = DynamicSchemaGenerator.GetSchema<T>();
         _logger?.LogDebug("Generated value schema: {Schema}", schema.ToString());
-        var typed = new AvroSerializer<T>(_schemaRegistryClient.Value, _serializerConfig).AsSyncOverAsync();
+        var typed = new AsyncSchemaRegistrySerializer<T>(_schemaRegistryClient.Value, AutomaticRegistrationBehavior.Always).AsSyncOverAsync();
         var serializer = SerializerAdapters.ToObjectSerializer(typed);
         _valueSerializerCache[type] = serializer;
         return serializer;
