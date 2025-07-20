@@ -39,7 +39,25 @@ public abstract class KsqlContext : KafkaContextCore
     private readonly KsqlDslOptions _dslOptions;
     private TableCacheRegistry? _cacheRegistry;
     private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<KsqlContext>();
-    private static readonly Uri DefaultKsqlDbUrl = new("http://localhost:8088");
+
+    private static Uri GetDefaultKsqlDbUrl(KsqlContext context)
+    {
+        var bootstrap = GetCommonSection(context).BootstrapServers;
+        if (!string.IsNullOrWhiteSpace(bootstrap))
+        {
+            var first = bootstrap.Split(',')[0];
+            var hostParts = first.Split(':');
+            var host = hostParts[0];
+            int port = 8088;
+            if (hostParts.Length > 1 && int.TryParse(hostParts[1], out var parsed))
+            {
+                port = parsed;
+            }
+            return new Uri($"http://{host}:{port}");
+        }
+
+        return new Uri("http://localhost:8088");
+    }
 
     /// <summary>
     /// Hook to decide whether schema registration should be skipped for tests
@@ -221,7 +239,7 @@ public abstract class KsqlContext : KafkaContextCore
         if (!string.IsNullOrWhiteSpace(schemaUrl) &&
             Uri.TryCreate(schemaUrl, UriKind.Absolute, out var uri))
         {
-            var port = uri.IsDefaultPort ? DefaultKsqlDbUrl.Port : uri.Port;
+            var port = uri.IsDefaultPort ? GetDefaultKsqlDbUrl(context).Port : uri.Port;
             return new Uri($"{uri.Scheme}://{uri.Host}:{port}");
         }
 
@@ -231,7 +249,7 @@ public abstract class KsqlContext : KafkaContextCore
             var first = bootstrap.Split(',')[0];
             var hostParts = first.Split(':');
             var host = hostParts[0];
-            int port = DefaultKsqlDbUrl.Port;
+            int port = GetDefaultKsqlDbUrl(context).Port;
             if (hostParts.Length > 1 && int.TryParse(hostParts[1], out var parsed))
             {
                 port = parsed;
@@ -239,7 +257,7 @@ public abstract class KsqlContext : KafkaContextCore
             return new Uri($"http://{host}:{port}");
         }
 
-        return DefaultKsqlDbUrl;
+        return GetDefaultKsqlDbUrl(context);
     }
 
     private static HttpClient CreateClient(KsqlContext context)
