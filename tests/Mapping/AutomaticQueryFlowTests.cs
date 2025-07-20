@@ -18,6 +18,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Xunit;
 
+#nullable enable
+
 namespace Kafka.Ksql.Linq.Tests.Mapping;
 
 public class AutomaticQueryFlowTests

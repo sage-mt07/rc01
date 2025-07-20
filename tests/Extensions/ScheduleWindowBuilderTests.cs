@@ -11,6 +11,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
+#nullable enable
+
 namespace Kafka.Ksql.Linq.Tests.Extensions;
 
 public class ScheduleWindowBuilderTests

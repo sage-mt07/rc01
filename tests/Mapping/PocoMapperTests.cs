@@ -7,6 +7,8 @@ using System.Linq;
 using System.Reflection;
 using Xunit;
 
+#nullable enable
+
 namespace Kafka.Ksql.Linq.Tests.Mapping;
 
 public class PocoMapperTests

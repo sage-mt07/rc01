@@ -19,6 +19,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
+#nullable enable
+
 namespace Kafka.Ksql.Linq.Tests.Mapping;
 
 public class AddAsyncSampleFlowTests
