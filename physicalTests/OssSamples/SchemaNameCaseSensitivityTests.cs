@@ -106,10 +106,7 @@ public class SchemaNameCaseSensitivityTests
             .UseSchemaRegistry("http://localhost:8081")
             .BuildContext<OrderContext>();
 
-        var dummyCtx = new KafkaMessageContext
-        {
-            Headers = new Dictionary<string, object> { ["is_dummy"] = true }
-        };
+        var headers = new Dictionary<string, string> { ["is_dummy"] = "true" };
 
         await ctx.Set<OrderCorrectCase>().AddAsync(new OrderCorrectCase
         {
@@ -117,7 +114,7 @@ public class SchemaNameCaseSensitivityTests
             Id = 1,
             Region = "east",
             Amount = 10d
-        }, dummyCtx);
+        }, headers);
 
         await Task.Delay(500);
         await ctx.DisposeAsync();

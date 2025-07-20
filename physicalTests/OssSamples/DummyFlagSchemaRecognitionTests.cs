@@ -69,10 +69,7 @@ public class DummyFlagSchemaRecognitionTests
             .UseSchemaRegistry("http://localhost:8081")
             .BuildContext<DummyContext>();
 
-        var dummyCtx = new KafkaMessageContext
-        {
-            Headers = new Dictionary<string, object> { ["is_dummy"] = true }
-        };
+        var headers = new Dictionary<string, string> { ["is_dummy"] = "true" };
 
         await ctx.Set<OrderValue>().AddAsync(new OrderValue
         {
@@ -82,11 +79,11 @@ public class DummyFlagSchemaRecognitionTests
             Amount = 10d,
             IsHighPriority = false,
             Count = 1
-        }, dummyCtx);
-        await ctx.Set<Customer>().AddAsync(new Customer { Id = 1, Name = "alice" }, dummyCtx);
-        await ctx.Set<EventLog>().AddAsync(new EventLog { Level = 1, Message = "init" }, dummyCtx);
-        await ctx.Set<NullableOrder>().AddAsync(new NullableOrder { CustomerId = 1, Region = "east", Amount = 10d }, dummyCtx);
-        await ctx.Set<NullableKeyOrder>().AddAsync(new NullableKeyOrder { CustomerId = 1, Amount = 10d }, dummyCtx);
+        }, headers);
+        await ctx.Set<Customer>().AddAsync(new Customer { Id = 1, Name = "alice" }, headers);
+        await ctx.Set<EventLog>().AddAsync(new EventLog { Level = 1, Message = "init" }, headers);
+        await ctx.Set<NullableOrder>().AddAsync(new NullableOrder { CustomerId = 1, Region = "east", Amount = 10d }, headers);
+        await ctx.Set<NullableKeyOrder>().AddAsync(new NullableKeyOrder { CustomerId = 1, Amount = 10d }, headers);
 
         await Task.Delay(500);
         await ctx.DisposeAsync();

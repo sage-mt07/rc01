@@ -44,10 +44,7 @@ public class DummyFlagMessageTests
             .UseSchemaRegistry("http://localhost:8081")
             .BuildContext<DummyContext>();
 
-        var messageContext = new KafkaMessageContext
-        {
-            Headers = new Dictionary<string, object> { ["is_dummy"] = true }
-        };
+        var headers = new Dictionary<string, string> { ["is_dummy"] = "true" };
 
         await ctx.Set<OrderValue>().AddAsync(new OrderValue
         {
@@ -57,7 +54,7 @@ public class DummyFlagMessageTests
             Amount = 10d,
             IsHighPriority = false,
             Count = 1
-        }, messageContext);
+        }, headers);
 
         var consumerConfig = new ConsumerConfig
         {

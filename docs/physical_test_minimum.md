@@ -14,3 +14,11 @@ Kafka/Schema Registry への Avro スキーマ登録時は、 **トピック名�
 - `WINDOW` 句は必ず `GROUP BY` 直後に記述してください。
 - `CASE` 式では `THEN` と `ELSE` の型が一致しているかを確認します。
 
+
+## ディレクトリ構成
+
+物理テストは次の3カテゴリに分かれています。
+
+- `physicalTests/Connectivity/` : Kafka や Schema Registry の疎通を確認する最小テスト群。
+- `physicalTests/KsqlSyntax/` : API から生成された KSQL 文の構文チェック用テスト群。
+- `physicalTests/OssSamples/` : LINQ DSL 等、OSS サンプルコードを使った統合テスト群。

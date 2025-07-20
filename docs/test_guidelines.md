@@ -17,3 +17,9 @@
 - `CASE` 式の `THEN` と `ELSE` 型が異なる場合はテストを失敗させます。
 
 テスト自動生成処理では、上記に違反するクエリを検出した場合、自動的にスキップして実行しません。
+
+### 物理テストの区分
+
+- **Connectivity** : Kafka ブローカーや Schema Registry の疎通を確認。
+- **KsqlSyntax** : 生成された KSQL 文が ksqlDB で受理されるかを検証。
+- **OssSamples** : サンプルコードを用いた API 挙動の統合テスト。
