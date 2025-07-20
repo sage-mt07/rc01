@@ -101,7 +101,11 @@ public class KafkaConsumerManagerTests
     [Fact]
     public void DeserializerCaching_WorksPerType()
     {
-        var manager = new KafkaConsumerManager(Options.Create(new KsqlDslOptions()), new NullLoggerFactory());
+        var optionsForCache = new KsqlDslOptions
+        {
+            SchemaRegistry = new SchemaRegistrySection { Url = "http://example" }
+        };
+        var manager = new KafkaConsumerManager(Options.Create(optionsForCache), new NullLoggerFactory());
         var d1 = InvokePrivate<IDeserializer<object>>(manager, "CreateKeyDeserializer", new[] { typeof(Type) }, null, typeof(int));
         var d2 = InvokePrivate<IDeserializer<object>>(manager, "CreateKeyDeserializer", new[] { typeof(Type) }, null, typeof(int));
         var cache = (ConcurrentDictionary<Type, IDeserializer<object>>)typeof(KafkaConsumerManager)

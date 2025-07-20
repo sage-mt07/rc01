@@ -109,7 +109,11 @@ public class KafkaProducerManagerExtraTests
     [Fact]
     public void SerializerCaching_WorksPerType()
     {
-        var manager = new KafkaProducerManager(Options.Create(new KsqlDslOptions()), null);
+        var options = new KsqlDslOptions
+        {
+            SchemaRegistry = new SchemaRegistrySection { Url = "http://example" }
+        };
+        var manager = new KafkaProducerManager(Options.Create(options), null);
         var s1 = InvokePrivate<ISerializer<object>>(manager, "CreateKeySerializer", new[] { typeof(Type) }, null, typeof(int));
         var s2 = InvokePrivate<ISerializer<object>>(manager, "CreateKeySerializer", new[] { typeof(Type) }, null, typeof(int));
         var cache = (ConcurrentDictionary<Type, ISerializer<object>>)typeof(KafkaProducerManager)
