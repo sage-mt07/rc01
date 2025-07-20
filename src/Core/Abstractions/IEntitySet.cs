@@ -20,6 +20,7 @@ public interface IEntitySet<T> : IAsyncEnumerable<T> where T : class
 
     // Streaming operations
     Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default);
+    Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default);
 
 
 

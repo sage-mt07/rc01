@@ -104,6 +104,16 @@ internal class WindowAggregatedEntitySet<TSource, TKey, TResult> : IEntitySet<TR
         }
     }
 
+    public async Task ForEachAsync(Func<TResult, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        var results = await ToListAsync(cancellationToken);
+        foreach (var result in results)
+        {
+            var ctx = new KafkaMessageContext();
+            await action(result, ctx);
+        }
+    }
+
     public string GetTopicName() => _windowTableName;
 
     public EntityModel GetEntityModel() => _resultEntityModel;

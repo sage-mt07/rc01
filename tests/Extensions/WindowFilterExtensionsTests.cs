@@ -28,6 +28,7 @@ public class WindowFilterExtensionsTests
         public Task RemoveAsync(T entity, CancellationToken cancellationToken = default) { _items.Remove(entity); return Task.CompletedTask; }
         public Task<List<T>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<T>(_items));
         public Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.WhenAll(_items.Select(action));
+        public Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.WhenAll(_items.Select(i => action(i, new KafkaMessageContext())));
         public string GetTopicName() => _model.TopicName ?? typeof(T).Name.ToLowerInvariant();
         public EntityModel GetEntityModel() => _model;
         public IKsqlContext GetContext() => throw new NotImplementedException();

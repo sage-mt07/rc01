@@ -125,6 +125,11 @@ internal class WindowedEntitySet<T> : IWindowedEntitySet<T> where T : class
         await _baseEntitySet.ForEachAsync(action, timeout, cancellationToken);
     }
 
+    public async Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        await _baseEntitySet.ForEachAsync(action, timeout, cancellationToken);
+    }
+
     public string GetTopicName() => _baseEntitySet.GetTopicName();
 
     public EntityModel GetEntityModel() => _baseEntitySet.GetEntityModel();

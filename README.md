@@ -108,6 +108,18 @@ class Program
 
 ```
 
+Kafka headers can be inspected via the overload that exposes `KafkaMessageContext`:
+
+```csharp
+await context.Set<OrderMessage>().ForEachAsync((msg, ctx) =>
+{
+    if (ctx.Headers.TryGetValue("is_dummy", out var d) && d?.Equals(true) == true)
+        return Task.CompletedTask;
+
+    return ProcessAsync(msg);
+});
+```
+
 // Build a Consumer with matching serializers automatically
 var consumer = context.CreateConsumerBuilder<ManualCommitOrder>()
     .Build();

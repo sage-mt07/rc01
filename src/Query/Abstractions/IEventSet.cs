@@ -27,6 +27,7 @@ internal interface IEventSet<T> : IQueryable<T>, IAsyncEnumerable<T> where T : c
     void Subscribe(Action<T> onNext, CancellationToken cancellationToken = default);
     Task SubscribeAsync(Func<T, Task> onNext, CancellationToken cancellationToken = default);
     Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default);
+    Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default);
 
     // LINQ Extensions
     IEventSet<T> Where(Expression<Func<T, bool>> predicate);

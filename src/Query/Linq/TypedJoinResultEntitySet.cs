@@ -60,6 +60,11 @@ internal class TypedJoinResultEntitySet<TOuter, TInner, TResult> : IEntitySet<TR
         throw new NotSupportedException("ForEachAsync not supported on join result sets");
     }
 
+    public Task ForEachAsync(Func<TResult, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("ForEachAsync not supported on join result sets");
+    }
+
     public string GetTopicName() => (_entityModel.TopicName ?? typeof(TResult).Name).ToLowerInvariant();
     public EntityModel GetEntityModel() => _entityModel;
     public IKsqlContext GetContext() => _context;

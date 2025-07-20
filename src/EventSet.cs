@@ -127,7 +127,15 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
     /// REDESIGNED: ForEachAsync supporting continuous Kafka consumption
     /// Design change: ToListAsync() is disallowed; now based on GetAsyncEnumerator
     /// </summary>
-    public virtual async Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    public virtual Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action));
+
+        return ForEachAsync((item, ctx) => action(item), timeout, cancellationToken);
+    }
+
+    public virtual async Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
         if (action == null)
             throw new ArgumentNullException(nameof(action));
@@ -148,7 +156,8 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
                 // Execute the action with error handling
                 try
                 {
-                    await action(item);
+                    var messageContext = CreateMessageContext(item);
+                    await action(item, messageContext);
                 }
                 catch (Exception ex)
                 {
