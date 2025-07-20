@@ -5,7 +5,7 @@
 ## Pull クエリの制約
 
 - `EMIT CHANGES` を含まない `SELECT` 文は Pull クエリとして扱われます。
-- Pull クエリでは `GROUP BY` や `COUNT(*)`、`SUM()` などの集約句は使用できません。
+- Pull クエリで `GROUP BY` を指定するとビルド時または実行時にエラーとなり、Push Query への切替を促すメッセージが表示されます。
 - 集約が必要な場合は Push クエリ (`EMIT CHANGES` を付与) または事前集約済みテーブルを参照してください。
 
 ## 追加ルール

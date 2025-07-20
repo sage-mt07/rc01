@@ -373,16 +373,24 @@ internal abstract class GeneratorBase
     protected string ApplyQueryPostProcessing(string baseQuery, QueryAssemblyContext context)
     {
         var query = baseQuery.Trim();
+        var upper = query.ToUpper();
+
+        // Pull Query や TABLE クエリで GROUP BY が指定された場合はエラー
+        if (upper.Contains("GROUP BY") && (context.IsPullQuery || context.IsTableQuery))
+        {
+            throw new InvalidOperationException(
+                "GROUP BY is not supported in pull or table queries. Use a push query with EMIT CHANGES instead.");
+        }
 
         // TABLEクエリでは常にPull Query扱いとし、EMIT CHANGESを付与しない
         if (!context.IsTableQuery)
         {
             // GROUP BYを含む場合は常にPush QueryとしてEMIT CHANGESを付与
-            if (query.ToUpper().Contains("GROUP BY") && !query.ToUpper().Contains("EMIT CHANGES"))
+            if (upper.Contains("GROUP BY") && !upper.Contains("EMIT CHANGES"))
             {
                 query += " EMIT CHANGES";
             }
-            else if (!context.IsPullQuery && !query.ToUpper().Contains("EMIT CHANGES"))
+            else if (!context.IsPullQuery && !upper.Contains("EMIT CHANGES"))
             {
                 query += " EMIT CHANGES";
             }
