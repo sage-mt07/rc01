@@ -219,6 +219,7 @@ Kafka、Schema Registry、ksqlDB を再起動した場合でも、テスト開�
    ```bash
 dotnet test physicalTests/Kafka.Ksql.Linq.Tests.Integration.csproj --filter Category=Integration
    ```
+物理テストは `Connectivity` `KsqlSyntax` `OssSamples` の三階層に分かれています。
 テストの前提・挙動
 テスト開始時に `ResetAsync()` が実行され、必要なストリーム/テーブルの作成と
 Avro スキーマ登録をまとめて行います
