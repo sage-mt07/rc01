@@ -1,5 +1,6 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Application;
+using Kafka.Ksql.Linq.Core.Context;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -23,6 +24,8 @@ public class DummyFlagMessageTests
 
     public class DummyContext : KsqlContext
     {
+        public DummyContext() : base() { }
+        public DummyContext(KafkaContextOptions options) : base(options) { }
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
             modelBuilder.Entity<OrderValue>().WithTopic("orders");
@@ -35,9 +38,13 @@ public class DummyFlagMessageTests
     {
         await TestEnvironment.ResetAsync();
 
-        var ctx = KsqlContextBuilder.Create()
-            .UseSchemaRegistry("http://localhost:8081")
-            .BuildContext<DummyContext>();
+        var options = new KafkaContextOptions
+        {
+            BootstrapServers = "localhost:9093",
+            SchemaRegistryUrl = "http://localhost:8081"
+        };
+
+        await using var ctx = new DummyContext(options);
 
         var headers = new Dictionary<string, string> { ["is_dummy"] = "true" };
 
