@@ -1,11 +1,11 @@
 using System;
 using Xunit;
+using Kafka.Ksql.Linq.Application;
 
 namespace Kafka.Ksql.Linq.Tests.Integration;
 
 internal static class KsqlDbAvailability
 {
-    private static readonly IKsqlClient _client = new KsqlClient(new Uri("http://localhost:8088"));
     public const string SkipReason = "Skipped in CI due to missing ksqlDB instance or schema setup failure";
     private static bool _checked;
     private static bool _available;
@@ -18,7 +18,8 @@ internal static class KsqlDbAvailability
         try
         {
             TestEnvironment.ResetAsync().GetAwaiter().GetResult();
-            var r = _client.ExecuteStatementAsync("SHOW TOPICS;").GetAwaiter().GetResult();
+            using var ctx = TestEnvironment.CreateContext();
+            var r = ctx.ExecuteStatementAsync("SHOW TOPICS;").GetAwaiter().GetResult();
             _available = r.IsSuccess;
         }
         catch (Exception ex)

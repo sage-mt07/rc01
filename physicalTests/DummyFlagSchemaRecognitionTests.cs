@@ -16,7 +16,6 @@ namespace Kafka.Ksql.Linq.Tests.Integration;
 
 public class DummyFlagSchemaRecognitionTests
 {
-    private readonly IKsqlClient _client = new KsqlClient(new Uri("http://localhost:8088"));
 
     public class OrderValue
     {
@@ -102,9 +101,12 @@ public class DummyFlagSchemaRecognitionTests
     {
         await TestEnvironment.ResetAsync();
 
-        foreach (var ddl in TestSchema.GenerateTableDdls())
+        await using (var ctx = TestEnvironment.CreateContext())
         {
-            await _client.ExecuteStatementAsync(ddl);
+            foreach (var ddl in TestSchema.GenerateTableDdls())
+            {
+                await ctx.ExecuteStatementAsync(ddl);
+            }
         }
 
         await ProduceDummyRecordsAsync();
@@ -118,10 +120,13 @@ public class DummyFlagSchemaRecognitionTests
             "SELECT REGION, COUNT(*) FROM ORDERS GROUP BY REGION EMIT CHANGES LIMIT 1;"
         };
 
-        foreach (var q in queries)
+        await using (var ctx = TestEnvironment.CreateContext())
         {
-            var r = await _client.ExecuteExplainAsync(q);
-            Assert.True(r.IsSuccess, $"{q} failed: {r.Message}");
+            foreach (var q in queries)
+            {
+                var r = await ctx.ExecuteExplainAsync(q);
+                Assert.True(r.IsSuccess, $"{q} failed: {r.Message}");
+            }
         }
     }
 

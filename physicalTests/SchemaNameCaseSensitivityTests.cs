@@ -15,7 +15,6 @@ namespace Kafka.Ksql.Linq.Tests.Integration;
 
 public class SchemaNameCaseSensitivityTests
 {
-    private readonly IKsqlClient _client = new KsqlClient(new Uri("http://localhost:8088"));
 
     public class OrderCorrectCase
     {
@@ -43,8 +42,9 @@ public class SchemaNameCaseSensitivityTests
 
     private async Task EnsureTablesAsync()
     {
+        await using var ctx = TestEnvironment.CreateContext();
         foreach (var ddl in TestSchema.GenerateTableDdls())
-            await _client.ExecuteStatementAsync(ddl);
+            await ctx.ExecuteStatementAsync(ddl);
     }
 
     private async Task ProduceValidDummyAsync()
