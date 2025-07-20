@@ -120,13 +120,13 @@ public class DynamicKsqlGenerationTests
             .Select(g => new { g.Key.CustomerId, g.Key.Region, Total = g.Sum(x => (double)x.Amount) });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", multiKey.Expression, false).ToUpperInvariant());
 
-        var conditionalSum = orders
+            var conditionalSum = orders
             .GroupBy(o => o.CustomerId)
             .Select(g => new
             {
                 g.Key,
-                Total = g.Sum(o => (double)o.Amount),
-                HighPriorityTotal = g.Sum(o => o.IsHighPriority ? (double)o.Amount : 0.0)
+                Total = g.Sum(o => o.Amount),
+                HighPriorityTotal = g.Sum(o => o.IsHighPriority ? o.Amount : 0m)
             });
         yield return ExecuteInScope(() => dml.GenerateLinqQuery("orders", conditionalSum.Expression, false).ToUpperInvariant());
 
