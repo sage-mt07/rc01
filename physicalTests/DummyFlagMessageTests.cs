@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
+#nullable enable
 namespace Kafka.Ksql.Linq.Tests.Integration;
 
 public class DummyFlagMessageTests
