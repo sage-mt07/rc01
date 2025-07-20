@@ -41,9 +41,8 @@ public class DlqTopicConfiguration
     public Dictionary<string, string> AdditionalConfigs { get; set; } = new()
     {
         ["cleanup.policy"] = "delete",
-          ["segment.ms"] = "3600000", // 1 hour
-          ["max.message.bytes"] = "1048576", // 1MB
-        ["confluent.topic.description"] = "DLQ topic for error message handling - auto created by KafkaContext"
+        ["segment.ms"] = "3600000", // 1 hour
+        ["max.message.bytes"] = "1048576" // 1MB
     };
 
     /// <summary>
