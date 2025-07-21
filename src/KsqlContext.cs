@@ -42,25 +42,7 @@ public abstract class KsqlContext : IKsqlContext
     private TableCacheRegistry? _cacheRegistry;
     private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<KsqlContext>();
 
-    private Uri GetDefaultKsqlDbUrl()
-    {
-        var bootstrap = _dslOptions.Common.BootstrapServers;
-        if (!string.IsNullOrWhiteSpace(bootstrap))
-        {
-            var first = bootstrap.Split(',')[0];
-            var hostParts = first.Split(':');
-            var host = hostParts[0];
-            int port = 8088;
-            if (hostParts.Length > 1 && int.TryParse(hostParts[1], out var parsed))
-            {
-                port = parsed;
-            }
-            return new Uri($"http://{host}:{port}");
-        }
 
-        throw new InvalidOperationException(
-            "FATAL: ksqlDB URL could not be determined. Configure BootstrapServers or SchemaRegistry Url.");
-    }
 
     /// <summary>
     /// Hook to decide whether schema registration should be skipped for tests
@@ -360,23 +342,16 @@ public abstract class KsqlContext : IKsqlContext
         return new ConfluentSchemaRegistry.CachedSchemaRegistryClient(config);
     }
 
-    private Uri GetKsqlDbUrl()
-    {
-        var schemaUrl = _dslOptions.SchemaRegistry.Url;
-        if (!string.IsNullOrWhiteSpace(schemaUrl) &&
-            Uri.TryCreate(schemaUrl, UriKind.Absolute, out var uri))
-        {
-            var port = uri.IsDefaultPort ? GetDefaultKsqlDbUrl().Port : uri.Port;
-            return new Uri($"{uri.Scheme}://{uri.Host}:{port}");
-        }
 
-        var bootstrap = _dslOptions.Common.BootstrapServers;
+    private Uri GetDefaultKsqlDbUrl()
+    {
+        var bootstrap = _dslOptions.SchemaRegistry.Url;
         if (!string.IsNullOrWhiteSpace(bootstrap))
         {
             var first = bootstrap.Split(',')[0];
             var hostParts = first.Split(':');
             var host = hostParts[0];
-            int port = GetDefaultKsqlDbUrl().Port;
+            int port = 8088;
             if (hostParts.Length > 1 && int.TryParse(hostParts[1], out var parsed))
             {
                 port = parsed;
@@ -384,12 +359,12 @@ public abstract class KsqlContext : IKsqlContext
             return new Uri($"http://{host}:{port}");
         }
 
-        return GetDefaultKsqlDbUrl();
+        throw new InvalidOperationException(
+            "FATAL: ksqlDB URL could not be determined. Configure BootstrapServers or SchemaRegistry Url.");
     }
-
     private HttpClient CreateClient()
     {
-        return new HttpClient { BaseAddress = GetKsqlDbUrl() };
+        return new HttpClient { BaseAddress = GetDefaultKsqlDbUrl() };
     }
 
     public async Task<KsqlDbResponse> ExecuteStatementAsync(string statement)
