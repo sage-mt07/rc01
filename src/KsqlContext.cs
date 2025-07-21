@@ -23,8 +23,9 @@ using ConfluentSchemaRegistry = Confluent.SchemaRegistry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Kafka.Ksql.Linq.Core.Configuration;
+using Kafka.Ksql.Linq.Application;
 
-namespace Kafka.Ksql.Linq.Application;
+namespace Kafka.Ksql.Linq;
 /// <summary>
 /// KsqlContext that integrates the Core layer.
 /// Design rationale: inherits core abstractions and integrates higher-level features.

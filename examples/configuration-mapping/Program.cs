@@ -1,4 +1,4 @@
-using Kafka.Ksql.Linq.Application;
+using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

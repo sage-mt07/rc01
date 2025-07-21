@@ -1,3 +1,4 @@
+using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Application;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

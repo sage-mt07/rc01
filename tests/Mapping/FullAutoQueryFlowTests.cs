@@ -1,3 +1,4 @@
+using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Context;
