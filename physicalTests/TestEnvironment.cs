@@ -8,7 +8,9 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
 using Kafka.Ksql.Linq.Application;
-using Kafka.Ksql.Linq.Core.Context;
+using Kafka.Ksql.Linq;
+using Kafka.Ksql.Linq.Configuration;
+using Kafka.Ksql.Linq.Core.Configuration;
 using System.Threading.Tasks;
 
 namespace Kafka.Ksql.Linq.Tests.Integration;
@@ -36,10 +38,10 @@ internal static class TestEnvironment
 
     internal static KsqlContext CreateContext()
     {
-        var options = new KafkaContextOptions
+        var options = new KsqlDslOptions
         {
-            BootstrapServers = KafkaBootstrapServers,
-            SchemaRegistryUrl = SchemaRegistryUrl
+            Common = new CommonSection { BootstrapServers = KafkaBootstrapServers },
+            SchemaRegistry = new SchemaRegistrySection { Url = SchemaRegistryUrl }
         };
 
         return new AdminContext(options);
@@ -47,8 +49,8 @@ internal static class TestEnvironment
 
     internal class AdminContext : KsqlContext
     {
-        public AdminContext() : base(new KafkaContextOptions()) { }
-        public AdminContext(KafkaContextOptions options) : base(options) { }
+        public AdminContext() : base(new KsqlDslOptions()) { }
+        public AdminContext(KsqlDslOptions options) : base(options) { }
         protected override bool SkipSchemaRegistration => false;
     }
 

@@ -1,6 +1,8 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Application;
-using Kafka.Ksql.Linq.Core.Context;
+using Kafka.Ksql.Linq;
+using Kafka.Ksql.Linq.Configuration;
+using Kafka.Ksql.Linq.Core.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,8 +51,8 @@ public class DummyFlagSchemaRecognitionTests
 
     public class DummyContext : KsqlContext
     {
-        public DummyContext() : base(new KafkaContextOptions()) { }
-        public DummyContext(KafkaContextOptions options) : base(options) { }
+        public DummyContext() : base(new KsqlDslOptions()) { }
+        public DummyContext(KsqlDslOptions options) : base(options) { }
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
             modelBuilder.Entity<OrderValue>().WithTopic("orders");
@@ -63,10 +65,10 @@ public class DummyFlagSchemaRecognitionTests
 
     private async Task ProduceDummyRecordsAsync()
     {
-        var options = new KafkaContextOptions
+        var options = new KsqlDslOptions
         {
-            BootstrapServers = "localhost:9092",
-            SchemaRegistryUrl = "http://localhost:8088"
+            Common = new CommonSection { BootstrapServers = "localhost:9092" },
+            SchemaRegistry = new SchemaRegistrySection { Url = "http://localhost:8088" }
         };
 
         await using var ctx = new DummyContext(options);
