@@ -355,22 +355,8 @@ public abstract class KsqlContext : IKsqlContext
             return new Uri($"{schemaUri.Scheme}://{schemaUri.Host}:{port}");
         }
 
-        var bootstrap = _dslOptions.Common.BootstrapServers;
-        if (!string.IsNullOrWhiteSpace(bootstrap))
-        {
-            var first = bootstrap.Split(',')[0];
-            var hostParts = first.Split(':');
-            var host = hostParts[0];
-            int port = 8088;
-            if (hostParts.Length > 1 && int.TryParse(hostParts[1], out var parsed))
-            {
-                port = parsed;
-            }
-            return new Uri($"http://{host}:{port}");
-        }
-
         throw new InvalidOperationException(
-            "FATAL: ksqlDB URL could not be determined. Configure BootstrapServers or SchemaRegistry Url.");
+            "SchemaRegistry Url is required to resolve the ksqlDB endpoint.");
     }
     private HttpClient CreateClient()
     {
