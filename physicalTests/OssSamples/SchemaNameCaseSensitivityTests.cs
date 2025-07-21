@@ -51,15 +51,13 @@ public class SchemaNameCaseSensitivityTests
         }
     }
 
-    private async Task EnsureTablesAsync()
+    // スキーマ定義と異なるフィールド名の大文字小文字違いを送信した場合に例外が発生するか確認
+    [KsqlDbFact]
+    [Trait("Category", "Integration")]
+    public async Task MismatchedFieldCase_ShouldThrowException()
     {
-        await using var ctx = TestEnvironment.CreateContext();
-        foreach (var ddl in TestSchema.GenerateTableDdls())
-            await ctx.ExecuteStatementAsync(ddl);
-    }
+        await TestEnvironment.ResetAsync();
 
-    private async Task ProduceValidDummyAsync()
-    {
         var options = new KsqlDslOptions
         {
             Common = new CommonSection { BootstrapServers = "localhost:9092" },
@@ -78,56 +76,22 @@ public class SchemaNameCaseSensitivityTests
             Amount = 10d
         }, headers);
 
-        await Task.Delay(500);
-        await ctx.DisposeAsync();
-    }
-
-    // スキーマ定義と異なるフィールド名の大文字小文字違いを送信した場合に例外が発生するか確認
-    [KsqlDbFact]
-    [Trait("Category", "Integration")]
-    public async Task MismatchedFieldCase_ShouldThrowException()
-    {
-        await TestEnvironment.ResetAsync();
-
-        await EnsureTablesAsync();
-        await ProduceValidDummyAsync();
-
-        var verifyOptions = new KsqlDslOptions
-        {
-            Common = new CommonSection { BootstrapServers = "localhost:9092" },
-            SchemaRegistry = new SchemaRegistrySection { Url = "http://localhost:8088" }
-        };
-
-        await using var verifyCtx = new OrderContext(verifyOptions);
-
-        var list = await verifyCtx.Set<OrderCorrectCase>().ToListAsync();
+        var list = await ctx.Set<OrderCorrectCase>().ToListAsync();
         Assert.Single(list);
 
         var forEachList = new List<OrderCorrectCase>();
-        await verifyCtx.Set<OrderCorrectCase>().ForEachAsync(o => { forEachList.Add(o); return Task.CompletedTask; }, TimeSpan.FromSeconds(1));
+        await ctx.Set<OrderCorrectCase>().ForEachAsync(o => { forEachList.Add(o); return Task.CompletedTask; }, TimeSpan.FromSeconds(1));
         Assert.Single(forEachList);
 
-        await verifyCtx.DisposeAsync();
-
-        var options = new KsqlDslOptions
-        {
-            Common = new CommonSection { BootstrapServers = "localhost:9092" },
-            SchemaRegistry = new SchemaRegistrySection { Url = "http://localhost:8088" }
-        };
-
-        await using var ctx = new WrongCaseContext(options);
-
-        var set = ctx.Set<OrderWrongCase>();
+        await using var wrongCtx = new WrongCaseContext(options);
 
         await Assert.ThrowsAsync<SchemaRegistryException>(() =>
-            set.AddAsync(new OrderWrongCase
+            wrongCtx.Set<OrderWrongCase>().AddAsync(new OrderWrongCase
             {
                 CustomerId = 1,
                 Id = 1,
                 region = "west",
                 Amount = 5d
-            }));
-
-        await ctx.DisposeAsync();
+            }, headers));
     }
 }
