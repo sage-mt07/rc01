@@ -43,9 +43,7 @@ public class KafkaConnectivityTests
         var result = await ctx.ExecuteStatementAsync("SHOW TOPICS;");
         Assert.True(result.IsSuccess);
 
-        using var http = new HttpClient();
-        var resp = await http.GetAsync("http://localhost:8088/subjects");
-        Assert.True(resp.IsSuccessStatusCode);
+ 
     }
 }
 

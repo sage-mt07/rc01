@@ -18,6 +18,7 @@ namespace Kafka.Ksql.Linq.Tests.Integration;
 internal static class TestEnvironment
 {
     private const string SchemaRegistryUrl = "http://localhost:8088";
+    private const string KsqlDbUrl = "http://localhost:8081";
     private const string KafkaBootstrapServers = "localhost:9092";
     private const string DlqTopic = "dead.letter.queue";
     private static readonly HttpClient Http = new();
@@ -187,7 +188,7 @@ internal static class TestEnvironment
             }
 
             // Schema Registry check
-            var resp = await Http.GetAsync($"{SchemaRegistryUrl}/subjects");
+            var resp = await Http.GetAsync($"{KsqlDbUrl}/subjects");
             if (!resp.IsSuccessStatusCode)
                 throw new InvalidOperationException("SchemaRegistry unreachable");
         }
@@ -229,7 +230,7 @@ internal static class TestEnvironment
 
         for (var i = 0; i < attempts; i++)
         {
-            var resp = await Http.GetAsync($"{SchemaRegistryUrl}/subjects");
+            var resp = await Http.GetAsync($"{KsqlDbUrl}/subjects");
             resp.EnsureSuccessStatusCode();
             var json = await resp.Content.ReadAsStringAsync();
             var subjects = System.Text.Json.JsonSerializer.Deserialize<string[]>(json) ?? Array.Empty<string>();
@@ -240,7 +241,7 @@ internal static class TestEnvironment
             await Task.Delay(delayMs);
         }
 
-        var respFinal = await Http.GetAsync($"{SchemaRegistryUrl}/subjects");
+        var respFinal = await Http.GetAsync($"{KsqlDbUrl}/subjects");
         respFinal.EnsureSuccessStatusCode();
         var finalJson = await respFinal.Content.ReadAsStringAsync();
         var finalSubjects = System.Text.Json.JsonSerializer.Deserialize<string[]>(finalJson) ?? Array.Empty<string>();

@@ -56,17 +56,10 @@ services:
     ports:
       - "8081:8081"
     environment:
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'PLAINTEXT://kafka:9092'
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:29092
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
 
-  tools:
-    image: confluentinc/cp-schema-registry:7.4.3
-    depends_on:
-      - kafka
-      - schema-registry
-    entrypoint: ["sleep", "infinity"]
-    networks:
-      - default
+
 
   ksqldb-cli:
     image: confluentinc/ksqldb-cli:0.29.0
