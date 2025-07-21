@@ -53,6 +53,20 @@ internal static class TestEnvironment
         public AdminContext() : base(new KsqlDslOptions()) { }
         public AdminContext(KsqlDslOptions options) : base(options) { }
         protected override bool SkipSchemaRegistration => false;
+
+        public Task DropTableAsync(string tableName, bool deleteTopic = true)
+        {
+            var ddl = $"DROP TABLE IF EXISTS {tableName.ToUpperInvariant()}" +
+                      (deleteTopic ? " DELETE TOPIC;" : ";");
+            return ExecuteStatementAsync(ddl);
+        }
+
+        public Task DropStreamAsync(string streamName, bool deleteTopic = true)
+        {
+            var ddl = $"DROP STREAM IF EXISTS {streamName.ToUpperInvariant()}" +
+                      (deleteTopic ? " DELETE TOPIC;" : ";");
+            return ExecuteStatementAsync(ddl);
+        }
     }
 
     /// <summary>
@@ -98,28 +112,22 @@ internal static class TestEnvironment
     /// </summary>
     public static async Task TeardownAsync()
     {
-        var ksqlStatements = new[]
-        {
-            "DROP STREAM IF EXISTS source DELETE TOPIC;",
-            "DROP TABLE IF EXISTS orders DELETE TOPIC;",
-            "DROP TABLE IF EXISTS customers DELETE TOPIC;",
-            "DROP TABLE IF EXISTS events DELETE TOPIC;",
-            "DROP TABLE IF EXISTS orders_nullable DELETE TOPIC;",
-            "DROP TABLE IF EXISTS orders_nullable_key DELETE TOPIC;",
-        };
-
         await using (var ctx = CreateContext())
         {
-            foreach (var stmt in ksqlStatements)
+            try
             {
-                try
+                if (ctx is AdminContext admin)
                 {
-                    await ctx.ExecuteStatementAsync(stmt);
+                    await admin.DropStreamAsync("source");
+                    foreach (var table in TestSchema.AllTableNames)
+                    {
+                        await admin.DropTableAsync(table);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "Failed to execute: {Stmt}", stmt);
-                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to drop objects");
             }
         }
 
