@@ -46,7 +46,7 @@ Kafka.Ksql.Linq.Coreは、Apache KafkaとKsqlDBを使ったストリーミング
 ### `Kafka.Ksql.Linq.Core.Models`
 **責務**: コアモデル・ヘルパー
 - `KeyExtractor`: エンティティキー抽出・変換
-- `ProducerKey`, `ConsumerKey`: Kafka操作識別子
+- `ConsumerKey`: Kafka操作識別子
 
 ### `Kafka.Ksql.Linq.Core.Window`
 **責務**: ウィンドウ処理実装
