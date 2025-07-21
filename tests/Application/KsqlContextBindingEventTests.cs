@@ -1,7 +1,6 @@
 using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Core.Context;
 using Kafka.Ksql.Linq.Cache.Core;
 using System;
 using System.Collections.Generic;
@@ -15,7 +14,7 @@ public class KsqlContextBindingEventTests
 {
     private class BindingContext : KsqlContext
     {
-        public BindingContext() : base(new KafkaContextOptions()) { }
+        public BindingContext() : base(new KsqlDslOptions()) { }
 
         protected override bool SkipSchemaRegistration => true;
 

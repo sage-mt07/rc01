@@ -1,7 +1,9 @@
 using Confluent.SchemaRegistry;
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Core.Context;
+using Kafka.Ksql.Linq;
+using Kafka.Ksql.Linq.Configuration;
+using Kafka.Ksql.Linq.Core.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -30,8 +32,8 @@ public class SchemaNameCaseSensitivityTests
 
     public class OrderContext : KsqlContext
     {
-        public OrderContext() : base(new KafkaContextOptions()) { }
-        public OrderContext(KafkaContextOptions options) : base(options) { }
+        public OrderContext() : base(new KsqlDslOptions()) { }
+        public OrderContext(KsqlDslOptions options) : base(options) { }
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
             modelBuilder.Entity<OrderCorrectCase>().WithTopic("orders");
@@ -41,8 +43,8 @@ public class SchemaNameCaseSensitivityTests
     // Context for OrderWrongCase using default serialization
     public class WrongCaseContext : KsqlContext
     {
-        public WrongCaseContext() : base(new KafkaContextOptions()) { }
-        public WrongCaseContext(KafkaContextOptions options) : base(options) { }
+        public WrongCaseContext() : base(new KsqlDslOptions()) { }
+        public WrongCaseContext(KsqlDslOptions options) : base(options) { }
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
             modelBuilder.Entity<OrderWrongCase>().WithTopic("orders");
@@ -58,10 +60,10 @@ public class SchemaNameCaseSensitivityTests
 
     private async Task ProduceValidDummyAsync()
     {
-        var options = new KafkaContextOptions
+        var options = new KsqlDslOptions
         {
-            BootstrapServers = "localhost:9092",
-            SchemaRegistryUrl = "http://localhost:8088"
+            Common = new CommonSection { BootstrapServers = "localhost:9092" },
+            SchemaRegistry = new SchemaRegistrySection { Url = "http://localhost:8088" }
         };
 
         await using var ctx = new OrderContext(options);
@@ -90,10 +92,10 @@ public class SchemaNameCaseSensitivityTests
         await EnsureTablesAsync();
         await ProduceValidDummyAsync();
 
-        var verifyOptions = new KafkaContextOptions
+        var verifyOptions = new KsqlDslOptions
         {
-            BootstrapServers = "localhost:9092",
-            SchemaRegistryUrl = "http://localhost:8088"
+            Common = new CommonSection { BootstrapServers = "localhost:9092" },
+            SchemaRegistry = new SchemaRegistrySection { Url = "http://localhost:8088" }
         };
 
         await using var verifyCtx = new OrderContext(verifyOptions);
@@ -107,10 +109,10 @@ public class SchemaNameCaseSensitivityTests
 
         await verifyCtx.DisposeAsync();
 
-        var options = new KafkaContextOptions
+        var options = new KsqlDslOptions
         {
-            BootstrapServers = "localhost:9092",
-            SchemaRegistryUrl = "http://localhost:8088"
+            Common = new CommonSection { BootstrapServers = "localhost:9092" },
+            SchemaRegistry = new SchemaRegistrySection { Url = "http://localhost:8088" }
         };
 
         await using var ctx = new WrongCaseContext(options);

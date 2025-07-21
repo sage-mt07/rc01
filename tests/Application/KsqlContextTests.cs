@@ -1,6 +1,6 @@
 using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Core.Context;
+using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Core.Dlq;
@@ -14,8 +14,8 @@ public class KsqlContextTests
 {
     private class TestContext : KsqlContext
     {
-        public TestContext() : base(new KafkaContextOptions()) { }
-        public TestContext(KafkaContextOptions opt) : base(opt) { }
+        public TestContext() : base(new KsqlDslOptions()) { }
+        public TestContext(KsqlDslOptions opt) : base(opt) { }
 
         protected override bool SkipSchemaRegistration => true;
 
