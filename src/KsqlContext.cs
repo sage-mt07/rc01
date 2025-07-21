@@ -727,13 +727,3 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
     }
 }
 
-/// <summary>
-/// Compatibility shim for renamed context class.
-/// </summary>
-[Obsolete("Use KsqlContext instead")]
-public abstract class KafkaContext : KsqlContext
-{
-    protected KafkaContext(IConfiguration configuration) : base(configuration) { }
-    protected KafkaContext(IConfiguration configuration, string sectionName) : base(configuration, sectionName) { }
-    protected KafkaContext(KsqlDslOptions options) : base(options) { }
-}
