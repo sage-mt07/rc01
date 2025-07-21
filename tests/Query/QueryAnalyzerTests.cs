@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using Kafka.Ksql.Linq.Query.Analysis;
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Context;
 using Kafka.Ksql.Linq.Core.Modeling;
 using Xunit;
 
@@ -72,7 +73,7 @@ public class QueryAnalyzerTests
 
     private class TestContext : KsqlContext
     {
-        public TestContext() : base() { }
+        public TestContext() : base(new KafkaContextOptions()) { }
         protected override bool SkipSchemaRegistration => true;
 
         protected override void OnModelCreating(IModelBuilder modelBuilder)

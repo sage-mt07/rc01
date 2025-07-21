@@ -1,6 +1,7 @@
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Context;
 using Kafka.Ksql.Linq.Cache.Core;
 using Kafka.Ksql.Linq.Cache.Extensions;
 using Kafka.Ksql.Linq.Cache;
@@ -15,7 +16,7 @@ public class EventSetWithServicesRocksDbTests
 {
     private class TestContext : KsqlContext
     {
-        public TestContext() : base() { }
+        public TestContext() : base(new KafkaContextOptions()) { }
 
         protected override bool SkipSchemaRegistration => true;
 

@@ -49,7 +49,7 @@ public class DummyFlagSchemaRecognitionTests
 
     public class DummyContext : KsqlContext
     {
-        public DummyContext() : base() { }
+        public DummyContext() : base(new KafkaContextOptions()) { }
         public DummyContext(KafkaContextOptions options) : base(options) { }
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {

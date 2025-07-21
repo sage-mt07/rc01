@@ -6,6 +6,7 @@ using Kafka.Ksql.Linq.Core.Models;
 using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
 using Kafka.Ksql.Linq.Core.Dlq;
+using Kafka.Ksql.Linq.Core.Context;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -38,7 +39,7 @@ public class KsqlContextDlqSendTests
 
     private class TestContext : KsqlContext
     {
-        public TestContext() : base() { }
+        public TestContext() : base(new KafkaContextOptions()) { }
 
         protected override bool SkipSchemaRegistration => true;
 

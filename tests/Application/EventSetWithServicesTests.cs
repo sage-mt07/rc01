@@ -10,7 +10,7 @@ public class EventSetWithServicesTests
 {
     private class TestContext : KsqlContext
     {
-        public TestContext() : base() { }
+        public TestContext() : base(new KafkaContextOptions()) { }
 
         protected override bool SkipSchemaRegistration => true;
     }

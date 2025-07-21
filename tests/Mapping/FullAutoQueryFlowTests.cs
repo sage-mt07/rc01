@@ -45,7 +45,7 @@ public class FullAutoQueryFlowTests
 
     private class TestContext : KsqlContext
     {
-        public TestContext() : base() { }
+        public TestContext() : base(new KafkaContextOptions()) { }
         protected override bool SkipSchemaRegistration => true;
         public void SetProducerManager(KafkaProducerManager manager)
         {
