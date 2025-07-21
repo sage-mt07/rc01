@@ -1,4 +1,4 @@
-using Kafka.Ksql.Linq.Application;
+using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Core.Context;
 using Microsoft.Extensions.Configuration;
 

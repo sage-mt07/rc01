@@ -1,4 +1,5 @@
 using System;
+using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Application;
 using Confluent.SchemaRegistry;
 using Xunit;
