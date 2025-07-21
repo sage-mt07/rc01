@@ -1,6 +1,9 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Query.Schema;
 using Kafka.Ksql.Linq.Core.Models;
+using Kafka.Ksql.Linq.SchemaRegistryTools;
+using Confluent.SchemaRegistry;
+using Kafka.Ksql.Linq.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,11 +21,7 @@ public static class KsqlContextQueryExtensions
     /// </summary>
     public static QuerySchema? GetQuerySchema<T>(this KsqlContext context) where T : class
     {
-        var entityModels = context.GetEntityModels();
-        if (!entityModels.TryGetValue(typeof(T), out var entityModel))
-            return null;
-
-        return ExtractQuerySchemaFromEntityModel(entityModel);
+        return GetQuerySchema(context, typeof(T));
     }
 
     /// <summary>
@@ -34,7 +33,37 @@ public static class KsqlContextQueryExtensions
         if (!entityModels.TryGetValue(pocoType, out var entityModel))
             return null;
 
-        return ExtractQuerySchemaFromEntityModel(entityModel);
+        var schema = ExtractQuerySchemaFromEntityModel(entityModel);
+        if (schema != null)
+        {
+            context.GetMappingRegistry().Register(entityModel.EntityType, schema.KeyProperties, schema.ValueProperties);
+            return schema;
+        }
+
+        if (entityModel.AccessMode == EntityAccessMode.ReadOnly)
+        {
+            var client = context.GetSchemaRegistryClient();
+            var meta = SchemaRegistryMetaProvider.GetMetaFromSchemaRegistry(pocoType, client);
+            context.GetMappingRegistry().RegisterMeta(pocoType, meta);
+            schema = new QuerySchema
+            {
+                SourceType = pocoType,
+                TargetType = pocoType,
+                TopicName = entityModel.TopicName ?? pocoType.Name.ToLowerInvariant(),
+                IsValid = true,
+                KeyProperties = meta.KeyProperties,
+                ValueProperties = meta.ValueProperties
+            };
+            var ns = pocoType.Namespace?.ToLower() ?? string.Empty;
+            var baseName = pocoType.Name.ToLower();
+            schema.KeyInfo.ClassName = $"{baseName}-key";
+            schema.KeyInfo.Namespace = ns;
+            schema.ValueInfo.ClassName = $"{baseName}-value";
+            schema.ValueInfo.Namespace = ns;
+            return schema;
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -45,9 +74,9 @@ public static class KsqlContextQueryExtensions
         var result = new Dictionary<Type, QuerySchema>();
         var entityModels = context.GetEntityModels();
 
-        foreach (var (type, entityModel) in entityModels)
+        foreach (var (type, _) in entityModels)
         {
-            var schema = ExtractQuerySchemaFromEntityModel(entityModel);
+            var schema = context.GetQuerySchema(type);
             if (schema != null)
             {
                 result[type] = schema;
@@ -63,13 +92,14 @@ public static class KsqlContextQueryExtensions
     public static void RegisterQuerySchemas(this KsqlContext context)
     {
         var querySchemas = context.GetAllQuerySchemas();
+        var mapping = context.GetMappingRegistry();
 
         foreach (var (_, schema) in querySchemas)
         {
             if (schema.IsValid)
             {
-                // 登録処理は廃止されたため、ここでは検証のみ行う
                 QuerySchemaHelper.ValidateQuerySchema(schema, out _);
+                mapping.Register(schema.TargetType, schema.KeyProperties, schema.ValueProperties);
             }
         }
     }

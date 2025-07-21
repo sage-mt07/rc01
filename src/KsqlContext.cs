@@ -9,6 +9,7 @@ using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq.Infrastructure.Admin;
 using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Query.Abstractions;
+using Kafka.Ksql.Linq.Mapping;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -40,6 +41,7 @@ public abstract class KsqlContext : IKsqlContext
     private readonly KafkaAdminService _adminService;
     private readonly KsqlDslOptions _dslOptions;
     private TableCacheRegistry? _cacheRegistry;
+    private readonly MappingRegistry _mappingRegistry = new();
     private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<KsqlContext>();
 
 
@@ -387,6 +389,8 @@ public abstract class KsqlContext : IKsqlContext
     internal KafkaProducerManager GetProducerManager() => _producerManager;
     internal KafkaConsumerManager GetConsumerManager() => _consumerManager;
     internal DlqProducer GetDlqProducer() => _dlqProducer;
+    internal ConfluentSchemaRegistry.ISchemaRegistryClient GetSchemaRegistryClient() => _schemaRegistryClient.Value;
+    internal MappingRegistry GetMappingRegistry() => _mappingRegistry;
 
     /// <summary>
     /// 指定したエンティティを手動でDLQへ送信します
