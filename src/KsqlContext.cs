@@ -563,6 +563,10 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
 
             await producerManager.SendAsync(entity, headers, cancellationToken);
         }
+        catch (ConfluentSchemaRegistry.SchemaRegistryException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             throw new InvalidOperationException($"Failed to send entity {typeof(T).Name} to Kafka", ex);
