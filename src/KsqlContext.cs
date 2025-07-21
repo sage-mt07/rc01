@@ -1,28 +1,25 @@
+using Confluent.Kafka;
+using Kafka.Ksql.Linq.Cache.Core;
+using Kafka.Ksql.Linq.Cache.Extensions;
 using Kafka.Ksql.Linq.Configuration;
+using Kafka.Ksql.Linq.Configuration.Abstractions;
 using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Dlq;
+using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq.Infrastructure.Admin;
 using Kafka.Ksql.Linq.Messaging.Consumers;
-using Kafka.Ksql.Linq.Messaging.Producers;
-using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Query.Abstractions;
-using Kafka.Ksql.Linq.Cache.Extensions;
-using Kafka.Ksql.Linq.Cache.Core;
-using Kafka.Ksql.Linq.Core.Models;
-using Kafka.Ksql.Linq.Core.Modeling;
-using Kafka.Ksql.Linq.Configuration.Abstractions;
-using Confluent.Kafka;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ConfluentSchemaRegistry = Confluent.SchemaRegistry;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
-using Kafka.Ksql.Linq.Core.Configuration;
 
 namespace Kafka.Ksql.Linq;
 /// <summary>
