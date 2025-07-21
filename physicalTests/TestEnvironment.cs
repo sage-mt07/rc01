@@ -47,7 +47,7 @@ internal static class TestEnvironment
 
     internal class AdminContext : KsqlContext
     {
-        public AdminContext() : base() { }
+        public AdminContext() : base(new KafkaContextOptions()) { }
         public AdminContext(KafkaContextOptions options) : base(options) { }
         protected override bool SkipSchemaRegistration => false;
     }

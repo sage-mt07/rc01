@@ -8,7 +8,7 @@ namespace Kafka.Ksql.Linq.Tests.Application;
 // Dummy context used for KsqlContextBuilder tests
 public class DummyContext : KsqlContext
 {
-    public DummyContext() : base() { }
+    public DummyContext() : base(new KafkaContextOptions()) { }
     public DummyContext(KafkaContextOptions options) : base(options) { }
 
     // Skip heavy initialization during tests

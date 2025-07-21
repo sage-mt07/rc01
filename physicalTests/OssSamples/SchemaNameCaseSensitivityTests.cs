@@ -30,7 +30,7 @@ public class SchemaNameCaseSensitivityTests
 
     public class OrderContext : KsqlContext
     {
-        public OrderContext() : base() { }
+        public OrderContext() : base(new KafkaContextOptions()) { }
         public OrderContext(KafkaContextOptions options) : base(options) { }
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
@@ -41,7 +41,7 @@ public class SchemaNameCaseSensitivityTests
     // Context for OrderWrongCase using default serialization
     public class WrongCaseContext : KsqlContext
     {
-        public WrongCaseContext() : base() { }
+        public WrongCaseContext() : base(new KafkaContextOptions()) { }
         public WrongCaseContext(KafkaContextOptions options) : base(options) { }
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {

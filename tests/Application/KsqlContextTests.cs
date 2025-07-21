@@ -15,7 +15,7 @@ public class KsqlContextTests
 {
     private class TestContext : KsqlContext
     {
-        public TestContext() : base() { }
+        public TestContext() : base(new KafkaContextOptions()) { }
         public TestContext(KafkaContextOptions opt) : base(opt) { }
 
         protected override bool SkipSchemaRegistration => true;

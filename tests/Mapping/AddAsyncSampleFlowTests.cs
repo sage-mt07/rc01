@@ -4,6 +4,7 @@ using Kafka.Ksql.Linq.Mapping;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
 using Kafka.Ksql.Linq.Configuration;
+using Kafka.Ksql.Linq.Core.Context;
 using Kafka.Ksql.Linq.Entities.Samples.Models;
 using Kafka.Ksql.Linq.Query.Schema;
 using Kafka.Ksql.Linq.Core.Models;
@@ -43,7 +44,7 @@ public class AddAsyncSampleFlowTests
 
     private class TestContext : KsqlContext
     {
-        public TestContext() : base() { }
+        public TestContext() : base(new KafkaContextOptions()) { }
         protected override bool SkipSchemaRegistration => true;
         public void SetProducerManager(KafkaProducerManager manager)
         {

@@ -21,6 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ConfluentSchemaRegistry = Confluent.SchemaRegistry;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using Kafka.Ksql.Linq.Core.Configuration;
 
 namespace Kafka.Ksql.Linq.Application;
@@ -65,10 +66,63 @@ public abstract class KsqlContext : KafkaContextCore
     /// </summary>
     protected virtual bool SkipSchemaRegistration => false;
 
-    protected KsqlContext() : base()
+    public const string DefaultSectionName = "KsqlDsl";
+
+    protected KsqlContext(IConfiguration configuration)
+        : this(configuration, DefaultSectionName)
+    {
+    }
+
+    protected KsqlContext(IConfiguration configuration, string sectionName) : base()
     {
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
         _dslOptions = new KsqlDslOptions();
+        configuration.GetSection(sectionName).Bind(_dslOptions);
+        DecimalPrecisionConfig.DecimalPrecision = _dslOptions.DecimalPrecision;
+        DecimalPrecisionConfig.DecimalScale = _dslOptions.DecimalScale;
+        _adminService = new KafkaAdminService(
+        Microsoft.Extensions.Options.Options.Create(_dslOptions),
+        null);
+        try
+        {
+            if (!SkipSchemaRegistration)
+            {
+                InitializeWithSchemaRegistration();
+            }
+            else
+            {
+                ConfigureModel();
+            }
+
+            _producerManager = new KafkaProducerManager(
+                Microsoft.Extensions.Options.Options.Create(_dslOptions),
+                null);
+
+            _dlqProducer = new DlqProducer(
+                _producerManager,
+                _dslOptions.DlqOptions);
+            _dlqProducer.InitializeAsync().GetAwaiter().GetResult();
+
+            _consumerManager = new KafkaConsumerManager(
+                Microsoft.Extensions.Options.Options.Create(_dslOptions),
+                null);
+            _consumerManager.DeserializationError += (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
+                _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType);
+
+            this.UseTableCache(_dslOptions, null);
+            _cacheRegistry = this.GetTableCacheRegistry();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                "FATAL: KsqlContext initialization failed. Application cannot continue without Kafka connectivity.", ex);
+        }
+    }
+
+    protected KsqlContext(KsqlDslOptions options) : base()
+    {
+        _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
+        _dslOptions = options;
         DecimalPrecisionConfig.DecimalPrecision = _dslOptions.DecimalPrecision;
         DecimalPrecisionConfig.DecimalScale = _dslOptions.DecimalScale;
         _adminService = new KafkaAdminService(
@@ -564,6 +618,8 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
 [Obsolete("Use KsqlContext instead")]
 public abstract class KafkaContext : KsqlContext
 {
-    protected KafkaContext() : base() { }
+    protected KafkaContext(IConfiguration configuration) : base(configuration) { }
+    protected KafkaContext(IConfiguration configuration, string sectionName) : base(configuration, sectionName) { }
+    protected KafkaContext(KsqlDslOptions options) : base(options) { }
     protected KafkaContext(KafkaContextOptions options) : base(options) { }
 }
