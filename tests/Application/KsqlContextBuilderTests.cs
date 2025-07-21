@@ -1,6 +1,6 @@
 using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Application;
-using Kafka.Ksql.Linq.Core.Context;
+using Kafka.Ksql.Linq.Configuration;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
@@ -9,8 +9,8 @@ namespace Kafka.Ksql.Linq.Tests.Application;
 // Dummy context used for KsqlContextBuilder tests
 public class DummyContext : KsqlContext
 {
-    public DummyContext() : base(new KafkaContextOptions()) { }
-    public DummyContext(KafkaContextOptions options) : base(options) { }
+    public DummyContext() : base(new KsqlDslOptions()) { }
+    public DummyContext(KsqlDslOptions options) : base(options) { }
 
     // Skip heavy initialization during tests
     protected override bool SkipSchemaRegistration => true;

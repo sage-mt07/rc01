@@ -1,6 +1,6 @@
 using System;
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Core.Context;
+using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq.Entities.Samples.Models;
 
@@ -10,8 +10,9 @@ namespace Kafka.Ksql.Linq.Entities.Samples;
 /// Minimal context demonstrating OnModelCreating based registration.
 /// EntitySet creation is not implemented in this sample.
 /// </summary>
-public class SampleContext : KafkaContextCore
+public class SampleContext : KsqlContext
 {
+    public SampleContext() : base(new KsqlDslOptions()) { }
     protected override IEntitySet<T> CreateEntitySet<T>(EntityModel entityModel)
     {
         throw new NotImplementedException();

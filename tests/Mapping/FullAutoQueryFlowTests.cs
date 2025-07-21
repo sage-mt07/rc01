@@ -1,7 +1,6 @@
 using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Core.Context;
 using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq.Mapping;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
@@ -46,7 +45,7 @@ public class FullAutoQueryFlowTests
 
     private class TestContext : KsqlContext
     {
-        public TestContext() : base(new KafkaContextOptions()) { }
+        public TestContext() : base(new KsqlDslOptions()) { }
         protected override bool SkipSchemaRegistration => true;
         public void SetProducerManager(KafkaProducerManager manager)
         {

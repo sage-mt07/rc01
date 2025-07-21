@@ -1,6 +1,5 @@
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Core.Context;
 using Kafka.Ksql.Linq.Infrastructure.Admin;
 using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Messaging.Producers;
@@ -9,6 +8,7 @@ using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.Cache.Extensions;
 using Kafka.Ksql.Linq.Cache.Core;
 using Kafka.Ksql.Linq.Core.Models;
+using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq.Configuration.Abstractions;
 using Confluent.Kafka;
 using System;
@@ -23,28 +23,31 @@ using ConfluentSchemaRegistry = Confluent.SchemaRegistry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Kafka.Ksql.Linq.Core.Configuration;
-using Kafka.Ksql.Linq.Application;
 
 namespace Kafka.Ksql.Linq;
 /// <summary>
 /// KsqlContext that integrates the Core layer.
 /// Design rationale: inherits core abstractions and integrates higher-level features.
 /// </summary>
-public abstract class KsqlContext : KafkaContextCore
+public abstract class KsqlContext : IKsqlContext
 {
     private readonly KafkaProducerManager _producerManager;
+    private readonly Dictionary<Type, EntityModel> _entityModels = new();
+    private readonly Dictionary<Type, object> _entitySets = new();
+    private bool _disposed = false;
     private readonly KafkaConsumerManager _consumerManager;
     private readonly DlqProducer _dlqProducer;
     private readonly Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient> _schemaRegistryClient;
+    private readonly Lazy<HttpClient> _ksqlDbClient;
 
     private readonly KafkaAdminService _adminService;
     private readonly KsqlDslOptions _dslOptions;
     private TableCacheRegistry? _cacheRegistry;
     private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<KsqlContext>();
 
-    private static Uri GetDefaultKsqlDbUrl(KsqlContext context)
+    private Uri GetDefaultKsqlDbUrl()
     {
-        var bootstrap = GetCommonSection(context).BootstrapServers;
+        var bootstrap = _dslOptions.Common.BootstrapServers;
         if (!string.IsNullOrWhiteSpace(bootstrap))
         {
             var first = bootstrap.Split(',')[0];
@@ -74,9 +77,10 @@ public abstract class KsqlContext : KafkaContextCore
     {
     }
 
-    protected KsqlContext(IConfiguration configuration, string sectionName) : base()
+    protected KsqlContext(IConfiguration configuration, string sectionName)
     {
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
+        _ksqlDbClient = new Lazy<HttpClient>(CreateClient);
         _dslOptions = new KsqlDslOptions();
         configuration.GetSection(sectionName).Bind(_dslOptions);
         DecimalPrecisionConfig.DecimalPrecision = _dslOptions.DecimalPrecision;
@@ -84,6 +88,7 @@ public abstract class KsqlContext : KafkaContextCore
         _adminService = new KafkaAdminService(
         Microsoft.Extensions.Options.Options.Create(_dslOptions),
         null);
+        InitializeEntityModels();
         try
         {
             if (!SkipSchemaRegistration)
@@ -120,15 +125,17 @@ public abstract class KsqlContext : KafkaContextCore
         }
     }
 
-    protected KsqlContext(KsqlDslOptions options) : base()
+    protected KsqlContext(KsqlDslOptions options)
     {
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
+        _ksqlDbClient = new Lazy<HttpClient>(CreateClient);
         _dslOptions = options;
         DecimalPrecisionConfig.DecimalPrecision = _dslOptions.DecimalPrecision;
         DecimalPrecisionConfig.DecimalScale = _dslOptions.DecimalScale;
         _adminService = new KafkaAdminService(
         Microsoft.Extensions.Options.Options.Create(_dslOptions),
         null);
+        InitializeEntityModels();
         try
         {
             if (!SkipSchemaRegistration)
@@ -156,7 +163,7 @@ public abstract class KsqlContext : KafkaContextCore
                 _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType);
 
             this.UseTableCache(_dslOptions, null);
-            _cacheRegistry = this.GetTableCacheRegistry();
+        _cacheRegistry = this.GetTableCacheRegistry();
         }
         catch (Exception ex)
         {
@@ -165,50 +172,122 @@ public abstract class KsqlContext : KafkaContextCore
         }
     }
 
-    protected KsqlContext(KafkaContextOptions options) : base(options)
+    protected virtual void OnModelCreating(IModelBuilder modelBuilder) { }
+
+    public IEntitySet<T> Set<T>() where T : class
     {
-        _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
-        _dslOptions = new KsqlDslOptions();
-        DecimalPrecisionConfig.DecimalPrecision = _dslOptions.DecimalPrecision;
-        DecimalPrecisionConfig.DecimalScale = _dslOptions.DecimalScale;
-        _adminService = new KafkaAdminService(
-        Microsoft.Extensions.Options.Options.Create(_dslOptions),
-        null);
-        try
+        var entityType = typeof(T);
+
+        if (_entitySets.TryGetValue(entityType, out var existingSet))
         {
-            if (!SkipSchemaRegistration)
+            return (IEntitySet<T>)existingSet;
+        }
+
+        var entityModel = GetOrCreateEntityModel<T>();
+        var entitySet = CreateEntitySet<T>(entityModel);
+        _entitySets[entityType] = entitySet;
+
+        return entitySet;
+    }
+
+    public object GetEventSet(Type entityType)
+    {
+        if (_entitySets.TryGetValue(entityType, out var entitySet))
+        {
+            return entitySet;
+        }
+
+        var entityModel = GetOrCreateEntityModel(entityType);
+        var createdSet = CreateEntitySet(entityType, entityModel);
+        _entitySets[entityType] = createdSet;
+
+        return createdSet;
+    }
+
+    public Dictionary<Type, EntityModel> GetEntityModels()
+    {
+        return new Dictionary<Type, EntityModel>(_entityModels);
+    }
+
+    protected virtual object CreateEntitySet(Type entityType, EntityModel entityModel)
+    {
+        var method = GetType().GetMethod(nameof(CreateEntitySet), 1, new[] { typeof(EntityModel) });
+        var genericMethod = method!.MakeGenericMethod(entityType);
+        return genericMethod.Invoke(this, new object[] { entityModel })!;
+    }
+
+    protected void ConfigureModel()
+    {
+        var modelBuilder = new ModelBuilder(_dslOptions.ValidationMode);
+        using (Kafka.Ksql.Linq.Core.Modeling.ModelCreatingScope.Enter())
+        {
+            OnModelCreating(modelBuilder);
+        }
+        ApplyModelBuilderSettings(modelBuilder);
+    }
+
+    private void InitializeEntityModels()
+    {
+    }
+
+    private void ApplyModelBuilderSettings(ModelBuilder modelBuilder)
+    {
+        var models = modelBuilder.GetAllEntityModels();
+        foreach (var (type, model) in models)
+        {
+            if (_entityModels.TryGetValue(type, out var existing))
             {
-                InitializeWithSchemaRegistration();
+                existing.SetStreamTableType(model.GetExplicitStreamTableType());
             }
             else
             {
-                ConfigureModel();
+                _entityModels[type] = model;
             }
-
-            _producerManager = new KafkaProducerManager(
-                Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                null);
-
-            _dlqProducer = new DlqProducer(
-                _producerManager,
-                _dslOptions.DlqOptions);
-            _dlqProducer.InitializeAsync().GetAwaiter().GetResult();
-
-            _consumerManager = new KafkaConsumerManager(
-                Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                null);
-            _consumerManager.DeserializationError += (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
-                _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType);
-
-            this.UseTableCache(_dslOptions, null);
-            _cacheRegistry = this.GetTableCacheRegistry();
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException(
-                "FATAL: KsqlContext initialization failed. Application cannot continue without Kafka connectivity.", ex);
         }
     }
+
+    private EntityModel GetOrCreateEntityModel<T>() where T : class
+    {
+        return GetOrCreateEntityModel(typeof(T));
+    }
+
+    private EntityModel GetOrCreateEntityModel(Type entityType)
+    {
+        if (_entityModels.TryGetValue(entityType, out var existingModel))
+        {
+            return existingModel;
+        }
+
+        var entityModel = CreateEntityModelFromType(entityType);
+        _entityModels[entityType] = entityModel;
+        return entityModel;
+    }
+
+    private EntityModel CreateEntityModelFromType(Type entityType)
+    {
+        var allProperties = entityType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        var keyProperties = System.Array.Empty<System.Reflection.PropertyInfo>();
+
+        var model = new EntityModel
+        {
+            EntityType = entityType,
+            TopicName = entityType.Name.ToLowerInvariant(),
+            AllProperties = allProperties,
+            KeyProperties = keyProperties
+        };
+
+        var validation = new ValidationResult { IsValid = true };
+
+        if (keyProperties.Length == 0)
+        {
+            validation.Warnings.Add($"No key properties defined for {entityType.Name}");
+        }
+
+        model.ValidationResult = validation;
+
+        return model;
+    }
+
 
     /// <summary>
     /// OnModelCreating → execute automatic schema registration flow
@@ -284,28 +363,23 @@ public abstract class KsqlContext : KafkaContextCore
         return new ConfluentSchemaRegistry.CachedSchemaRegistryClient(config);
     }
 
-    private static CommonSection GetCommonSection(KsqlContext context)
+    private Uri GetKsqlDbUrl()
     {
-        return context._dslOptions.Common;
-    }
-
-    private static Uri GetKsqlDbUrl(KsqlContext context)
-    {
-        var schemaUrl = context._dslOptions.SchemaRegistry.Url;
+        var schemaUrl = _dslOptions.SchemaRegistry.Url;
         if (!string.IsNullOrWhiteSpace(schemaUrl) &&
             Uri.TryCreate(schemaUrl, UriKind.Absolute, out var uri))
         {
-            var port = uri.IsDefaultPort ? GetDefaultKsqlDbUrl(context).Port : uri.Port;
+            var port = uri.IsDefaultPort ? GetDefaultKsqlDbUrl().Port : uri.Port;
             return new Uri($"{uri.Scheme}://{uri.Host}:{port}");
         }
 
-        var bootstrap = GetCommonSection(context).BootstrapServers;
+        var bootstrap = _dslOptions.Common.BootstrapServers;
         if (!string.IsNullOrWhiteSpace(bootstrap))
         {
             var first = bootstrap.Split(',')[0];
             var hostParts = first.Split(':');
             var host = hostParts[0];
-            int port = GetDefaultKsqlDbUrl(context).Port;
+            int port = GetDefaultKsqlDbUrl().Port;
             if (hostParts.Length > 1 && int.TryParse(hostParts[1], out var parsed))
             {
                 port = parsed;
@@ -313,17 +387,17 @@ public abstract class KsqlContext : KafkaContextCore
             return new Uri($"http://{host}:{port}");
         }
 
-        return GetDefaultKsqlDbUrl(context);
+        return GetDefaultKsqlDbUrl();
     }
 
-    private static HttpClient CreateClient(KsqlContext context)
+    private HttpClient CreateClient()
     {
-        return new HttpClient { BaseAddress = GetKsqlDbUrl(context) };
+        return new HttpClient { BaseAddress = GetKsqlDbUrl() };
     }
 
     public async Task<KsqlDbResponse> ExecuteStatementAsync(string statement)
     {
-        using var client = CreateClient(this);
+        var client = _ksqlDbClient.Value;
         var payload = new { ksql = statement, streamsProperties = new { } };
         var json = JsonSerializer.Serialize(payload);
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -343,7 +417,7 @@ public abstract class KsqlContext : KafkaContextCore
     /// <summary>
     /// Core層EventSet実装（上位層機能統合）
     /// </summary>
-    protected override IEntitySet<T> CreateEntitySet<T>(EntityModel entityModel)
+    protected virtual IEntitySet<T> CreateEntitySet<T>(EntityModel entityModel) where T : class
     {
         var baseSet = new EventSetWithServices<T>(this, entityModel);
         if (entityModel.GetExplicitStreamTableType() == StreamTableType.Table && entityModel.EnableCache)
@@ -409,10 +483,21 @@ public abstract class KsqlContext : KafkaContextCore
     public ProducerBuilder<object, T> CreateProducerBuilder<T>(string? topicName = null) where T : class
         => _producerManager.CreateProducerBuilder<T>(topicName);
 
-    protected override void Dispose(bool disposing)
+    protected virtual void Dispose(bool disposing)
     {
-        if (disposing)
+        if (!_disposed && disposing)
         {
+            foreach (var entitySet in _entitySets.Values)
+            {
+                if (entitySet is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+            _entitySets.Clear();
+            _entityModels.Clear();
+            _disposed = true;
+
             _producerManager?.Dispose();
             _consumerManager?.Dispose();
             _dlqProducer?.Dispose();
@@ -423,13 +508,41 @@ public abstract class KsqlContext : KafkaContextCore
             {
                 _schemaRegistryClient.Value?.Dispose();
             }
+            if (_ksqlDbClient.IsValueCreated)
+            {
+                _ksqlDbClient.Value.Dispose();
+            }
         }
-
-        base.Dispose(disposing);
     }
 
-    protected override async ValueTask DisposeAsyncCore()
+    public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore();
+        Dispose(false);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        foreach (var entitySet in _entitySets.Values)
+        {
+            if (entitySet is IAsyncDisposable asyncDisposable)
+            {
+                await asyncDisposable.DisposeAsync();
+            }
+            else if (entitySet is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+        _entitySets.Clear();
+
         _producerManager?.Dispose();
         _consumerManager?.Dispose();
         _dlqProducer?.Dispose();
@@ -440,13 +553,17 @@ public abstract class KsqlContext : KafkaContextCore
         {
             _schemaRegistryClient.Value?.Dispose();
         }
+        if (_ksqlDbClient.IsValueCreated)
+        {
+            _ksqlDbClient.Value.Dispose();
+        }
 
-        await base.DisposeAsyncCore();
+        await Task.CompletedTask;
     }
 
     public override string ToString()
     {
-        return $"{base.ToString()} [schema auto-registration ready]";
+        return $"KafkaContextCore: {_entityModels.Count} entities, {_entitySets.Count} sets [schema auto-registration ready]";
     }
 }
 
@@ -622,5 +739,4 @@ public abstract class KafkaContext : KsqlContext
     protected KafkaContext(IConfiguration configuration) : base(configuration) { }
     protected KafkaContext(IConfiguration configuration, string sectionName) : base(configuration, sectionName) { }
     protected KafkaContext(KsqlDslOptions options) : base(options) { }
-    protected KafkaContext(KafkaContextOptions options) : base(options) { }
 }

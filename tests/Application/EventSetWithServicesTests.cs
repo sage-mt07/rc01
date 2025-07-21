@@ -1,7 +1,7 @@
 using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.Core.Abstractions;
-using Kafka.Ksql.Linq.Core.Context;
+using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq;
 using Xunit;
 
@@ -11,7 +11,7 @@ public class EventSetWithServicesTests
 {
     private class TestContext : KsqlContext
     {
-        public TestContext() : base(new KafkaContextOptions()) { }
+        public TestContext() : base(new KsqlDslOptions()) { }
 
         protected override bool SkipSchemaRegistration => true;
     }
