@@ -35,7 +35,7 @@ public class KsqlDbExecutionExtensionsTests
     }
 
     [Fact]
-    public void CreateClient_FallsBackToBootstrapServers()
+    public void CreateClient_ThrowsWhenSchemaRegistryMissing()
     {
         var ctx = new DummyContext(new KsqlDslOptions());
         var field = typeof(KsqlContext).GetField("_dslOptions", BindingFlags.NonPublic | BindingFlags.Instance)!;
@@ -45,7 +45,8 @@ public class KsqlDbExecutionExtensionsTests
 
         var method = typeof(KsqlContext)
             .GetMethod("CreateClient", BindingFlags.NonPublic | BindingFlags.Instance)!;
-        using var client = (HttpClient)method.Invoke(ctx, null)!;
-        Assert.Equal(new Uri("http://example.com:9092"), client.BaseAddress);
+
+        var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(ctx, null));
+        Assert.IsType<InvalidOperationException>(ex.InnerException);
     }
 }
