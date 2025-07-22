@@ -55,5 +55,5 @@ broker, symbol, date, high, low, close, prev_close, diff
 - 参照プロセスから比較表を任意タイミングで閲覧できる
 
 ## 2025-07-19 02:11 JST [assistant]
-- ScheduleRange の条件を用いて DailyComparison の日足を計算する方法を明文化してください。具体的には `Window().BaseOn<TSchedule>()` でスケジュールテーブルを参照し、IF 条件で `openTime <= RateTimestamp < closeTime` を適用します。
+- ScheduleRange の条件を用いて DailyComparison の日足を計算する方法を明文化してください。具体的には `Window().BasedOn<TSchedule>()` でスケジュールテーブルを参照し、IF 条件で `openTime <= RateTimestamp < closeTime` を適用します。
 - 上記の処理を応用し、1分足、5分足、60分足の集計も同時に生成すること。必要に応じて `ScheduleRange` の範囲を分解して各分足を計算してください。

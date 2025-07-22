@@ -39,41 +39,41 @@ public class ScheduleWindowBuilderTests
     }
 
     [Fact]
-    public void Window_BaseOn_BuildsMethodCall()
+    public void Window_BasedOn_BuildsMethodCall()
     {
         IQueryable<TestEntity> src = new List<TestEntity>().AsQueryable();
 
-        var query = src.Window().BaseOn<ScheduleEntity>(e => e.MarketId);
+        var query = src.Window().BasedOn<ScheduleEntity>(e => e.MarketId);
         var call = Assert.IsAssignableFrom<MethodCallExpression>(query.Expression);
-        Assert.Equal("BaseOnImpl", call.Method.Name);
+        Assert.Equal("BasedOnImpl", call.Method.Name);
         var genArgs = call.Method.GetGenericArguments();
         Assert.Equal(typeof(TestEntity), genArgs[0]);
         Assert.Equal(typeof(ScheduleEntity), genArgs[1]);
     }
 
     [Fact]
-    public void BaseOn_NullSelector_Throws()
+    public void BasedOn_NullSelector_Throws()
     {
         IQueryable<TestEntity> src = new List<TestEntity>().AsQueryable();
-        Assert.Throws<ArgumentNullException>(() => src.Window().BaseOn<ScheduleEntity>(null!));
+        Assert.Throws<ArgumentNullException>(() => src.Window().BasedOn<ScheduleEntity>(null!));
     }
 
     [Fact]
-    public void BaseOnImpl_NonEntitySet_Throws()
+    public void BasedOnImpl_NonEntitySet_Throws()
     {
         IQueryable<TestEntity> src = new List<TestEntity>().AsQueryable();
         Expression<Func<TestEntity, object>> selector = e => e.MarketId;
 
         var method = typeof(ScheduleWindowBuilder<TestEntity>)
             .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
-            .Single(m => m.Name == "BaseOnImpl")
+            .Single(m => m.Name == "BasedOnImpl")
             .MakeGenericMethod(typeof(TestEntity), typeof(ScheduleEntity));
         var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object?[] { src, selector, null, null }));
         Assert.IsType<NotSupportedException>(ex.InnerException);
     }
 
     [Fact]
-    public void BaseOnImpl_FluentScheduleRange_Works()
+    public void BasedOnImpl_FluentScheduleRange_Works()
     {
         var ctx = new DummyContext();
         var eventModel = new EntityModel { EntityType = typeof(TestEntity), AllProperties = typeof(TestEntity).GetProperties(), KeyProperties = Array.Empty<PropertyInfo>(), ValidationResult = new ValidationResult { IsValid = true } };
@@ -86,7 +86,7 @@ public class ScheduleWindowBuilderTests
 
         var method = typeof(ScheduleWindowBuilder<TestEntity>)
             .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
-            .Single(m => m.Name == "BaseOnImpl")
+            .Single(m => m.Name == "BasedOnImpl")
             .MakeGenericMethod(typeof(TestEntity), typeof(FluentScheduleEntity));
 
         var result = method.Invoke(null, new object?[] { events, selector, "Start", "End" });
@@ -139,7 +139,7 @@ public class ScheduleWindowBuilderTests
     }
 
     [Fact]
-    public void BaseOnImpl_MissingScheduleRange_Throws()
+    public void BasedOnImpl_MissingScheduleRange_Throws()
     {
         var ctx = new DummyContext();
         var eventModel = new EntityModel { EntityType = typeof(TestEntity), AllProperties = typeof(TestEntity).GetProperties(), KeyProperties = Array.Empty<PropertyInfo>(), ValidationResult = new ValidationResult { IsValid = true } };
@@ -152,7 +152,7 @@ public class ScheduleWindowBuilderTests
 
         var method = typeof(ScheduleWindowBuilder<TestEntity>)
             .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
-            .Single(m => m.Name == "BaseOnImpl")
+            .Single(m => m.Name == "BasedOnImpl")
             .MakeGenericMethod(typeof(TestEntity), typeof(BadSchedule));
         var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object?[] { events, selector, null, null }));
         Assert.IsType<InvalidOperationException>(ex.InnerException);

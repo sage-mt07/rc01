@@ -22,15 +22,15 @@ public class ScheduleWindowBuilder<T> where T : class
         _source = source;
     }
 
-    private static readonly MethodInfo BaseOnMethod = typeof(ScheduleWindowBuilder<T>)
+    private static readonly MethodInfo BasedOnMethod = typeof(ScheduleWindowBuilder<T>)
         .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
-        .Single(m => m.Name == nameof(BaseOnImpl));
+        .Single(m => m.Name == nameof(BasedOnImpl));
 
-    public IQueryable<T> BaseOn<TSchedule>(Expression<Func<T, object>> keySelector) where TSchedule : class
+    public IQueryable<T> BasedOn<TSchedule>(Expression<Func<T, object>> keySelector) where TSchedule : class
     {
         if (keySelector == null) throw new ArgumentNullException(nameof(keySelector));
         var call = Expression.Call(null,
-            BaseOnMethod.MakeGenericMethod(typeof(T), typeof(TSchedule)),
+            BasedOnMethod.MakeGenericMethod(typeof(T), typeof(TSchedule)),
             _source.Expression,
             keySelector,
             Expression.Constant(null, typeof(string)),
@@ -38,14 +38,14 @@ public class ScheduleWindowBuilder<T> where T : class
         return _source.Provider.CreateQuery<T>(call);
     }
 
-    public IQueryable<T> BaseOn<TSchedule>(Expression<Func<T, object>> keySelector, string openPropertyName, string closePropertyName) where TSchedule : class
+    public IQueryable<T> BasedOn<TSchedule>(Expression<Func<T, object>> keySelector, string openPropertyName, string closePropertyName) where TSchedule : class
     {
         if (keySelector == null) throw new ArgumentNullException(nameof(keySelector));
         if (string.IsNullOrWhiteSpace(openPropertyName) || string.IsNullOrWhiteSpace(closePropertyName))
             throw new ArgumentException("Property names cannot be null or empty");
 
         var call = Expression.Call(null,
-            BaseOnMethod.MakeGenericMethod(typeof(T), typeof(TSchedule)),
+            BasedOnMethod.MakeGenericMethod(typeof(T), typeof(TSchedule)),
             _source.Expression,
             keySelector,
             Expression.Constant(openPropertyName, typeof(string)),
@@ -53,12 +53,12 @@ public class ScheduleWindowBuilder<T> where T : class
         return _source.Provider.CreateQuery<T>(call);
     }
 
-    private static IQueryable<TSource> BaseOnImpl<TSource, TSchedule>(IQueryable<TSource> source, Expression<Func<TSource, object>> keySelector, string? openPropertyName, string? closePropertyName)
+    private static IQueryable<TSource> BasedOnImpl<TSource, TSchedule>(IQueryable<TSource> source, Expression<Func<TSource, object>> keySelector, string? openPropertyName, string? closePropertyName)
         where TSource : class
         where TSchedule : class
     {
         if (source is not Core.Abstractions.IEntitySet<TSource> entitySet)
-            throw new NotSupportedException("BaseOn can only be used on IEntitySet sources.");
+            throw new NotSupportedException("BasedOn can only be used on IEntitySet sources.");
 
         var context = entitySet.GetContext();
         var scheduleSetObj = context.GetEventSet(typeof(TSchedule));
