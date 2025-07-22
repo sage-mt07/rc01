@@ -17,6 +17,11 @@
     </AssemblyAttribute>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="SendOnly\**\*.cs" />
+    <Compile Remove="ReceiveOnly\**\*.cs" />
+  </ItemGroup>
+
 
 
 	<ItemGroup>
