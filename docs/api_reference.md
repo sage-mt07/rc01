@@ -32,7 +32,7 @@
 | `.Where(predicate)`            | 条件フィルタ                  | `IEventSet<T>`                    | Stream/Table  | ✅      |
 | `.Window(WindowDef \| TimeSpan)` | タイムウィンドウ指定       | `IQueryable<T>`                   | Stream        | ✅      |
 | `.Window(int minutes)`          | `WindowMinutes`によるフィルタ  | `IEntitySet<T>`                  | Stream/Table  | ✅      |
-| `.Window().BaseOn<TSchedule>(keySelector, ?openProp, ?closeProp)` | `[ScheduleRange]` 属性、または `openProp`/`closeProp` パラメータで開始/終了を示すスケジュールPOCOに基づきウィンドウを生成 | `IQueryable<T>` | Stream | ✅ |
+| `.Window().BasedOn<TSchedule>(keySelector, ?openProp, ?closeProp)` | `[ScheduleRange]` 属性、または `openProp`/`closeProp` パラメータで開始/終了を示すスケジュールPOCOに基づきウィンドウを生成 | `IQueryable<T>` | Stream | ✅ |
 | `.GroupBy(...)`                | グループ化および集約          | `IEventSet<IGrouping<TKey, T>>`   | Stream/Table  | ✅      |
 | `.OnError(ErrorAction)`        | エラー処理方針指定            | `EventSet<T>`                     | Stream        | ✅      |
 | `.WithRetry(int)`              | リトライ設定                  | `EventSet<T>`                     | Stream        | ✅      |
@@ -47,7 +47,7 @@
 - `Set<T>().Limit(n)` を指定すると n 件取得後にストリームが終了します。残りのレコードは破棄されます。
 - バーエンティティでは `WithWindow().Select<TBar>()` で `BarTime` に代入した式が自動的に記録され、`Limit` の並び替えに使用されます。
 - `RemoveAsync(key)` は値 `null` のトムストーンを送り、KTable やキャッシュから該当キーのデータを削除します。
-- `.Window().BaseOn<TSchedule>` を用いる場合、バーは `[ScheduleRange]` 属性、または `openProp`/`closeProp` パラメータで示された `Open` ～ `Close` の範囲に含まれるデータのみで構成されます。日足生成で `Close` が 6:30 のときは、6:30 未満のデータが当日の終値として扱われます。
+- `.Window().BasedOn<TSchedule>` を用いる場合、バーは `[ScheduleRange]` 属性、または `openProp`/`closeProp` パラメータで示された `Open` ～ `Close` の範囲に含まれるデータのみで構成されます。日足生成で `Close` が 6:30 のときは、6:30 未満のデータが当日の終値として扱われます。
 - バーやウィンドウ定義は必ず `KafkaKsqlContext.OnModelCreating` 内で宣言してください。アプリケーション側では定義済みの `Set<T>` を参照するだけです。
 - `WithWindow<Rate, MarketSchedule>()` に続けて `.Select<RateCandle>()` を呼び出すことで、レートからバーエンティティを構成できます。
 - `WithWindow<TEntity, TSchedule>(windows, timeSelector, rateKey, scheduleKey)` として `timeSelector` 引数でウィンドウを区切る時刻プロパティを明示します。

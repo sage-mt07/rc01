@@ -1,7 +1,7 @@
 To naruse
 Window関数で足を作れるけど、足のclose timeは機械的に決まらないため、この機能を入れる。
 以下の要件でまず設計を行ってください。
-・Window().BaseOn<marketschedulepoco>()のIFとする
+・Window().BasedOn<marketschedulepoco>()のIFとする
 marketschedulepocoには複数のPKを持つことを想定する
 marketschedulepocoにはopen/closeの日時を持つプロパティが存在する
 区間の境界値は「左閉右開」[Open, Close)
