@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
 using Kafka.Ksql.Linq.Window.Finalization;
@@ -106,5 +107,30 @@ public class WindowFinalizationManagerTests
         await Task.Delay(150);
 
         Assert.Contains(producer.Sent, x => x.Topic == "orders_window_5_final");
+    }
+
+    [Fact]
+    public async Task GeneratesEmptyWindows_WhenNoEvents()
+    {
+        var producer = new FakeProducer();
+        var config = new WindowConfiguration<TestEntity>
+        {
+            TopicName = "orders",
+            Windows = new[] { 5 },
+            GracePeriod = TimeSpan.Zero,
+            FinalTopicProducer = producer,
+            AggregationFunc = events => events.Count
+        };
+
+        var processor = new WindowProcessor<TestEntity>(config, NullLogger.Instance);
+
+        var field = typeof(WindowProcessor<TestEntity>).GetField("_nextEmptyWindowStart", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        var dict = (ConcurrentDictionary<int, DateTime>)field.GetValue(processor)!;
+        dict[5] = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        await processor.ProcessFinalization(new DateTime(2020, 1, 1, 0, 12, 0, DateTimeKind.Utc));
+
+        Assert.True(producer.Sent.Count >= 2);
+        Assert.All(producer.Sent, x => Assert.Equal(0, ((WindowFinalMessage)x.Value).EventCount));
     }
 }

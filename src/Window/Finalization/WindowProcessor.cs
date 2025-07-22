@@ -13,11 +13,19 @@ internal class WindowProcessor<T> : WindowProcessor where T : class
     private readonly WindowConfiguration<T> _config;
     private readonly ConcurrentDictionary<string, WindowState<T>> _windowStates = new();
     private readonly ILogger _logger;
+    private readonly ConcurrentDictionary<int, DateTime> _nextEmptyWindowStart = new();
 
     public WindowProcessor(WindowConfiguration<T> config, ILogger logger)
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        var now = DateTime.UtcNow;
+        foreach (var windowMinutes in _config.Windows)
+        {
+            var start = CalculateWindowStart(now, windowMinutes).AddMinutes(-windowMinutes);
+            _nextEmptyWindowStart[windowMinutes] = start;
+        }
     }
 
     /// <summary>
@@ -59,6 +67,8 @@ internal class WindowProcessor<T> : WindowProcessor where T : class
     /// </summary>
     public override async Task ProcessFinalization(DateTime currentTime)
     {
+        EnsureEmptyWindows(currentTime);
+
         var windowsToFinalize = new List<(string key, WindowState<T> state)>();
 
         // Identify windows ready for finalization
@@ -215,6 +225,32 @@ internal class WindowProcessor<T> : WindowProcessor where T : class
         if (entity == null) return Guid.NewGuid().ToString();
 
         return entity.GetHashCode().ToString();
+    }
+
+    private void EnsureEmptyWindows(DateTime currentTime)
+    {
+        foreach (var windowMinutes in _config.Windows)
+        {
+            var nextStart = _nextEmptyWindowStart[windowMinutes];
+            var cutoff = CalculateWindowStart(currentTime, windowMinutes);
+
+            while (nextStart <= cutoff)
+            {
+                var windowKey = $"empty_{nextStart:yyyyMMddHHmm}_{windowMinutes}min";
+                _windowStates.GetOrAdd(windowKey, _ => new WindowState<T>
+                {
+                    WindowStart = nextStart,
+                    WindowEnd = nextStart.AddMinutes(windowMinutes),
+                    WindowMinutes = windowMinutes,
+                    Events = new List<T>(),
+                    IsFinalized = false
+                });
+
+                nextStart = nextStart.AddMinutes(windowMinutes);
+            }
+
+            _nextEmptyWindowStart[windowMinutes] = nextStart;
+        }
     }
 
     public override void Dispose()
