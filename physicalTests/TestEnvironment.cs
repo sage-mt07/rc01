@@ -102,7 +102,11 @@ internal static class TestEnvironment
 
         foreach (var ddl in TestSchema.GenerateTableDdls())
         {
-            await ctx.ExecuteStatementAsync(ddl);
+            var result = await ctx.ExecuteStatementAsync(ddl);
+            if (!result.IsSuccess)
+            {
+                throw new InvalidOperationException($"Failed to execute DDL: {ddl} - {result.Message}");
+            }
         }
 
         await ValidateSchemaRegistrationAsync();
@@ -239,7 +243,7 @@ internal static class TestEnvironment
         }
     }
 
-    private static async Task ValidateSchemaRegistrationAsync(int attempts = 5, int delayMs = 1000)
+    private static async Task ValidateSchemaRegistrationAsync(int attempts = 10, int delayMs = 1500)
     {
         var expected = TestSchema.AllTopicNames
             .SelectMany(n => new[] {$"{n}-value", $"{n}-key"})
