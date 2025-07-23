@@ -387,6 +387,7 @@ internal class KafkaProducerManager : IDisposable
     {
         if (!_disposed)
         {
+            // TODO: Remove ellipsis per logging_guidelines.md
             _logger?.LogInformation("Disposing type-safe KafkaProducerManager...");
 
             // Producerの解放

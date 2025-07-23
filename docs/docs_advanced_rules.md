@@ -142,6 +142,7 @@ modelBuilder.Entity<RateCandle>()
 
 本OSSでは、Kafkaやストリーム処理に関連するメトリック収集は**Confluent公式クライアントパッケージ（Confluent.Kafka）**側の機能を利用する方針とします。  
 OSS本体はアプリケーション側の運用情報・エラー通知等を**ILogger等の標準ロギング機構**で出力します。
+ログメッセージの表記ルールは [logging_guidelines.md](logging_guidelines.md) を参照してください。
 
 - Kafkaパフォーマンス・レイテンシ・メッセージ数などの詳細メトリックは、Confluent.Kafkaが標準で提供する監視API・メトリック機能を活用してください。
 - OSS本体で追加するのは「運用ログ（状態・エラー・イベント）」のみです。
