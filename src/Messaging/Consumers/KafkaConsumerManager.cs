@@ -367,6 +367,7 @@ internal class KafkaConsumerManager : IDisposable
     {
         if (!_disposed)
         {
+            // TODO: Remove ellipsis per logging_guidelines.md
             _logger?.LogInformation("Disposing type-safe KafkaConsumerManager...");
 
             // Consumerの解放
