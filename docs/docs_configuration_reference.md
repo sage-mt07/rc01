@@ -262,6 +262,7 @@ Consumer の設定は `ConsumerSection` クラスにそれぞれマッピング�
 |----------------------------|--------------------------------------|---------------------------------------------|--------|
 | Bootstrap Servers          | なし                                 | `Kafka:BootstrapServers`                   | Kafka接続先クラスタ |
 | Schema Registry URL       | なし                                 | `KsqlDsl:SchemaRegistry:Url`              | POCOスキーマ自動登録時に使用 |
+| ksqlDB URL                | なし                                 | `KsqlDsl:KsqlDbUrl`                       | ksqlDB RESTエンドポイント |
 | Auto Offset Reset | `.WithAutoOffsetReset(...)` | `Kafka:Consumers.<name>.AutoOffsetReset` | トピックごとの既読位置制御（複数可） | 通常は `earliest` or `latest` |
 | GroupId | `.WithGroupId(...)` | `Kafka:Consumers.<name>.GroupId` | コンシューマグループID（複数可） | コンシューマグループID |
 | トピック名                 | `[Topic("orders")]` 属性           | `KsqlDsl:Topics.orders` で上書き可         | 属性優先だが構成ファイルで詳細指定可 |
@@ -321,6 +322,7 @@ public class MyKsqlContext : KsqlContext
     "SchemaRegistry": {
       "Url": "http://localhost:8081"
     },
+    "KsqlDbUrl": "http://localhost:8088",
     "Topics": {
         "orders": {
           "NumPartitions": 3,

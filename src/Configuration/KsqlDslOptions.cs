@@ -27,6 +27,11 @@ public class KsqlDslOptions
     /// </summary>
     public SchemaRegistrySection SchemaRegistry { get; init; } = new();
 
+    /// <summary>
+    /// ksqlDB server URL. If omitted, SchemaRegistry.Url's host with port 8088 is used.
+    /// </summary>
+    public string? KsqlDbUrl { get; init; }
+
     public List<EntityConfiguration> Entities { get; init; } = new();
 
     public DlqOptions DlqOptions { get; init; } = new();

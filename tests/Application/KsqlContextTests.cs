@@ -6,6 +6,7 @@ using Kafka.Ksql.Linq.Messaging.Producers;
 using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Cache.Core;
 using System;
+using System.Net.Http;
 using Xunit;
 
 namespace Kafka.Ksql.Linq.Tests.Application;
@@ -25,6 +26,13 @@ public class KsqlContextTests
         public KafkaProducerManager CallGetProducerManager() => base.GetProducerManager();
         public KafkaConsumerManager CallGetConsumerManager() => base.GetConsumerManager();
         public DlqProducer CallGetDlqProducer() => base.GetDlqProducer();
+
+        public Uri GetBaseAddress()
+        {
+            var field = typeof(KsqlContext).GetField("_ksqlDbClient", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+            var lazy = (Lazy<HttpClient>)field.GetValue(this)!;
+            return lazy.Value.BaseAddress!;
+        }
     }
 
     [Fact]
@@ -63,5 +71,17 @@ public class KsqlContextTests
     {
         var ctx = new TestContext();
         Assert.NotNull(ctx.CallGetDlqProducer());
+    }
+
+    [Fact]
+    public void KsqlDbUrl_OverridesSchemaRegistryPort()
+    {
+        var opt = new KsqlDslOptions
+        {
+            SchemaRegistry = new SchemaRegistrySection { Url = "http://localhost:8081" },
+            KsqlDbUrl = "http://example:9000"
+        };
+        var ctx = new TestContext(opt);
+        Assert.Equal("http://example:9000/", ctx.GetBaseAddress().ToString());
     }
 }
