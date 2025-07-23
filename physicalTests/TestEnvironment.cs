@@ -239,7 +239,7 @@ internal static class TestEnvironment
         }
     }
 
-    private static async Task ValidateSchemaRegistrationAsync(int attempts = 5, int delayMs = 1000)
+    private static async Task ValidateSchemaRegistrationAsync(int attempts = 10, int delayMs = 2000)
     {
         var expected = TestSchema.AllTopicNames
             .SelectMany(n => new[] {$"{n}-value", $"{n}-key"})
