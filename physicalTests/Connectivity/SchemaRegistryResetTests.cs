@@ -19,7 +19,7 @@ public class SchemaRegistryResetTests
     {
         await TestEnvironment.ResetAsync();
 
-        var subjects = await Http.GetFromJsonAsync<string[]>("http://localhost:8081/subjects");
+        var subjects = await Http.GetFromJsonAsync<string[]>($"{TestEnvironment.SchemaRegistryUrl}/subjects");
         Assert.NotNull(subjects);
 
         foreach (var table in TestSchema.AllTopicNames)
@@ -37,9 +37,9 @@ public class SchemaRegistryResetTests
     {
         await TestEnvironment.ResetAsync();
 
-        var latest = await Http.GetFromJsonAsync<JsonElement>("http://localhost:8081/subjects/orders-value/versions/latest");
+        var latest = await Http.GetFromJsonAsync<JsonElement>($"{TestEnvironment.SchemaRegistryUrl}/subjects/orders-value/versions/latest");
         var schema = latest.GetProperty("schema").GetString();
-        var resp = await Http.PostAsJsonAsync("http://localhost:8081/subjects/orders-value/versions", new { schema });
+        var resp = await Http.PostAsJsonAsync($"{TestEnvironment.SchemaRegistryUrl}/subjects/orders-value/versions", new { schema });
         resp.EnsureSuccessStatusCode();
     }
 
@@ -49,7 +49,7 @@ public class SchemaRegistryResetTests
     public async Task UpperCaseSubjects_ShouldNotExist()
     {
         await TestEnvironment.ResetAsync();
-        var subjects = await Http.GetFromJsonAsync<string[]>("http://localhost:8081/subjects");
+        var subjects = await Http.GetFromJsonAsync<string[]>($"{TestEnvironment.SchemaRegistryUrl}/subjects");
         Assert.NotNull(subjects);
 
         foreach (var table in TestSchema.AllTopicNames)

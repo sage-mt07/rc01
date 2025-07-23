@@ -42,8 +42,8 @@ public class AdvancedDataTypeTests
 
         var options = new KsqlDslOptions
         {
-            Common = new CommonSection { BootstrapServers = "localhost:9092" },
-            SchemaRegistry = new SchemaRegistrySection { Url = "http://localhost:8088" }
+            Common = new CommonSection { BootstrapServers = TestEnvironment.KafkaBootstrapServers },
+            SchemaRegistry = new SchemaRegistrySection { Url = TestEnvironment.SchemaRegistryUrl }
         };
 
         await using var ctx = new RecordContext(options);
