@@ -223,7 +223,7 @@ Kafka、Schema Registry、ksqlDB を再起動した場合でも、テスト開�
 `TestEnvironment.ResetAsync()` が実行され、必要な全 Avro スキーマ
 (例: `orders-value`) が Schema Registry に再登録されます。
 サブジェクト名は **トピック名（小文字）-value/key** 形式で登録されます。
-登録に失敗した場合は `KsqlDbFact` 属性によりテストが自動的にスキップされます。
+登録に失敗した場合は 各テストメソッド内の `KsqlDbAvailability.IsAvailable()` チェックによりスキップされます。
 
 追加の .env や appsettings.json 設定が必要な場合は docs/getting-started.md を参照
 
