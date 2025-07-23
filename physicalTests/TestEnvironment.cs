@@ -102,7 +102,11 @@ internal static class TestEnvironment
 
         foreach (var ddl in TestSchema.GenerateTableDdls())
         {
-            await ctx.ExecuteStatementAsync(ddl);
+            var result = await ctx.ExecuteStatementAsync(ddl);
+            if (!result.IsSuccess)
+            {
+                throw new InvalidOperationException($"Failed to execute DDL: {ddl} - {result.Message}");
+            }
         }
 
         await ValidateSchemaRegistrationAsync();
@@ -238,6 +242,7 @@ internal static class TestEnvironment
                 Logger.LogError("Failed to create DLQ topic: {Reason}", result?.Error.Reason);
         }
     }
+
 
     private static async Task ValidateSchemaRegistrationAsync(int attempts = 10, int delayMs = 2000)
     {
