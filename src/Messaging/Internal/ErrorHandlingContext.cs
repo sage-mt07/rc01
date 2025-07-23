@@ -66,8 +66,7 @@ public class ErrorHandlingContext
             }
             catch (Exception handlerEx)
             {
-                // TODO: Standardize log message per logging_guidelines.md
-                Logger.LogError(handlerEx, "CUSTOM_HANDLER_ERROR");
+                Logger.LogError(handlerEx, "Failed in custom handler");
                 return false; // Skip if custom handler throws
             }
         }
@@ -76,8 +75,7 @@ public class ErrorHandlingContext
         {
             case ErrorAction.Skip:
                 // Log the error and skip
-                // TODO: Replace with "Skipping item after error" per logging_guidelines.md
-                Logger.LogWarning(exception, "SKIP");
+                Logger.LogWarning(exception, "Skipping item after error");
                 return false; // Skip
 
             case ErrorAction.Retry:
@@ -117,8 +115,7 @@ public class ErrorHandlingContext
 
             default:
                 // Skip if action is unknown
-                // TODO: Reword to "Unknown error action: {Action}; skipping item" per logging_guidelines.md
-                Logger.LogError("UNKNOWN ERROR ACTION: {Action}, skipping item", ErrorAction);
+                Logger.LogError("Skipping item due to unknown error action: {Action}", ErrorAction);
                 return false;
         }
     }
