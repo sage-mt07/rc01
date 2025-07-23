@@ -12,6 +12,7 @@ using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Core.Configuration;
 using System.Threading.Tasks;
+using Kafka.Ksql.Linq.Entities.Samples.Models;
 
 namespace Kafka.Ksql.Linq.Tests.Integration;
 
@@ -107,6 +108,24 @@ internal static class TestEnvironment
             {
                 throw new InvalidOperationException($"Failed to execute DDL: {ddl} - {result.Message}");
             }
+        }
+
+        // Ensure schemas for composite key tables are registered
+        var dummyOptions = new KsqlDslOptions
+        {
+            Common = new CommonSection { BootstrapServers = KafkaBootstrapServers },
+            SchemaRegistry = new SchemaRegistrySection { Url = SchemaRegistryUrl }
+        };
+        await using (var orderCtx = new CompositeKeyPocoTests.OrderContext(dummyOptions))
+        {
+            await orderCtx.Set<Order>().AddAsync(new Order
+            {
+                OrderId = 0,
+                UserId = 0,
+                ProductId = 0,
+                Quantity = 0
+            });
+            await Task.Delay(500);
         }
 
         await ValidateSchemaRegistrationAsync();
