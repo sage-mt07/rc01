@@ -347,16 +347,22 @@ public abstract class KsqlContext : IKsqlContext
 
     private Uri GetDefaultKsqlDbUrl()
     {
+        if (!string.IsNullOrWhiteSpace(_dslOptions.KsqlDbUrl) &&
+            Uri.TryCreate(_dslOptions.KsqlDbUrl, UriKind.Absolute, out var configured))
+        {
+            return configured;
+        }
+
         var schemaUrl = _dslOptions.SchemaRegistry.Url;
         if (!string.IsNullOrWhiteSpace(schemaUrl) &&
             Uri.TryCreate(schemaUrl, UriKind.Absolute, out var schemaUri))
         {
-            var port = schemaUri.IsDefaultPort ? 8088 : schemaUri.Port;
+            var port = schemaUri.IsDefaultPort || schemaUri.Port == 8081 ? 8088 : schemaUri.Port;
             return new Uri($"{schemaUri.Scheme}://{schemaUri.Host}:{port}");
         }
 
         throw new InvalidOperationException(
-            "SchemaRegistry Url is required to resolve the ksqlDB endpoint.");
+            "KsqlDbUrl or SchemaRegistry.Url is required to resolve the ksqlDB endpoint.");
     }
     private HttpClient CreateClient()
     {

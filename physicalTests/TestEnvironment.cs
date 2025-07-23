@@ -42,7 +42,8 @@ internal static class TestEnvironment
         var options = new KsqlDslOptions
         {
             Common = new CommonSection { BootstrapServers = KafkaBootstrapServers },
-            SchemaRegistry = new SchemaRegistrySection { Url = SchemaRegistryUrl }
+            SchemaRegistry = new SchemaRegistrySection { Url = SchemaRegistryUrl },
+            KsqlDbUrl = KsqlDbUrl
         };
 
         return new AdminContext(options);
