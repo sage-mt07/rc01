@@ -78,12 +78,13 @@ public class DynamicKsqlGenerationTests
     private static IEnumerable<(string Description, string Ksql)> GenerateDmlQueries()
     {
         using var ctx = new DummyContext(new KsqlDslOptions());
-
-        yield return ("SelectAll_Orders", ctx.Entity<OrderValue>().ToQueryString());
-        yield return ("SelectAll_Customers", ctx.Entity<Customer>().ToQueryString());
-        yield return ("SelectAll_Events", ctx.Entity<EventLog>().ToQueryString());
-        yield return ("SelectAll_NullableOrder", ctx.Entity<NullableOrder>().ToQueryString());
-        yield return ("SelectAll_NullableKeyOrder", ctx.Entity<NullableKeyOrder>().ToQueryString());
+        using (ModelCreatingScope.Enter())
+        {
+            yield return ("SelectAll_Orders", ctx.Entity<OrderValue>().ToQueryString());
+            yield return ("SelectAll_Customers", ctx.Entity<Customer>().ToQueryString());
+            yield return ("SelectAll_Events", ctx.Entity<EventLog>().ToQueryString());
+            yield return ("SelectAll_NullableOrder", ctx.Entity<NullableOrder>().ToQueryString());
+            yield return ("SelectAll_NullableKeyOrder", ctx.Entity<NullableKeyOrder>().ToQueryString());
 
         yield return ("Aggregate_Sum", ctx.Entity<OrderValue>()
             .GroupBy(o => o.CustomerId)
