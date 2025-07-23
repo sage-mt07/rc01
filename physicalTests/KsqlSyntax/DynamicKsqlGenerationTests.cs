@@ -222,6 +222,7 @@ public class DynamicKsqlGenerationTests
             .Select(g => new { RegionUpper = g.Key, TotalAmount = g.Sum(x => (double)x.Amount) })
             .ToQueryString());
     }
+}
 
     // OnModelCreating で生成したモデルから DDL/DML が正しく実行できるか検証
     [Fact]
