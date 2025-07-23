@@ -186,7 +186,7 @@ internal class KafkaAdminService : IDisposable
         // Skip if automatic DLQ creation is disabled
         if (!dlqConfig.EnableAutoCreation)
         {
-            _logger?.LogInformation("DLQ auto-creation disabled. Skipping topic creation: {TopicName}", topicName);
+            _logger?.LogInformation("Skipping DLQ topic creation because auto-creation is disabled: {TopicName}", topicName);
             return;
         }
 

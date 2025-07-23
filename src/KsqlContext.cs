@@ -298,8 +298,7 @@ public abstract class KsqlContext : IKsqlContext
             await _adminService.EnsureWindowFinalTopicsExistAsync(GetEntityModels());
 
             // Log output: DLQ preparation complete
-            // TODO: Standardize wording per logging_guidelines.md
-            Logger.LogInformation("✅ Kafka initialization completed. DLQ topic '{Topic}' is ready with 5-second retention.", GetDlqTopicName());
+            Logger.LogInformation("Kafka initialization completed; DLQ topic '{Topic}' ready with 5-second retention", GetDlqTopicName());
         }
         catch (Exception ex)
         {

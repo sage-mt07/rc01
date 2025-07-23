@@ -31,7 +31,7 @@ internal class WindowFinalConsumer : IDisposable
         int windowMinutes,
         Func<WindowFinalMessage, Task> messageHandler)
     {
-        _logger.LogInformation("Starting subscription to finalized windows: {Topic}({Window}) → RocksDB",
+        _logger.LogInformation("Starting subscription to finalized windows: {Topic}({Window}) to RocksDB",
             topicName, windowMinutes);
 
         var finalTopic = $"{topicName}_window_{windowMinutes}_final";
@@ -67,8 +67,8 @@ internal class WindowFinalConsumer : IDisposable
         else
         {
             var existingMessage = _finalizedWindows[message.WindowKey];
-            _logger.LogDebug("Duplicate finalized window ignored: {WindowKey}. " +
-                           "Existing from POD: {ExistingPod}, Duplicate from POD: {DuplicatePod}",
+            _logger.LogDebug(
+                "Duplicate finalized window ignored: {WindowKey}; existing POD {ExistingPod}, duplicate POD {DuplicatePod}",
                 message.WindowKey, existingMessage.PodId, message.PodId);
         }
     }

@@ -16,6 +16,7 @@ Limitations:
 """
 
 import os
+import re
 
 from collections import defaultdict
 
@@ -24,6 +25,9 @@ CATEGORY_PATTERNS = [
     (os.path.join('Kafka.Ksql.Linq.Importer'), 'Importer'),
     ('physicalTests', 'Tests'),
 ]
+
+LOG_PATTERN = re.compile(r"\bLog(Debug|Information|Warning|Error|Trace|Critical)\s*\(")
+LOG_CALL_RE = LOG_PATTERN
 
 
 def get_category(path: str) -> str:
@@ -103,28 +107,16 @@ def parse_file(path):
     return entries
 
 
-all_entries = []
+entries = []
 for root, dirs, files in os.walk('.'):
     if '.git' in root:
         continue
     for fname in files:
         if fname.endswith('.cs'):
-
-            path = os.path.join(root, fname)
-            with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-                for i, line in enumerate(f, 1):
-                    m = LOG_PATTERN.search(line)
-                    if m:
-                        severity = m.group(1)
-                        # attempt to get message within the quotes
-                        after = line[m.end():]
-                        # naive parse: read until next quote
-                        msg_match = re.search(r'"([^"\\]*(?:\\.[^"\\]*)*)"', after)
-                        message = msg_match.group(1) if msg_match else ''
-                        category = get_category(path)
-                        entries.append(
-                            (path.lstrip('./'), i, severity, message, category)
-                        )
+            file_entries = parse_file(os.path.join(root, fname))
+            for e in file_entries:
+                category = get_category(e[0])
+                entries.append((e[0], e[1], e[2], e[3], category))
 
 entries.sort()
 
