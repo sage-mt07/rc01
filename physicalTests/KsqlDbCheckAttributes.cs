@@ -17,14 +17,13 @@ internal static class KsqlDbAvailability
 
         try
         {
-            TestEnvironment.ResetAsync().GetAwaiter().GetResult();
             using var ctx = TestEnvironment.CreateContext();
             var r = ctx.ExecuteStatementAsync("SHOW TOPICS;").GetAwaiter().GetResult();
             _available = r.IsSuccess;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Test setup failed: {ex.Message}");
+            Console.WriteLine($"ksqlDB check failed: {ex.Message}");
             _available = false;
         }
 

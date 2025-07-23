@@ -39,14 +39,14 @@ public class DlqIntegrationTests
 
         var options = new KsqlDslOptions
         {
-            Common = new CommonSection { BootstrapServers = "localhost:9092" },
-            SchemaRegistry = new SchemaRegistrySection { Url = "http://localhost:8088" }
+            Common = new CommonSection { BootstrapServers = TestEnvironment.KafkaBootstrapServers },
+            SchemaRegistry = new SchemaRegistrySection { Url = TestEnvironment.SchemaRegistryUrl }
         };
 
         await using var ctx = new OrderContext(options);
 
         // send invalid raw message to trigger deserialization failure
-        var conf = new ProducerConfig { BootstrapServers = "localhost:9092" };
+        var conf = new ProducerConfig { BootstrapServers = TestEnvironment.KafkaBootstrapServers };
         using (var producer = new ProducerBuilder<Null, string>(conf).Build())
         {
             await producer.ProduceAsync("orders", new Message<Null, string> { Value = "bad" });

@@ -13,7 +13,7 @@ public class KafkaConnectivityTests
     [Fact]
     public async Task ProducerConsumer_RoundTrip()
     {
-        var bootstrap = "localhost:9092";
+        var bootstrap = TestEnvironment.KafkaBootstrapServers;
         var topic = "connectivity_" + Guid.NewGuid().ToString("N");
 
         using (var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = bootstrap }).Build())

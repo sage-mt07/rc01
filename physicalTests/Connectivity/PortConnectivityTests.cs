@@ -14,7 +14,7 @@ public class PortConnectivityTests
 [TestPriority(1)]
     public void Kafka_Broker_Should_Be_Reachable()
     {
-        using var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = "localhost:9092" }).Build();
+        using var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = TestEnvironment.KafkaBootstrapServers }).Build();
         var meta = admin.GetMetadata(TimeSpan.FromSeconds(10));
         Assert.NotEmpty(meta.Brokers);
     }
@@ -24,7 +24,7 @@ public class PortConnectivityTests
     public async Task SchemaRegistry_Should_Be_Reachable()
     {
         using var http = new HttpClient();
-        var resp = await http.GetAsync("http://localhost:8081/subjects");
+        var resp = await http.GetAsync($"{TestEnvironment.SchemaRegistryUrl}/subjects");
         Assert.True(resp.IsSuccessStatusCode);
     }
 

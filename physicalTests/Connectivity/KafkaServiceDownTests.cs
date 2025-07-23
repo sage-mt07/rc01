@@ -28,8 +28,8 @@ public class KafkaServiceDownTests
 
     private static KsqlDslOptions CreateOptions() => new()
     {
-        Common = new CommonSection { BootstrapServers = "localhost:9092" },
-        SchemaRegistry = new SchemaRegistrySection { Url = "http://localhost:8081" }
+        Common = new CommonSection { BootstrapServers = TestEnvironment.KafkaBootstrapServers },
+        SchemaRegistry = new SchemaRegistrySection { Url = TestEnvironment.SchemaRegistryUrl }
     };
 
     [KsqlDbFact]
