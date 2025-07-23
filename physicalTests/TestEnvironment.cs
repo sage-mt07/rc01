@@ -179,31 +179,40 @@ internal static class TestEnvironment
     {
         try
         {
-            // Kafka connectivity check
-            using (var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = KafkaBootstrapServers }).Build())
-            {
-                var meta = admin.GetMetadata(TimeSpan.FromSeconds(10));
-                if (meta.Brokers.Count == 0)
-                    throw new InvalidOperationException("Kafka unreachable");
-            }
+            using var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = KafkaBootstrapServers }).Build();
+            var meta = admin.GetMetadata(TimeSpan.FromSeconds(10));
+            if (meta.Brokers.Count == 0)
+                throw new InvalidOperationException("Kafka unreachable");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to connect to Kafka");
+            throw new InvalidOperationException("Kafka connectivity check failed", ex);
+        }
 
-            // ksqlDB connectivity check
-            await using (var ctx = CreateContext())
-            {
-                var r = await ctx.ExecuteStatementAsync("SHOW TOPICS;");
-                if (!r.IsSuccess)
-                    throw new InvalidOperationException("ksqlDB unreachable");
-            }
+        try
+        {
+            await using var ctx = CreateContext();
+            var r = await ctx.ExecuteStatementAsync("SHOW TOPICS;");
+            if (!r.IsSuccess)
+                throw new InvalidOperationException("ksqlDB unreachable");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to connect to ksqlDB");
+            throw new InvalidOperationException("ksqlDB connectivity check failed", ex);
+        }
 
-            // Schema Registry check
-            var resp = await Http.GetAsync($"{KsqlDbUrl}/subjects");
+        try
+        {
+            var resp = await Http.GetAsync($"{SchemaRegistryUrl}/subjects");
             if (!resp.IsSuccessStatusCode)
                 throw new InvalidOperationException("SchemaRegistry unreachable");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Service check failed");
-            throw;
+            Logger.LogError(ex, "Failed to connect to Schema Registry");
+            throw new InvalidOperationException("SchemaRegistry connectivity check failed", ex);
         }
     }
 
@@ -238,7 +247,7 @@ internal static class TestEnvironment
 
         for (var i = 0; i < attempts; i++)
         {
-            var resp = await Http.GetAsync($"{KsqlDbUrl}/subjects");
+            var resp = await Http.GetAsync($"{SchemaRegistryUrl}/subjects");
             resp.EnsureSuccessStatusCode();
             var json = await resp.Content.ReadAsStringAsync();
             var subjects = System.Text.Json.JsonSerializer.Deserialize<string[]>(json) ?? Array.Empty<string>();
@@ -249,7 +258,7 @@ internal static class TestEnvironment
             await Task.Delay(delayMs);
         }
 
-        var respFinal = await Http.GetAsync($"{KsqlDbUrl}/subjects");
+        var respFinal = await Http.GetAsync($"{SchemaRegistryUrl}/subjects");
         respFinal.EnsureSuccessStatusCode();
         var finalJson = await respFinal.Content.ReadAsStringAsync();
         var finalSubjects = System.Text.Json.JsonSerializer.Deserialize<string[]>(finalJson) ?? Array.Empty<string>();
