@@ -2,8 +2,9 @@
 
 This sample demonstrates the minimal workflow of **Kafka.Ksql.Linq**.
 `Program.cs` contains all logic: it defines a simple POCO entity,
-registers it in a context, sends one message with `AddAsync`, waits briefly
-for the message to be published, and then consumes it with `ForEachAsync`.
+registers it in a context, sends one message with `AddAsync`, waits until the
+stream is ready using `WaitForEntityReadyAsync`, and then consumes it with
+`ForEachAsync`.
 
 ## Prerequisites
 
