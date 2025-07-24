@@ -11,6 +11,8 @@ using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Core.Configuration;
+using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Modeling;
 using System.Threading.Tasks;
 
 namespace Kafka.Ksql.Linq.Tests.Integration;
@@ -46,28 +48,18 @@ internal static class TestEnvironment
             KsqlDbUrl = KsqlDbUrl
         };
 
-        return new AdminContext(options);
+        // KsqlContext is abstract, so tests require a trivial subclass
+        return new BasicContext(options);
     }
 
-    internal class AdminContext : KsqlContext
+    internal class BasicContext : KsqlContext
     {
-        public AdminContext() : base(new KsqlDslOptions()) { }
-        public AdminContext(KsqlDslOptions options) : base(options) { }
-        protected override bool SkipSchemaRegistration => false;
-
-        public Task DropTableAsync(string tableName, bool deleteTopic = true)
-        {
-            var ddl = $"DROP TABLE IF EXISTS {tableName.ToUpperInvariant()}" +
-                      (deleteTopic ? " DELETE TOPIC;" : ";");
-            return ExecuteStatementAsync(ddl);
-        }
-
-        public Task DropStreamAsync(string streamName, bool deleteTopic = true)
-        {
-            var ddl = $"DROP STREAM IF EXISTS {streamName.ToUpperInvariant()}" +
-                      (deleteTopic ? " DELETE TOPIC;" : ";");
-            return ExecuteStatementAsync(ddl);
-        }
+        public BasicContext() : base(new KsqlDslOptions()) { }
+        public BasicContext(KsqlDslOptions options) : base(options) { }
+        protected override bool SkipSchemaRegistration => true;
+        protected override IEntitySet<T> CreateEntitySet<T>(EntityModel entityModel)
+            => throw new NotImplementedException();
+        protected override void OnModelCreating(IModelBuilder modelBuilder) { }
     }
 
     private static async Task<KsqlDbResponse> ExecuteStatementHttpAsync(string statement)
@@ -131,23 +123,18 @@ internal static class TestEnvironment
     /// </summary>
     public static async Task TeardownAsync()
     {
-        await using (var ctx = CreateContext())
+        try
         {
-            try
+            foreach (var table in TestSchema.AllTableNames)
             {
-                if (ctx is AdminContext admin)
-                {
-                    await admin.DropStreamAsync("source");
-                    foreach (var table in TestSchema.AllTableNames)
-                    {
-                        await admin.DropTableAsync(table);
-                    }
-                }
+                await ExecuteStatementHttpAsync($"DROP TABLE IF EXISTS {table} DELETE TOPIC;");
             }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Failed to drop objects");
-            }
+
+            await ExecuteStatementHttpAsync("DROP STREAM IF EXISTS SOURCE DELETE TOPIC;");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to drop objects");
         }
 
         // remove registered schemas to ensure a clean state
