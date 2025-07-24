@@ -373,7 +373,13 @@ public class DynamicKsqlGenerationTests
         await ctx.Set<NullableOrder>().AddAsync(new NullableOrder { CustomerId = 1, Region = "east", Amount = 10d });
         await ctx.Set<NullableKeyOrder>().AddAsync(new NullableKeyOrder { CustomerId = 1, Amount = 10d });
 
-        await Task.Delay(500);
+        var timeout = TimeSpan.FromSeconds(5);
+        await ctx.WaitForEntityReadyAsync<OrderValue>(timeout);
+        await ctx.WaitForEntityReadyAsync<Customer>(timeout);
+        await ctx.WaitForEntityReadyAsync<EventLog>(timeout);
+        await ctx.WaitForEntityReadyAsync<NullableOrder>(timeout);
+        await ctx.WaitForEntityReadyAsync<NullableKeyOrder>(timeout);
+
         await ctx.DisposeAsync();
     }
 }
