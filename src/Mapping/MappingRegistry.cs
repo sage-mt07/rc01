@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Reflection.Emit;
 
 namespace Kafka.Ksql.Linq.Mapping;
@@ -17,6 +18,16 @@ public class MappingRegistry
 {
     private readonly ConcurrentDictionary<Type, KeyValueTypeMapping> _mappings = new();
     private readonly ModuleBuilder _moduleBuilder;
+
+    private static string SanitizeName(string name)
+    {
+        var sanitized = Regex.Replace(name, "[^A-Za-z0-9_]", "_");
+        if (string.IsNullOrEmpty(sanitized))
+            sanitized = "_";
+        if (char.IsDigit(sanitized[0]))
+            sanitized = "_" + sanitized;
+        return sanitized;
+    }
 
     public MappingRegistry()
     {
@@ -32,7 +43,7 @@ public class MappingRegistry
         string? topicName = null)
     {
         var ns = pocoType.Namespace?.ToLower() ?? string.Empty;
-        var baseName = (topicName ?? pocoType.Name).ToLower();
+        var baseName = SanitizeName((topicName ?? pocoType.Name).ToLower());
 
         var keyType = CreateType(ns, $"{baseName}-key", keyProperties);
         var valueType = CreateType(ns, $"{baseName}-value", valueProperties);
@@ -98,7 +109,8 @@ public class MappingRegistry
 
     private Type CreateType(string ns, string name, PropertyMeta[] properties)
     {
-        var typeBuilder = _moduleBuilder.DefineType($"{ns}.{name}", TypeAttributes.Public | TypeAttributes.Class);
+        var safeName = SanitizeName(name);
+        var typeBuilder = _moduleBuilder.DefineType($"{ns}.{safeName}", TypeAttributes.Public | TypeAttributes.Class);
         foreach (var meta in properties)
         {
             var field = typeBuilder.DefineField($"_{meta.Name}", meta.PropertyType, FieldAttributes.Private);
