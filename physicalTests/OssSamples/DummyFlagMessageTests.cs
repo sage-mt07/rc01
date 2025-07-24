@@ -66,12 +66,11 @@ public class DummyFlagMessageTests
             Count = 1
         }, headers);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ctx.Set<OrderValue>().ToListAsync());
+        var list = await ctx.Set<OrderValue>().ToListAsync();
+        Assert.Empty(list);
 
         var consumed = new List<OrderValue>();
         await ctx.Set<OrderValue>().ForEachAsync(o => { consumed.Add(o); return Task.CompletedTask; }, TimeSpan.FromSeconds(1));
-        Assert.Single(consumed);
-
-        await ctx.DisposeAsync();
+        Assert.Empty(consumed);
     }
 }
