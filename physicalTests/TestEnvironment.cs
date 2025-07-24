@@ -12,7 +12,6 @@ using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Core.Configuration;
 using System.Threading.Tasks;
-using Kafka.Ksql.Linq.Entities.Samples.Models;
 
 namespace Kafka.Ksql.Linq.Tests.Integration;
 
@@ -71,6 +70,17 @@ internal static class TestEnvironment
         }
     }
 
+    private static async Task<KsqlDbResponse> ExecuteStatementHttpAsync(string statement)
+    {
+        var payload = new { ksql = statement, streamsProperties = new { } };
+        var json = JsonSerializer.Serialize(payload);
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        using var response = await Http.PostAsync($"{KsqlDbUrl}/ksql", content);
+        var body = await response.Content.ReadAsStringAsync();
+        var success = response.IsSuccessStatusCode && !body.Contains("\"error_code\"");
+        return new KsqlDbResponse(success, body);
+    }
+
     /// <summary>
     /// テスト開始時の初期化処理
     /// </summary>
@@ -95,38 +105,22 @@ internal static class TestEnvironment
             await TryDeleteSubjectAsync(subject);
         }
 
-        // create required stream/table objects
-        await using var ctx = CreateContext();
-        await ctx.ExecuteStatementAsync(
+        // create required stream/table objects via HTTP
+        var result = await ExecuteStatementHttpAsync(
             "CREATE STREAM IF NOT EXISTS source (id INT) WITH (KAFKA_TOPIC='source', VALUE_FORMAT='AVRO', PARTITIONS=1);"
         );
+        if (!result.IsSuccess)
+        {
+            throw new InvalidOperationException($"Failed to execute DDL: CREATE STREAM source - {result.Message}");
+        }
 
         foreach (var ddl in TestSchema.GenerateTableDdls())
         {
-            var result = await ctx.ExecuteStatementAsync(ddl);
-            if (!result.IsSuccess)
+            var r = await ExecuteStatementHttpAsync(ddl);
+            if (!r.IsSuccess)
             {
-                throw new InvalidOperationException($"Failed to execute DDL: {ddl} - {result.Message}");
+                throw new InvalidOperationException($"Failed to execute DDL: {ddl} - {r.Message}");
             }
-        }
-
-        // Ensure schemas for composite key tables are registered
-        var dummyOptions = new KsqlDslOptions
-        {
-            Common = new CommonSection { BootstrapServers = KafkaBootstrapServers },
-            SchemaRegistry = new SchemaRegistrySection { Url = SchemaRegistryUrl }
-        };
-        await using (var orderCtx = new CompositeKeyPocoTests.OrderContext(dummyOptions))
-        {
-            await orderCtx.Set<Order>().AddAsync(new Order
-            {
-                OrderId = 0,
-                UserId = 0,
-                ProductId = 0,
-                Quantity = 0
-            });
-
-            await orderCtx.WaitForEntityReadyAsync<Order>(TimeSpan.FromSeconds(5));
         }
 
         await ValidateSchemaRegistrationAsync();
@@ -217,8 +211,7 @@ internal static class TestEnvironment
 
         try
         {
-            await using var ctx = CreateContext();
-            var r = await ctx.ExecuteStatementAsync("SHOW TOPICS;");
+            var r = await ExecuteStatementHttpAsync("SHOW TOPICS;");
             if (!r.IsSuccess)
                 throw new InvalidOperationException("ksqlDB unreachable");
         }
