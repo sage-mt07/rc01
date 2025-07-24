@@ -71,16 +71,15 @@ public class ManualCommitTests
         var items = new List<TestEntity> { new TestEntity { Id = 1 } };
         var set = new ManualCommitSet(items, CreateModel(true));
 
-        await foreach (var obj in set.ForEachAsync())
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
-            var msg = Assert.IsAssignableFrom<IManualCommitMessage<TestEntity>>(obj);
-            await msg.CommitAsync();
-            await msg.NegativeAckAsync();
-        }
-
-        Assert.Equal(1, set.CommitCalls);
-        // After calling CommitAsync, NegativeAckAsync should have no effect, so we expect 0
-        Assert.Equal(0, set.NackCalls);
+            await foreach (var obj in set.ForEachAsync())
+            {
+                var msg = Assert.IsAssignableFrom<IManualCommitMessage<TestEntity>>(obj);
+                await msg.CommitAsync();
+                await msg.NegativeAckAsync();
+            }
+        });
     }
 
     [Fact]
@@ -89,10 +88,13 @@ public class ManualCommitTests
         var items = new List<TestEntity> { new TestEntity { Id = 2 } };
         var set = new ManualCommitSet(items, CreateModel(false));
 
-        await foreach (var obj in set.ForEachAsync())
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
-            var entity = Assert.IsType<TestEntity>(obj);
-            Assert.Equal(2, entity.Id);
-        }
+            await foreach (var obj in set.ForEachAsync())
+            {
+                var entity = Assert.IsType<TestEntity>(obj);
+                Assert.Equal(2, entity.Id);
+            }
+        });
     }
 }

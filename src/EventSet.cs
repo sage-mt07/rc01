@@ -1,6 +1,7 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Messaging.Internal;
+using Kafka.Ksql.Linq.Query.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -94,6 +95,9 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
 
     public virtual async Task<List<T>> ToListAsync(CancellationToken cancellationToken = default)
     {
+        if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Stream)
+            throw new InvalidOperationException("ToListAsync() is not supported on a Stream source. Use ForEachAsync or subscribe for event consumption.");
+
         var results = new List<T>();
 
         await foreach (var item in GetAsyncEnumeratorWrapper(cancellationToken))
@@ -132,6 +136,9 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
         if (action == null)
             throw new ArgumentNullException(nameof(action));
 
+        if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Table)
+            throw new InvalidOperationException("ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
+
         return ForEachAsync((item, ctx) => action(item), timeout, cancellationToken);
     }
 
@@ -139,6 +146,9 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
     {
         if (action == null)
             throw new ArgumentNullException(nameof(action));
+
+        if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Table)
+            throw new InvalidOperationException("ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
 
         var start = DateTime.UtcNow;
         var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -220,6 +230,9 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
     /// </summary>
     public virtual async IAsyncEnumerable<object> ForEachAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Table)
+            throw new InvalidOperationException("ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
+
         await foreach (var item in GetAsyncEnumeratorWrapper(cancellationToken))
         {
             if (_entityModel.UseManualCommit)
@@ -499,6 +512,9 @@ internal class MappedEventSet<T> : EventSet<T> where T : class
     /// </summary>
     public override async Task<List<T>> ToListAsync(CancellationToken cancellationToken = default)
     {
+        if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Stream)
+            throw new InvalidOperationException("ToListAsync() is not supported on a Stream source. Use ForEachAsync or subscribe for event consumption.");
+
         // Already a fixed list; return a copy
         await Task.CompletedTask;
         return new List<T>(_mapped);

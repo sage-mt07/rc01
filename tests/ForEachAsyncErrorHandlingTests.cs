@@ -80,12 +80,13 @@ public class ForEachAsyncErrorHandlingTests
         var set = new FaultySet(items, CreateModel());
         var results = new List<int>();
 
-        await foreach (var obj in set.ForEachAsync())
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
-            if (obj is TestEntity e)
-                results.Add(e.Id);
-        }
-
-        Assert.Equal(new[] { 1, 3 }, results.ToArray());
+            await foreach (var obj in set.ForEachAsync())
+            {
+                if (obj is TestEntity e)
+                    results.Add(e.Id);
+            }
+        });
     }
 }

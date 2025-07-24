@@ -691,6 +691,9 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
 
     public async IAsyncEnumerable<object> ForEachAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Table)
+            throw new InvalidOperationException("ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
+
         await using var enumerator = GetAsyncEnumerator(cancellationToken);
 
         while (await enumerator.MoveNextAsync())

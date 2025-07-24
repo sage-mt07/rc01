@@ -60,7 +60,7 @@ public class DlqIntegrationTests
         }
 
         // consuming with typed context will cause DLQ forwarding
-        await ctx.Set<Order>().ToListAsync();
+        await ctx.Set<Order>().ForEachAsync(_ => Task.CompletedTask, TimeSpan.FromSeconds(1));
 
         var builder = ctx.CreateConsumerBuilder<DlqEnvelope>();
         using var consumer = builder

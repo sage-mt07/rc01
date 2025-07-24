@@ -83,8 +83,8 @@ public class EventSetTests
         var items = new List<TestEntity> { new TestEntity { Id = 1 }, new TestEntity { Id = 2 } };
         var set = new TestSet(items, CreateModel());
         var sum = 0;
-        await set.ForEachAsync(e => { sum += e.Id; return Task.CompletedTask; });
-        Assert.Equal(3, sum);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            set.ForEachAsync(e => { sum += e.Id; return Task.CompletedTask; }));
     }
 
 
