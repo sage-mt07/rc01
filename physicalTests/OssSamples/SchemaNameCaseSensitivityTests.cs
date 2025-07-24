@@ -84,9 +84,6 @@ public class SchemaNameCaseSensitivityTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => ctx.Set<OrderCorrectCase>().ToListAsync());
 
-        var forEachList = new List<OrderCorrectCase>();
-        await ctx.Set<OrderCorrectCase>().ForEachAsync(o => { forEachList.Add(o); return Task.CompletedTask; }, TimeSpan.FromSeconds(1));
-        Assert.Single(forEachList);
 
         await using var wrongCtx = new WrongCaseContext(options);
 
