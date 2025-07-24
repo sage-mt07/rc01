@@ -7,17 +7,17 @@ using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq.Infrastructure.Admin;
-using Kafka.Ksql.Linq.Messaging.Consumers;
-using Kafka.Ksql.Linq.Messaging.Internal;
-using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.Mapping;
-using Kafka.Ksql.Linq.Application;
+using Kafka.Ksql.Linq.Messaging.Consumers;
+using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.SchemaRegistryTools;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -75,6 +75,10 @@ public abstract class KsqlContext : IKsqlContext
         InitializeEntityModels();
         try
         {
+            _producerManager = new KafkaProducerManager(
+                Microsoft.Extensions.Options.Options.Create(_dslOptions),
+                null);
+
             if (!SkipSchemaRegistration)
             {
                 InitializeWithSchemaRegistration();
@@ -84,9 +88,7 @@ public abstract class KsqlContext : IKsqlContext
                 ConfigureModel();
             }
 
-            _producerManager = new KafkaProducerManager(
-                Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                null);
+
 
             _dlqProducer = new DlqProducer(
                 _producerManager,
@@ -132,6 +134,9 @@ public abstract class KsqlContext : IKsqlContext
         InitializeEntityModels();
         try
         {
+            _producerManager = new KafkaProducerManager(
+                 Microsoft.Extensions.Options.Options.Create(_dslOptions),
+                 null);
             if (!SkipSchemaRegistration)
             {
                 InitializeWithSchemaRegistration();
@@ -141,9 +146,7 @@ public abstract class KsqlContext : IKsqlContext
                 ConfigureModel();
             }
 
-            _producerManager = new KafkaProducerManager(
-                Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                null);
+ 
 
             _dlqProducer = new DlqProducer(
                 _producerManager,
@@ -220,8 +223,21 @@ public abstract class KsqlContext : IKsqlContext
 
     protected virtual object CreateEntitySet(Type entityType, EntityModel entityModel)
     {
-        var method = GetType().GetMethod(nameof(CreateEntitySet), 1, new[] { typeof(EntityModel) });
-        var genericMethod = method!.MakeGenericMethod(entityType);
+        var method = GetType()
+            .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            .FirstOrDefault(m =>
+                m.Name == nameof(CreateEntitySet)
+                && m.IsGenericMethodDefinition
+                && m.GetGenericArguments().Length == 1
+                && m.GetParameters().Length == 1
+                && m.GetParameters()[0].ParameterType == typeof(EntityModel)
+            );
+
+        if (method == null)
+            throw new InvalidOperationException("Generic CreateEntitySet<T>(EntityModel) not found!");
+
+        // このあと
+        var genericMethod = method.MakeGenericMethod(entityType);
         return genericMethod.Invoke(this, new object[] { entityModel })!;
     }
 
