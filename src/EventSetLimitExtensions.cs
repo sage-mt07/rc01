@@ -1,4 +1,5 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Query.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +24,8 @@ public static class EventSetLimitExtensions
 
         var items = await entitySet.ToListAsync(cancellationToken);
         var model = entitySet.GetEntityModel();
+        if (model.GetExplicitStreamTableType() != StreamTableType.Table)
+            throw new NotSupportedException("Limit is only supported for Table entities.");
         if (model.BarTimeSelector == null)
             throw new InvalidOperationException($"Entity {typeof(T).Name} is missing bar time selector configuration.");
 
