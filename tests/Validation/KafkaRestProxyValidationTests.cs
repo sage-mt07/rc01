@@ -30,6 +30,7 @@ public class KafkaRestProxyValidationTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task Appsettings_ShouldMapCorrectly_AndSendKafkaMessage()
     {
         var config = new ConfigurationBuilder()
