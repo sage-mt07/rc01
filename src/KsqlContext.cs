@@ -601,8 +601,8 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
     public async Task<List<T>> ToListAsync(CancellationToken cancellationToken = default)
     {
         if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Stream)
-            throw new InvalidOperationException("ToListAsync() is not supported on a Stream source. Use ForEachAsync or subscribe for event consumption.");
-
+            throw new InvalidOperationException(
+                "ToListAsync() is not supported on a Stream source. Use ForEachAsync or subscribe for event consumption.");
         try
         {
             var cache = _ksqlContext.GetTableCache<T>();
@@ -640,8 +640,8 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
     public async Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
         if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Table)
-            throw new InvalidOperationException("ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
-
+            throw new InvalidOperationException(
+                "ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
         try
         {
             var consumerManager = _ksqlContext.GetConsumerManager();
@@ -659,8 +659,8 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
     public async Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
         if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Table)
-            throw new InvalidOperationException("ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
-
+            throw new InvalidOperationException(
+                "ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
         try
         {
             var consumerManager = _ksqlContext.GetConsumerManager();
