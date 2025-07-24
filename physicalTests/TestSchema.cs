@@ -40,19 +40,10 @@ internal static class TestSchema
             ("CustomerId", "INT"),
             ("Amount", "DOUBLE")
         },
-        ["orders_multi_pk"] = new[]
-        {
-            ("OrderId", "INT"),
-            ("UserId", "INT"),
-            ("ProductId", "INT"),
-            ("Quantity", "INT")
-        }
+        // orders_multi_pk removed: multi-column PRIMARY KEY syntax is unsupported
     };
 
-    public static readonly Dictionary<string, string[]> CompositePrimaryKeys = new()
-    {
-        ["orders_multi_pk"] = new[] { "OrderId", "UserId" }
-    };
+    // CompositePrimaryKeys dictionary removed per ksqlDB limitations
 
     public static IEnumerable<string> AllTableNames => Tables.Keys.Select(k => k.ToUpperInvariant());
 
@@ -65,22 +56,12 @@ internal static class TestSchema
     {
         foreach (var kvp in Tables)
         {
-            if (CompositePrimaryKeys.TryGetValue(kvp.Key, out var keys))
-            {
-                var cols = kvp.Value.Select(c => $"{c.Name.ToUpperInvariant()} {c.Type}");
-                var pk = $"PRIMARY KEY ({string.Join(", ", keys.Select(k => k.ToUpperInvariant()))})";
-                var colList = string.Join(", ", cols) + ", " + pk;
-                yield return $"CREATE TABLE IF NOT EXISTS {kvp.Key.ToUpperInvariant()} ({colList}) WITH (KAFKA_TOPIC='{kvp.Key}', VALUE_FORMAT='AVRO', KEY_FORMAT='AVRO', PARTITIONS=1);";
-            }
-            else
-            {
-                var cols = kvp.Value.Select((c, i) =>
-                    i == 0
-                        ? $"{c.Name.ToUpperInvariant()} {c.Type} PRIMARY KEY"
-                        : $"{c.Name.ToUpperInvariant()} {c.Type}");
-                var colList = string.Join(", ", cols);
-                yield return $"CREATE TABLE IF NOT EXISTS {kvp.Key.ToUpperInvariant()} ({colList}) WITH (KAFKA_TOPIC='{kvp.Key}', VALUE_FORMAT='AVRO', KEY_FORMAT='AVRO', PARTITIONS=1);";
-            }
+            var cols = kvp.Value.Select((c, i) =>
+                i == 0
+                    ? $"{c.Name.ToUpperInvariant()} {c.Type} PRIMARY KEY"
+                    : $"{c.Name.ToUpperInvariant()} {c.Type}");
+            var colList = string.Join(", ", cols);
+            yield return $"CREATE TABLE IF NOT EXISTS {kvp.Key.ToUpperInvariant()} ({colList}) WITH (KAFKA_TOPIC='{kvp.Key}', VALUE_FORMAT='AVRO', KEY_FORMAT='AVRO', PARTITIONS=1);";
         }
     }
 
