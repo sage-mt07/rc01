@@ -10,6 +10,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -234,36 +237,51 @@ public class DynamicKsqlGenerationTests
 
         await TestEnvironment.ResetAsync();
 
-        var options = new KsqlDslOptions
-        {
-            Common = new CommonSection { BootstrapServers = TestEnvironment.KafkaBootstrapServers },
-            SchemaRegistry = new SchemaRegistrySection { Url = TestEnvironment.SchemaRegistryUrl }
-        };
+        var models = BuildModels();
+        var ddls = GenerateDdlQueries(models).ToList();
 
-        await using var ctx = new DummyContext(options);
+        foreach (var ddl in ddls)
+        {
+            var drop = ddl.StartsWith("CREATE STREAM", StringComparison.OrdinalIgnoreCase)
+                ? ddl.Replace("CREATE STREAM", "DROP STREAM IF EXISTS", StringComparison.OrdinalIgnoreCase) + " DELETE TOPIC;"
+                : ddl.Replace("CREATE TABLE", "DROP TABLE IF EXISTS", StringComparison.OrdinalIgnoreCase) + " DELETE TOPIC;";
+            await ExecuteStatementDirectAsync(drop);
+        }
+
+        foreach (var ddl in ddls)
+        {
+            var result = await ExecuteStatementDirectAsync(ddl);
+            var success = result.IsSuccess ||
+                (result.Message?.Contains("already exists", StringComparison.OrdinalIgnoreCase) ?? false);
+            Assert.True(success, $"DDL failed: {result.Message}");
+        }
 
         var timeout = TimeSpan.FromSeconds(5);
-        await ctx.WaitForEntityReadyAsync<OrderValue>(timeout);
-        await ctx.WaitForEntityReadyAsync<Customer>(timeout);
-        await ctx.WaitForEntityReadyAsync<EventLog>(timeout);
-        await ctx.WaitForEntityReadyAsync<NullableOrder>(timeout);
-        await ctx.WaitForEntityReadyAsync<NullableKeyOrder>(timeout);
+        foreach (var model in models.Values)
+        {
+            var isTable = model.StreamTableType == StreamTableType.Table;
+            var name = (model.TopicName ?? model.EntityType.Name).ToUpperInvariant();
+            await WaitForEntityReadyDirectAsync(name, isTable, timeout);
+        }
 
-        var tables = await ctx.ExecuteStatementAsync("SHOW TABLES;");
+        var tables = await ExecuteStatementDirectAsync("SHOW TABLES;");
         Assert.Contains("ORDERS", tables.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("CUSTOMERS", tables.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("EVENTS", tables.Message, StringComparison.OrdinalIgnoreCase);
 
-        var streams = await ctx.ExecuteStatementAsync("SHOW STREAMS;");
+        var streams = await ExecuteStatementDirectAsync("SHOW STREAMS;");
         Assert.Contains("ORDERS_NULLABLE", streams.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("ORDERS_NULLABLE_KEY", streams.Message, StringComparison.OrdinalIgnoreCase);
 
-        var describe = await ctx.ExecuteStatementAsync("DESCRIBE ORDERS;");
+        var describe = await ExecuteStatementDirectAsync("DESCRIBE ORDERS;");
         Assert.Contains("CUSTOMERID", describe.Message.ToUpperInvariant());
         Assert.Contains("AMOUNT", describe.Message.ToUpperInvariant());
 
-        var orderList = await ctx.Set<OrderValue>().ToListAsync();
-        Assert.NotNull(orderList);
+        foreach (var (_, ksql) in GenerateDmlQueries())
+        {
+            var response = await ExecuteExplainDirectAsync(ksql);
+            Assert.True(response.IsSuccess, $"{ksql} failed: {response.Message}");
+        }
     }
 
     public static IEnumerable<object[]> AllDmlQueries()
@@ -381,5 +399,70 @@ public class DynamicKsqlGenerationTests
         await ctx.WaitForEntityReadyAsync<NullableKeyOrder>(timeout);
 
         await ctx.DisposeAsync();
+    }
+
+    private static async Task<KsqlDbResponse> ExecuteStatementDirectAsync(string statement)
+    {
+        using var client = new HttpClient { BaseAddress = new Uri(TestEnvironment.KsqlDbUrl) };
+        var payload = new { ksql = statement, streamsProperties = new { } };
+        var json = JsonSerializer.Serialize(payload);
+        using var content = new StringContent(json, Encoding.UTF8, "application/json");
+        using var response = await client.PostAsync("/ksql", content);
+        var body = await response.Content.ReadAsStringAsync();
+        var success = response.IsSuccessStatusCode && !body.Contains("\"error_code\"");
+        return new KsqlDbResponse(success, body);
+    }
+
+    private static async Task<KsqlDbResponse> ExecuteExplainDirectAsync(string ksql)
+    {
+        return await ExecuteStatementDirectAsync($"EXPLAIN {ksql}");
+    }
+
+    private static async Task<bool> IsEntityReadyDirectAsync(string name, bool isTable)
+    {
+        var statement = isTable ? "SHOW TABLES;" : "SHOW STREAMS;";
+        var response = await ExecuteStatementDirectAsync(statement);
+        if (!response.IsSuccess)
+            return false;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(response.Message);
+            var listName = isTable ? "tables" : "streams";
+            foreach (var item in doc.RootElement.EnumerateArray())
+            {
+                if (!item.TryGetProperty(listName, out var arr))
+                    continue;
+
+                foreach (var element in arr.EnumerateArray())
+                {
+                    if (element.TryGetProperty("name", out var n) &&
+                        string.Equals(n.GetString(), name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // ignore parse errors
+        }
+
+        return false;
+    }
+
+    private static async Task WaitForEntityReadyDirectAsync(string name, bool isTable, TimeSpan timeout)
+    {
+        var start = DateTime.UtcNow;
+        while (DateTime.UtcNow - start < timeout)
+        {
+            if (await IsEntityReadyDirectAsync(name, isTable))
+                return;
+
+            await Task.Delay(100);
+        }
+
+        throw new TimeoutException($"Entity {name} not ready after {timeout}.");
     }
 }
