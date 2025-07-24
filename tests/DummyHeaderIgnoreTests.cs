@@ -63,13 +63,12 @@ public class DummyHeaderIgnoreTests
         var set = new DummyHeaderSet(items, CreateModel());
         var processed = new List<int>();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            set.ForEachAsync((msg, ctx) =>
-            {
-                if (ctx.Headers.TryGetValue("is_dummy", out var d) && d is bool b && b)
-                    return Task.CompletedTask;
-                processed.Add(msg.Id);
-                return Task.CompletedTask;
-            }));
+        await set.ForEachAsync((msg, ctx) =>
+        {
+            processed.Add(msg.Id);
+            return Task.CompletedTask;
+        });
+
+        Assert.Equal(new[] { 1 }, processed);
     }
 }
