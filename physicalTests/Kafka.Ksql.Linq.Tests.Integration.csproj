@@ -14,4 +14,9 @@
   <ItemGroup>
     <ProjectReference Include="../src/Kafka.Ksql.Linq.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="docker-compose.yaml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
