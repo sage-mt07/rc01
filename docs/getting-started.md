@@ -518,19 +518,16 @@ public class WindowedOrderSummary
 ## 9. 削除と件数制限の操作
 
 ### Set<T>().Limit(N)
-`Limit` を付与すると、KSQL の `LIMIT` 句を伴う Pull Query が生成されます。取得数が N
- 件に達した時点で処理が完了し、それ以降のレコードは自動的に破棄されます。
+`Limit` は Table 型 (`Set<T>`) の保持件数を制限する DSL です。`OnModelCreating` 内で宣言し、指定件数を超えた古いレコードは自動削除されます。Stream 型や実行時クエリでは使用できません。
 
 ```csharp
-var latest = await context.Set<Trade>()
-    .Limit(50)
-    .ToListAsync();
+protected override void OnModelCreating(IModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Trade>().Limit(50);
+}
 ```
 
-バー生成に `WithWindow().Select<TBar>()` を使用している場合、`BarTime` への
-代入式から自動的にタイムスタンプセレクターが取得され、`Limit` の並び替えに活用
-されます。
-
+バー生成に `WithWindow().Select<TBar>()` を使用している場合、`BarTime` への代入式から自動的にタイムスタンプセレクターが取得され、`Limit` の並び替えに活用されます。
 ### RemoveAsync でトムストーン送信
 `RemoveAsync` はキーを指定して値 `null` のメッセージ（トムストーン）をトピックへ送信し
 ます。これにより KTable やキャッシュに保持された同一キーのデータが削除されます。
