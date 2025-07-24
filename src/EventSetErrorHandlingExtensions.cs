@@ -12,6 +12,9 @@ public static class EventSetErrorHandlingExtensions
 
     public static EventSet<T> OnError<T>(this EventSet<T> eventSet, ErrorAction errorAction) where T : class
     {
+        if (typeof(T) == typeof(Core.Models.DlqEnvelope) && errorAction == ErrorAction.DLQ)
+            throw new InvalidOperationException("DLQストリームでOnError(DLQ)は利用できません（無限ループ防止のため）");
+
         var policy = new ErrorHandlingPolicy
         {
             Action = errorAction

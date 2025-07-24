@@ -342,6 +342,8 @@ await context.Orders
 
 このように、明示的なエラーハンドリング設計が求められます。
 
+DLQ の内容を確認する場合は `ctx.Set<DlqEnvelope>()` を用います。DLQ は履歴ストリームであり `Take()` や `ToListAsync()` などの件数指定取得はできません。すべて `ForEachAsync()` で逐次処理してください。さらに DLQ ストリームでは `.OnError(ErrorAction.DLQ)` は無限ループ防止のため禁止されています。
+
 ### commitの制御
 Kafkaのコンシューム操作において、メッセージのオフセットコミットは非常に重要です。
 
