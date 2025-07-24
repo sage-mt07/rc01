@@ -38,13 +38,13 @@
 | `.WithRetry(int)`              | リトライ設定                  | `EventSet<T>`                     | Stream        | ✅      |
 | `.StartErrorHandling()`        | エラーチェーン開始            | `IErrorHandlingChain<T>`          | Stream        | ✅      |
 | `.WithManualCommit()`          | 手動コミットモード切替        | `IEntityBuilder<T>`               | Subscription  | ✅      |
-| `.Limit(int)`                  | 取得件数を制限する Pull Query | `IEntitySet<T>`                  | Stream/Table  | ✅      |
+| `.Limit(int)`                  | **保持件数制限。Table型(Set<T>)でのみ利用可。OnModelCreatingで定義し、超過分は自動削除される。** | `IEntitySet<T>`                  | Table  | ✅      |
 
 - `ToList`/`ToListAsync` は Pull Query として実行されます【F:src/Query/Pipeline/DMLQueryGenerator.cs†L27-L34】。
 - `WithManualCommit()` を指定しない `ForEachAsync()` は自動コミット動作となります【F:docs/old/manual_commit.md†L1-L23】。
 - `OnError(ErrorAction.DLQ)` を指定すると DLQ トピックへ送信されます【F:docs/old/defaults.md†L52-L52】。
 - Messaging クラス自体は DLQ 送信処理を持たず、`ErrorOccurred`/`DeserializationError`/`ProduceError` などのイベントを通じて外部で DLQ 送信を行います。
-- `Set<T>().Limit(n)` を指定すると n 件取得後にストリームが終了します。残りのレコードは破棄されます。
+- `Set<T>().Limit(n)` は Table 型の保持件数を制限する DSL です。`OnModelCreating` 内で指定し、超過分のレコードは自動削除されます。Stream 型や実行時クエリでは利用できません。
 - バーエンティティでは `WithWindow().Select<TBar>()` で `BarTime` に代入した式が自動的に記録され、`Limit` の並び替えに使用されます。
 - `RemoveAsync(key)` は値 `null` のトムストーンを送り、KTable やキャッシュから該当キーのデータを削除します。
 - `.Window().BasedOn<TSchedule>` を用いる場合、バーは `[ScheduleRange]` 属性、または `openProp`/`closeProp` パラメータで示された `Open` ～ `Close` の範囲に含まれるデータのみで構成されます。日足生成で `Close` が 6:30 のときは、6:30 未満のデータが当日の終値として扱われます。
