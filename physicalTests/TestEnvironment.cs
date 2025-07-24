@@ -125,7 +125,8 @@ internal static class TestEnvironment
                 ProductId = 0,
                 Quantity = 0
             });
-            await Task.Delay(500);
+
+            await orderCtx.WaitForEntityReadyAsync<Order>(TimeSpan.FromSeconds(5));
         }
 
         await ValidateSchemaRegistrationAsync();

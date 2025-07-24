@@ -92,7 +92,13 @@ public class DummyFlagSchemaRecognitionTests
         await ctx.Set<NullableOrder>().AddAsync(new NullableOrder { CustomerId = 1, Region = "east", Amount = 10d }, headers);
         await ctx.Set<NullableKeyOrder>().AddAsync(new NullableKeyOrder { CustomerId = 1, Amount = 10d }, headers);
 
-        await Task.Delay(500);
+        var timeout = TimeSpan.FromSeconds(5);
+        await ctx.WaitForEntityReadyAsync<OrderValue>(timeout);
+        await ctx.WaitForEntityReadyAsync<Customer>(timeout);
+        await ctx.WaitForEntityReadyAsync<EventLog>(timeout);
+        await ctx.WaitForEntityReadyAsync<NullableOrder>(timeout);
+        await ctx.WaitForEntityReadyAsync<NullableKeyOrder>(timeout);
+
         await ctx.DisposeAsync();
     }
 
@@ -115,7 +121,6 @@ public class DummyFlagSchemaRecognitionTests
         }
 
         await ProduceDummyRecordsAsync();
-        await Task.Delay(2000);
 
         var queries = new[]
         {
