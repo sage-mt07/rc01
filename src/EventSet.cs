@@ -153,43 +153,78 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
         if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Table)
             throw new InvalidOperationException("ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
 
-        var start = DateTime.UtcNow;
+        var inactivity = timeout <= TimeSpan.Zero ? Timeout.InfiniteTimeSpan : timeout;
         var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        try
+        await using var enumerator = GetAsyncEnumerator(combinedCts.Token);
+
+        while (true)
         {
-            await foreach (var item in GetAsyncEnumeratorWrapper(combinedCts.Token))
+            var moveNextTask = enumerator.MoveNextAsync().AsTask();
+            var delayTask = inactivity == Timeout.InfiniteTimeSpan
+                ? Task.Delay(Timeout.Infinite, combinedCts.Token)
+                : Task.Delay(inactivity, combinedCts.Token);
+
+            var completed = await Task.WhenAny(moveNextTask, delayTask);
+
+            if (completed == delayTask)
             {
-                // Timeout check (maximum duration for continuous consumption)
-                if (timeout != default && DateTime.UtcNow - start > timeout)
-                {
-                    break;
-                }
-
-                // Execute the action with error handling
-                try
-                {
-                    var messageContext = CreateMessageContext(item);
-                    await action(item, messageContext);
-                }
-                catch (Exception ex)
-                {
-                    var messageContext = CreateMessageContext(item);
-                    var shouldContinue = await _errorHandlingContext.HandleErrorAsync(item, ex, messageContext);
-
-                    if (!shouldContinue)
-                    {
-                        continue; // Skip this item on error and continue to the next
-                    }
-
-                    // If shouldContinue is true, rethrow the exception
-                    throw;
-                }
+                // No new data within the timeout period
+                break;
             }
-        }
-        finally
-        {
-            combinedCts?.Dispose();
+
+            combinedCts.Token.ThrowIfCancellationRequested();
+
+            bool hasNext;
+            try
+            {
+                hasNext = moveNextTask.Result;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                var ctx = new KafkaMessageContext
+                {
+                    MessageId = Guid.NewGuid().ToString(),
+                    Tags = new Dictionary<string, object>
+                    {
+                        ["processing_phase"] = "ForEachAsync"
+                    }
+                };
+
+                var shouldContinue = await _errorHandlingContext.HandleErrorAsync(default(T)!, ex, ctx);
+                if (!shouldContinue)
+                    continue;
+                throw;
+            }
+
+            if (!hasNext)
+            {
+                break;
+            }
+
+            var item = enumerator.Current;
+
+            try
+            {
+                var messageContext = CreateMessageContext(item);
+                await action(item, messageContext);
+            }
+            catch (Exception ex)
+            {
+                var messageContext = CreateMessageContext(item);
+                var shouldContinue = await _errorHandlingContext.HandleErrorAsync(item, ex, messageContext);
+
+                if (!shouldContinue)
+                {
+                    continue;
+                }
+
+                throw;
+            }
         }
     }
 
