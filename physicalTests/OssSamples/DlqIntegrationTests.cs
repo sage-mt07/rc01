@@ -54,14 +54,9 @@ public class DlqIntegrationTests
         await ctx.Set<Order>().AddAsync(new Order { Id = 1, Amount = 0.01m });
 
         // DLQ送信テスト本体
-        var orderSet = ctx.Set<Order>();
-        var extType = typeof(EventSetErrorHandlingExtensions);
-        var method = extType.GetMethod("OnError")?.MakeGenericMethod(typeof(Order));
-        if (method == null || orderSet.GetType().BaseType != typeof(EventSet<Order>))
-            throw new SkipException("OnError extension not available");
-
-        var withPolicy = (EventSet<Order>)method.Invoke(null, new object[] { orderSet, ErrorAction.DLQ })!;
-        await withPolicy.ForEachAsync(o => throw new Exception("Simulated failure"), TimeSpan.FromSeconds(3));
+        await ctx.Set<Order>()
+            .OnError(ErrorAction.DLQ)
+            .ForEachAsync(_ => throw new Exception("Simulated failure"), TimeSpan.FromSeconds(3));
 
         // DLQストリーム検証（ForEachAsync専用）
         DlqEnvelope? found = null;
