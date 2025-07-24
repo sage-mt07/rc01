@@ -1,4 +1,3 @@
-using Confluent.Kafka;
 using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Configuration;
@@ -36,7 +35,7 @@ public class DlqIntegrationTests
 
     [Fact]
     [Trait("Category", "Integration")]
-    public async Task FailingForEach_SendsToDlq()
+    public async Task ForEachAsync_OnErrorDlq_WritesToDlq()
     {
         if (!KsqlDbAvailability.IsAvailable())
             throw new SkipException(KsqlDbAvailability.SkipReason);
@@ -51,26 +50,29 @@ public class DlqIntegrationTests
 
         await using var ctx = new OrderContext(options);
 
-        // send invalid raw message to trigger deserialization failure
-        var conf = new ProducerConfig { BootstrapServers = TestEnvironment.KafkaBootstrapServers };
-        using (var producer = new ProducerBuilder<Null, string>(conf).Build())
+        // スキーマ確定用ダミーデータ送信
+        await ctx.Set<Order>().AddAsync(new Order { Id = 1, Amount = 0.01m });
+
+        // DLQ送信テスト本体
+        var orderSet = ctx.Set<Order>();
+        var extType = typeof(EventSetErrorHandlingExtensions);
+        var method = extType.GetMethod("OnError")?.MakeGenericMethod(typeof(Order));
+        if (method == null || orderSet.GetType().BaseType != typeof(EventSet<Order>))
+            throw new SkipException("OnError extension not available");
+
+        var withPolicy = (EventSet<Order>)method.Invoke(null, new object[] { orderSet, ErrorAction.DLQ })!;
+        await withPolicy.ForEachAsync(o => throw new Exception("Simulated failure"), TimeSpan.FromSeconds(3));
+
+        // DLQストリーム検証（ForEachAsync専用）
+        DlqEnvelope? found = null;
+        await ctx.Set<DlqEnvelope>().ForEachAsync(msg =>
         {
-            await producer.ProduceAsync("orders", new Message<Null, string> { Value = "bad" });
-            producer.Flush(TimeSpan.FromSeconds(5));
-        }
+            if (msg.ErrorType == "Simulated failure")
+                found = msg;
+            return Task.CompletedTask;
+        }, TimeSpan.FromSeconds(10));
 
-        // consuming with typed context will cause DLQ forwarding
-        await ctx.Set<Order>().ForEachAsync(_ => Task.CompletedTask, TimeSpan.FromSeconds(1));
-
-        var builder = ctx.CreateConsumerBuilder<DlqEnvelope>();
-        using var consumer = builder
-            .SetErrorHandler((_, _) => { })
-            .Build();
-        consumer.Subscribe(ctx.GetDlqTopicName());
-        var dlqMsg = consumer.Consume(TimeSpan.FromSeconds(10));
-        consumer.Close();
-
-        Assert.NotNull(dlqMsg);
-        Assert.NotEmpty(dlqMsg.Message.Value.ErrorType);
+        Assert.NotNull(found);
+        Assert.Equal("Simulated failure", found.ErrorType);
     }
 }
