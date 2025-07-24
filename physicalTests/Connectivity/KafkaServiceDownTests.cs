@@ -46,7 +46,7 @@ public class KafkaServiceDownTests
             await TestEnvironment.ResetAsync();
 
         }
-        catch (Exception ex1)
+        catch (Exception)
         {
 
         }
@@ -77,7 +77,7 @@ public class KafkaServiceDownTests
             await TestEnvironment.ResetAsync();
 
         }
-        catch (Exception ex1)
+        catch (Exception)
         {
 
         }

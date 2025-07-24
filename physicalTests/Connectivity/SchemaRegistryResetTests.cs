@@ -69,7 +69,7 @@ public class SchemaRegistryResetTests
             await TestEnvironment.ResetAsync();
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
         }
@@ -98,7 +98,7 @@ public class SchemaRegistryResetTests
             await TestEnvironment.ResetAsync();
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
         }
@@ -121,7 +121,7 @@ public class SchemaRegistryResetTests
             await TestEnvironment.ResetAsync();
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
         }

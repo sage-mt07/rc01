@@ -22,7 +22,7 @@ public class InvalidQueryTests
             await TestEnvironment.ResetAsync();
 
         }
-        catch (System.Exception ex)
+        catch (System.Exception)
         {
 
         }
