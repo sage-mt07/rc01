@@ -234,42 +234,36 @@ public class DynamicKsqlGenerationTests
 
         await TestEnvironment.ResetAsync();
 
-        var models = BuildModels();
-        var ddls = GenerateDdlQueries(models).ToList();
-
-        // drop all objects first
-        await using (var ctx = TestEnvironment.CreateContext())
+        var options = new KsqlDslOptions
         {
-            foreach (var ddl in ddls)
-            {
-                var drop = ddl.StartsWith("CREATE STREAM")
-                    ? ddl.Replace("CREATE STREAM", "DROP STREAM IF EXISTS") + " DELETE TOPIC;"
-                    : ddl.Replace("CREATE TABLE", "DROP TABLE IF EXISTS") + " DELETE TOPIC;";
-                await ctx.ExecuteStatementAsync(drop);
-            }
+            Common = new CommonSection { BootstrapServers = TestEnvironment.KafkaBootstrapServers },
+            SchemaRegistry = new SchemaRegistrySection { Url = TestEnvironment.SchemaRegistryUrl }
+        };
 
-            // then create all objects
-            foreach (var ddl in ddls)
-            {
-                var result = await ctx.ExecuteStatementAsync(ddl);
-                var success = result.IsSuccess ||
-                    (result.Message?.Contains("already exists", StringComparison.OrdinalIgnoreCase) ?? false);
-                Assert.True(success, $"DDL failed: {result.Message}");
-            }
-        }
+        await using var ctx = new DummyContext(options);
 
-        // insert dummy records so ksqlDB can materialize schemas
-        await ProduceDummyRecordsAsync();
+        var timeout = TimeSpan.FromSeconds(5);
+        await ctx.WaitForEntityReadyAsync<OrderValue>(timeout);
+        await ctx.WaitForEntityReadyAsync<Customer>(timeout);
+        await ctx.WaitForEntityReadyAsync<EventLog>(timeout);
+        await ctx.WaitForEntityReadyAsync<NullableOrder>(timeout);
+        await ctx.WaitForEntityReadyAsync<NullableKeyOrder>(timeout);
 
-        // validate that all DML queries are executable
-        await using (var ctx = TestEnvironment.CreateContext())
-        {
-            foreach (var (_, ksql) in GenerateDmlQueries())
-            {
-                var response = await ctx.ExecuteExplainAsync(ksql);
-                Assert.True(response.IsSuccess, $"{ksql} failed: {response.Message}");
-            }
-        }
+        var tables = await ctx.ExecuteStatementAsync("SHOW TABLES;");
+        Assert.Contains("ORDERS", tables.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("CUSTOMERS", tables.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("EVENTS", tables.Message, StringComparison.OrdinalIgnoreCase);
+
+        var streams = await ctx.ExecuteStatementAsync("SHOW STREAMS;");
+        Assert.Contains("ORDERS_NULLABLE", streams.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ORDERS_NULLABLE_KEY", streams.Message, StringComparison.OrdinalIgnoreCase);
+
+        var describe = await ctx.ExecuteStatementAsync("DESCRIBE ORDERS;");
+        Assert.Contains("CUSTOMERID", describe.Message.ToUpperInvariant());
+        Assert.Contains("AMOUNT", describe.Message.ToUpperInvariant());
+
+        var orderList = await ctx.Set<OrderValue>().ToListAsync();
+        Assert.NotNull(orderList);
     }
 
     public static IEnumerable<object[]> AllDmlQueries()
