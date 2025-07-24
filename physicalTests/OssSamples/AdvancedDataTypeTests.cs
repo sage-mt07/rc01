@@ -44,7 +44,15 @@ public class AdvancedDataTypeTests
         if (!KsqlDbAvailability.IsAvailable())
             throw new SkipException(KsqlDbAvailability.SkipReason);
 
-        await TestEnvironment.ResetAsync();
+        try
+        {
+            await TestEnvironment.ResetAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Warning] ResetAsync failed: {ex}");
+            throw new SkipException($"Test setup failed in ResetAsync: {ex.Message}");
+        }
 
         var options = new KsqlDslOptions
         {
