@@ -21,7 +21,7 @@ public class MappingRegistry
 
     private static string SanitizeName(string name)
     {
-        var sanitized = Regex.Replace(name, "[^A-Za-z0-9_]", "_");
+        var sanitized = Regex.Replace(name, "[^A-Za-z0-9_-]", "_");
         if (string.IsNullOrEmpty(sanitized))
             sanitized = "_";
         if (char.IsDigit(sanitized[0]))
