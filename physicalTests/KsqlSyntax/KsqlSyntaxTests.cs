@@ -1,6 +1,9 @@
 using Confluent.Kafka;
 using System;
 using Kafka.Ksql.Linq.Application;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -38,9 +41,20 @@ public class KsqlSyntaxTests
         if (!KsqlDbAvailability.IsAvailable())
             throw new SkipException(KsqlDbAvailability.SkipReason);
 
-        await using var ctx = TestEnvironment.CreateContext();
-        var response = await ctx.ExecuteExplainAsync(ksql);
+        var response = await ExecuteExplainDirectAsync(ksql);
         Assert.True(response.IsSuccess, $"{ksql} failed: {response.Message}");
+    }
+
+    private static async Task<KsqlDbResponse> ExecuteExplainDirectAsync(string ksql)
+    {
+        using var client = new HttpClient { BaseAddress = new Uri(TestEnvironment.KsqlDbUrl) };
+        var payload = new { ksql = $"EXPLAIN {ksql}", streamsProperties = new { } };
+        var json = JsonSerializer.Serialize(payload);
+        using var content = new StringContent(json, Encoding.UTF8, "application/json");
+        using var response = await client.PostAsync("/ksql", content);
+        var body = await response.Content.ReadAsStringAsync();
+        var success = response.IsSuccessStatusCode && !body.Contains("\"error_code\"");
+        return new KsqlDbResponse(success, body);
     }
 
 }
