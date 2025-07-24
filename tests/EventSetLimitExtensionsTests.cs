@@ -1,6 +1,7 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq;
+using Kafka.Ksql.Linq.Query.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,6 +45,7 @@ public class EventSetLimitExtensionsTests
         {
             _items = items.ToList();
             _model.BarTimeSelector = (Expression<Func<RateCandle, DateTime>>)(x => x.BarTime);
+            _model.SetStreamTableType(StreamTableType.Table);
         }
         public Task AddAsync(RateCandle entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<List<RateCandle>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(_items.ToList());

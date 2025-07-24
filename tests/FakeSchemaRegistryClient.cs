@@ -37,7 +37,10 @@ internal class FakeSchemaRegistryClient : ISchemaRegistryClient
     public Task<RegisteredSchema> GetLatestSchemaAsync(string subject)
     {
         if (!_store.TryGetValue(subject, out var list) || list.Count == 0)
-            throw new SchemaRegistryException("Subject not found", 40401);
+            throw new SchemaRegistryException(
+                "Subject not found",
+                System.Net.HttpStatusCode.NotFound,
+                40401);
         var (schema, id) = list[^1];
         var rs = new RegisteredSchema(subject, list.Count, id, schema, SchemaType.Avro, new List<SchemaReference>());
         return Task.FromResult(rs);

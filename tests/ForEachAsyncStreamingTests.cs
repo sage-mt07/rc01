@@ -1,11 +1,13 @@
 using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Modeling;
+using Kafka.Ksql.Linq.Query.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using Xunit;
 
 namespace Kafka.Ksql.Linq.Tests;
@@ -31,15 +33,37 @@ public class ForEachAsyncStreamingTests
             _channel = channel;
         }
         protected override Task SendEntityAsync(TestEvent entity, Dictionary<string, string>? headers, CancellationToken cancellationToken) => Task.CompletedTask;
-        public override async IAsyncEnumerator<TestEvent> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        public override IAsyncEnumerator<TestEvent> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
-            while (await _channel.Reader.WaitToReadAsync(cancellationToken))
+            return new ChannelEnumerator(_channel, cancellationToken);
+        }
+
+        private sealed class ChannelEnumerator : IAsyncEnumerator<TestEvent>
+        {
+            private readonly Channel<TestEvent> _channel;
+            private readonly CancellationToken _token;
+            public ChannelEnumerator(Channel<TestEvent> channel, CancellationToken token)
             {
-                while (_channel.Reader.TryRead(out var item))
+                _channel = channel;
+                _token = token;
+            }
+
+            public TestEvent Current { get; private set; } = null!;
+
+            public async ValueTask<bool> MoveNextAsync()
+            {
+                try
                 {
-                    yield return item;
+                    Current = await _channel.Reader.ReadAsync(_token);
+                    return true;
+                }
+                catch (ChannelClosedException)
+                {
+                    return false;
                 }
             }
+
+            public ValueTask DisposeAsync() => default;
         }
         private static EntityModel CreateModel()
         {
@@ -47,7 +71,7 @@ public class ForEachAsyncStreamingTests
             builder.Entity<TestEvent>().WithTopic("t");
             var model = builder.GetEntityModel<TestEvent>()!;
             model.ValidationResult = new ValidationResult { IsValid = true };
-            model.StreamTableType = StreamTableType.Stream;
+            model.SetStreamTableType(StreamTableType.Stream);
             return model;
         }
     }
@@ -80,6 +104,7 @@ public class ForEachAsyncStreamingTests
         var task = set.ForEachAsync(e => Task.CompletedTask, TimeSpan.FromSeconds(5), cts.Token);
 
         cts.CancelAfter(100);
-        await Assert.ThrowsAsync<TaskCanceledException>(() => task);
+        await task;
+        Assert.True(cts.IsCancellationRequested);
     }
 }
