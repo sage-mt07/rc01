@@ -57,7 +57,8 @@ public class AdvancedDataTypeTests
         var data = new Record { Id = 1, Price = 12.3456m, Created = DateTime.UtcNow, State = Status.Done };
         await ctx.Set<Record>().AddAsync(data);
 
-        var list = await ctx.Set<Record>().ToListAsync();
+        var list = new List<Record>();
+        await ctx.Set<Record>().ForEachAsync(r => { list.Add(r); return Task.CompletedTask; }, TimeSpan.FromSeconds(1));
         Assert.Single(list);
         Assert.Equal(data.Price, list[0].Price);
         Assert.Equal(data.State, list[0].State);

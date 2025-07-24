@@ -82,8 +82,7 @@ public class SchemaNameCaseSensitivityTests
             Amount = 10d
         }, headers);
 
-        var list = await ctx.Set<OrderCorrectCase>().ToListAsync();
-        Assert.Single(list);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => ctx.Set<OrderCorrectCase>().ToListAsync());
 
         var forEachList = new List<OrderCorrectCase>();
         await ctx.Set<OrderCorrectCase>().ForEachAsync(o => { forEachList.Add(o); return Task.CompletedTask; }, TimeSpan.FromSeconds(1));

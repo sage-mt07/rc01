@@ -56,9 +56,8 @@ public class CompositeKeyPocoTests
         var list = await ctx.Set<Order>().ToListAsync();
         Assert.Single(list);
 
-        var consumed = new List<Order>();
-        await ctx.Set<Order>().ForEachAsync(o => { consumed.Add(o); return Task.CompletedTask; }, TimeSpan.FromSeconds(1));
-        Assert.Single(consumed);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ctx.Set<Order>().ForEachAsync(o => { return Task.CompletedTask; }, TimeSpan.FromSeconds(1)));
 
         await ctx.DisposeAsync();
     }
