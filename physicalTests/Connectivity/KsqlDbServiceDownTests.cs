@@ -24,7 +24,7 @@ public class KsqlDbServiceDownTests
             await TestEnvironment.ResetAsync();
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
         await DockerHelper.StopServiceAsync("ksqldb-server");

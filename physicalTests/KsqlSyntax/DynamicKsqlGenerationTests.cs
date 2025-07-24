@@ -289,7 +289,7 @@ public class DynamicKsqlGenerationTests
             await TestEnvironment.ResetAsync();
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
 

@@ -67,7 +67,7 @@ public class SchemaNameCaseSensitivityTests
             await TestEnvironment.ResetAsync();
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
 

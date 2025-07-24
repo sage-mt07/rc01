@@ -114,7 +114,7 @@ public class DummyFlagSchemaRecognitionTests
             await TestEnvironment.ResetAsync();
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
 

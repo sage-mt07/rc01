@@ -6,6 +6,8 @@ using System.Linq.Expressions;
 using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Query.Pipeline;
 
+#nullable enable
+
 namespace Kafka.Ksql.Linq.Tests.Integration;
 
 internal static class KsqlTestLinqExtensions
