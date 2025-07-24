@@ -1,4 +1,6 @@
 using Kafka.Ksql.Linq.Core.Models;
+using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Extensions;
 using System;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -26,10 +28,11 @@ public class MappingRegistry
     public KeyValueTypeMapping Register(
         Type pocoType,
         PropertyMeta[] keyProperties,
-        PropertyMeta[] valueProperties)
+        PropertyMeta[] valueProperties,
+        string? topicName = null)
     {
         var ns = pocoType.Namespace?.ToLower() ?? string.Empty;
-        var baseName = pocoType.Name.ToLower();
+        var baseName = (topicName ?? pocoType.Name).ToLower();
 
         var keyType = CreateType(ns, $"{baseName}-key", keyProperties);
         var valueType = CreateType(ns, $"{baseName}-value", valueProperties);
@@ -59,9 +62,29 @@ public class MappingRegistry
     /// </summary>
     public KeyValueTypeMapping RegisterMeta(
         Type pocoType,
-        (PropertyMeta[] KeyProperties, PropertyMeta[] ValueProperties) meta)
+        (PropertyMeta[] KeyProperties, PropertyMeta[] ValueProperties) meta,
+        string? topicName = null)
     {
-        return Register(pocoType, meta.KeyProperties, meta.ValueProperties);
+        return Register(pocoType, meta.KeyProperties, meta.ValueProperties, topicName);
+    }
+
+    /// <summary>
+    /// Register mapping using an EntityModel's property information.
+    /// Convenience wrapper so callers don't need to manually convert
+    /// PropertyInfo to <see cref="PropertyMeta"/> arrays.
+    /// </summary>
+    public KeyValueTypeMapping RegisterEntityModel(EntityModel model)
+    {
+        if (model == null) throw new ArgumentNullException(nameof(model));
+
+        var keyMeta = model.KeyProperties
+            .Select(p => PropertyMeta.FromProperty(p))
+            .ToArray();
+        var valueMeta = model.AllProperties
+            .Select(p => PropertyMeta.FromProperty(p))
+            .ToArray();
+
+        return Register(model.EntityType, keyMeta, valueMeta, model.GetTopicName());
     }
 
     public KeyValueTypeMapping GetMapping(Type pocoType)

@@ -8,6 +8,8 @@ using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq.Infrastructure.Admin;
 using Kafka.Ksql.Linq.Mapping;
+using Kafka.Ksql.Linq.Core.Models;
+using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.SchemaRegistryTools;
@@ -258,6 +260,7 @@ public abstract class KsqlContext : IKsqlContext
         dlqModel.TopicName = GetDlqTopicName();
         dlqModel.AccessMode = Core.Abstractions.EntityAccessMode.ReadOnly;
         _entityModels[typeof(Core.Models.DlqEnvelope)] = dlqModel;
+        _mappingRegistry.RegisterEntityModel(dlqModel);
     }
 
     private void ApplyModelBuilderSettings(ModelBuilder modelBuilder)
@@ -278,6 +281,9 @@ public abstract class KsqlContext : IKsqlContext
             {
                 _entityModels[type] = model;
             }
+
+            // Register property metadata with MappingRegistry
+            _mappingRegistry.RegisterEntityModel(model);
         }
     }
 
@@ -394,7 +400,7 @@ public abstract class KsqlContext : IKsqlContext
             if (type == typeof(Core.Models.DlqEnvelope))
                 continue;
 
-            var subject = GetSubjectName(type);
+            var subject = GetSubjectName(model);
             var schema = BuildSchemaString(type);
 
             SchemaRegistryTools.SchemaRegistrationResult regResult;
@@ -426,11 +432,10 @@ public abstract class KsqlContext : IKsqlContext
         }
     }
 
-    private static string GetSubjectName(Type entityType)
+    private static string GetSubjectName(EntityModel model)
     {
-        var ns = entityType.Namespace?.ToLowerInvariant() ?? string.Empty;
-        var name = entityType.Name.ToLowerInvariant();
-        return $"{ns}.{name}-value";
+        var topicName = model.GetTopicName();
+        return $"{topicName}-value";
     }
 
     private static string BuildSchemaString(Type entityType)

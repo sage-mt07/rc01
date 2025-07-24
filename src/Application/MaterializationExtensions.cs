@@ -1,4 +1,5 @@
 using Kafka.Ksql.Linq.Core.Models;
+using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Messaging.Internal;
 using Kafka.Ksql.Linq.SchemaRegistryTools;
 using System.Collections.Generic;
@@ -14,9 +15,8 @@ public static class MaterializationExtensions
         if (context == null) throw new ArgumentNullException(nameof(context));
         var client = context.GetSchemaRegistryClient();
         var model = context.GetEntityModels()[typeof(T)];
-        var ns = typeof(T).Namespace?.ToLowerInvariant() ?? string.Empty;
-        var name = typeof(T).Name.ToLowerInvariant();
-        var subject = $"{ns}.{name}-value";
+        var topicName = model.GetTopicName();
+        var subject = $"{topicName}-value";
         var schema = DynamicSchemaGenerator.GetSchemaJson<T>();
         var result = await client.RegisterSchemaIfNewAsync(subject, schema);
         if (result.WasCreated)
