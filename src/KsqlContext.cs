@@ -8,8 +8,11 @@ using Kafka.Ksql.Linq.Core.Dlq;
 using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq.Infrastructure.Admin;
 using Kafka.Ksql.Linq.Messaging.Consumers;
+using Kafka.Ksql.Linq.Messaging.Internal;
 using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.Mapping;
+using Kafka.Ksql.Linq.Application;
+using Kafka.Ksql.Linq.SchemaRegistryTools;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -308,7 +311,8 @@ public abstract class KsqlContext : IKsqlContext
         // 1. Build the model in OnModelCreating
         ConfigureModel();
 
-        // Removed old Avro schema registration logic
+        // [Naruse指示] Register schemas and materialize entities if new
+        RegisterSchemasAndMaterializeAsync().GetAwaiter().GetResult();
 
         // 2. Verify Kafka connectivity
         ValidateKafkaConnectivity();
@@ -355,6 +359,69 @@ public abstract class KsqlContext : IKsqlContext
             throw new InvalidOperationException(
                 "FATAL: Cannot connect to Kafka. Verify bootstrap servers and network connectivity.", ex);
         }
+    }
+
+    /// <summary>
+    /// Register schemas for all entities and send dummy record if newly created
+    /// </summary>
+    private async Task RegisterSchemasAndMaterializeAsync()
+    {
+        var client = _schemaRegistryClient.Value;
+
+        foreach (var (type, model) in _entityModels)
+        {
+            if (type == typeof(Core.Models.DlqEnvelope))
+                continue;
+
+            var subject = GetSubjectName(type);
+            var schema = BuildSchemaString(type);
+
+            SchemaRegistryTools.SchemaRegistrationResult regResult;
+            try
+            {
+                regResult = await client.RegisterSchemaIfNewAsync(subject, schema);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Schema registration failed for {Subject}", subject);
+                throw;
+            }
+
+            if (regResult.WasCreated)
+            {
+                try
+                {
+                    var dummy = CreateDummyInstance(type);
+                    var headers = new Dictionary<string, string> { ["is_dummy"] = "true" };
+                    dynamic set = GetEventSet(type);
+                    await set.AddAsync((dynamic)dummy, headers);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Materialization failed for {Entity}", type.Name);
+                    throw;
+                }
+            }
+        }
+    }
+
+    private static string GetSubjectName(Type entityType)
+    {
+        var ns = entityType.Namespace?.ToLowerInvariant() ?? string.Empty;
+        var name = entityType.Name.ToLowerInvariant();
+        return $"{ns}.{name}-value";
+    }
+
+    private static string BuildSchemaString(Type entityType)
+    {
+        return Messaging.Internal.DynamicSchemaGenerator.GetSchemaJson(entityType);
+    }
+
+    private static object CreateDummyInstance(Type entityType)
+    {
+        var method = typeof(Application.DummyObjectFactory).GetMethod("CreateDummy")!
+            .MakeGenericMethod(entityType);
+        return method.Invoke(null, null)!;
     }
 
 
