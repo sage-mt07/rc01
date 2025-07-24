@@ -92,15 +92,16 @@ public class SchemaNameCaseSensitivityTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => ctx.Set<OrderCorrectCase>().ToListAsync());
 
 
-        await using var wrongCtx = new WrongCaseContext(options);
-
-        await Assert.ThrowsAsync<SchemaRegistryException>(() =>
-            wrongCtx.Set<OrderWrongCase>().AddAsync(new OrderWrongCase
+        await Assert.ThrowsAsync<SchemaRegistryException>(async () =>
+        {
+            await using var wrongCtx = new WrongCaseContext(options); // ここで例外を期待
+            await wrongCtx.Set<OrderWrongCase>().AddAsync(new OrderWrongCase
             {
                 CustomerId = 1,
                 Id = 1,
                 region = "west",
                 Amount = 5d
-            }, headers));
+            }, headers);
+        });
     }
 }
