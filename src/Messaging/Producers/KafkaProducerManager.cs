@@ -147,7 +147,7 @@ internal class KafkaProducerManager : IDisposable
         var keyType = KeyExtractor.DetermineKeyType(model);
         var keySerializer = CreateKeySerializer(keyType);
 
-        var typedValueSerializer = new AsyncSchemaRegistrySerializer<T>(_schemaRegistryClient.Value, AutomaticRegistrationBehavior.Always).AsSyncOverAsync();
+        var typedValueSerializer = new AsyncSchemaRegistrySerializer<T>(_schemaRegistryClient.Value).AsSyncOverAsync();
 
         return new ProducerBuilder<object, T>(config)
             .SetKeySerializer(keySerializer)
@@ -294,7 +294,7 @@ internal class KafkaProducerManager : IDisposable
     {
         var schema = DynamicSchemaGenerator.GetSchema<T>();
         _logger?.LogDebug("Generated key schema: {Schema}", schema.ToString());
-        var typed = new AsyncSchemaRegistrySerializer<T>(_schemaRegistryClient.Value, AutomaticRegistrationBehavior.Always).AsSyncOverAsync();
+        var typed = new AsyncSchemaRegistrySerializer<T>(_schemaRegistryClient.Value).AsSyncOverAsync();
         return SerializerAdapters.ToObjectSerializer(typed);
     }
 
@@ -305,7 +305,7 @@ internal class KafkaProducerManager : IDisposable
             return cached;
         var schema = DynamicSchemaGenerator.GetSchema<T>();
         _logger?.LogDebug("Generated value schema: {Schema}", schema.ToString());
-        var typed = new AsyncSchemaRegistrySerializer<T>(_schemaRegistryClient.Value, AutomaticRegistrationBehavior.Always).AsSyncOverAsync();
+        var typed = new AsyncSchemaRegistrySerializer<T>(_schemaRegistryClient.Value).AsSyncOverAsync();
         var serializer = SerializerAdapters.ToObjectSerializer(typed);
         _valueSerializerCache[type] = serializer;
         return serializer;
