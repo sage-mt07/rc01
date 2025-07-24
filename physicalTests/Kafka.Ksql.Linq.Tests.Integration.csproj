@@ -18,5 +18,9 @@
     <None Update="docker-compose.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="../tools/docker-compose.kafka.yml">
+      <Link>tools/docker-compose.kafka.yml</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
