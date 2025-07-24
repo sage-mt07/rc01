@@ -101,8 +101,18 @@ public abstract class KsqlContext : IKsqlContext
         }
         catch (Exception ex)
         {
+            var hint = string.Empty;
+            if (ex is HttpRequestException || ex.InnerException is HttpRequestException)
+            {
+                hint = " Could not connect to ksqlDB endpoint.";
+            }
+            else if (ex is KafkaException || ex.InnerException is KafkaException)
+            {
+                hint = " Cannot connect to Kafka cluster.";
+            }
+
             throw new InvalidOperationException(
-                "FATAL: KsqlContext initialization failed. Application cannot continue without Kafka connectivity.", ex);
+                $"FATAL: KsqlContext initialization failed.{hint} See inner exception for details. {ex.Message}", ex);
         }
     }
 
@@ -148,8 +158,18 @@ public abstract class KsqlContext : IKsqlContext
         }
         catch (Exception ex)
         {
+            var hint = string.Empty;
+            if (ex is HttpRequestException || ex.InnerException is HttpRequestException)
+            {
+                hint = " Could not connect to ksqlDB endpoint.";
+            }
+            else if (ex is KafkaException || ex.InnerException is KafkaException)
+            {
+                hint = " Cannot connect to Kafka cluster.";
+            }
+
             throw new InvalidOperationException(
-                "FATAL: KsqlContext initialization failed. Application cannot continue without Kafka connectivity.", ex);
+                $"FATAL: KsqlContext initialization failed.{hint} See inner exception for details. {ex.Message}", ex);
         }
     }
 
