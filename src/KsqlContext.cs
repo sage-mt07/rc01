@@ -159,6 +159,11 @@ public abstract class KsqlContext : IKsqlContext
     {
         var entityType = typeof(T);
 
+        if (entityType == typeof(Core.Models.DlqEnvelope))
+        {
+            return (IEntitySet<T>)GetDlqStream();
+        }
+
         if (_entitySets.TryGetValue(entityType, out var existingSet))
         {
             return (IEntitySet<T>)existingSet;
@@ -209,6 +214,11 @@ public abstract class KsqlContext : IKsqlContext
 
     private void InitializeEntityModels()
     {
+        var dlqModel = CreateEntityModelFromType(typeof(Core.Models.DlqEnvelope));
+        dlqModel.SetStreamTableType(Query.Abstractions.StreamTableType.Stream);
+        dlqModel.TopicName = GetDlqTopicName();
+        dlqModel.AccessMode = Core.Abstractions.EntityAccessMode.ReadOnly;
+        _entityModels[typeof(Core.Models.DlqEnvelope)] = dlqModel;
     }
 
     private void ApplyModelBuilderSettings(ModelBuilder modelBuilder)
@@ -407,6 +417,20 @@ public abstract class KsqlContext : IKsqlContext
     internal ConfluentSchemaRegistry.ISchemaRegistryClient GetSchemaRegistryClient() => _schemaRegistryClient.Value;
     internal MappingRegistry GetMappingRegistry() => _mappingRegistry;
 
+    private IEntitySet<Core.Models.DlqEnvelope> GetDlqStream()
+    {
+        var type = typeof(Core.Models.DlqEnvelope);
+        if (_entitySets.TryGetValue(type, out var existing))
+        {
+            return (IEntitySet<Core.Models.DlqEnvelope>)existing;
+        }
+
+        var model = GetOrCreateEntityModel<Core.Models.DlqEnvelope>();
+        var set = CreateEntitySet<Core.Models.DlqEnvelope>(model);
+        _entitySets[type] = set;
+        return set;
+    }
+
     /// <summary>
     /// 指定したエンティティを手動でDLQへ送信します
     /// </summary>
@@ -600,6 +624,9 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
     /// </summary>
     public async Task<List<T>> ToListAsync(CancellationToken cancellationToken = default)
     {
+        if (_entityModel.EntityType == typeof(Core.Models.DlqEnvelope))
+            throw new InvalidOperationException("DLQは無限列挙/履歴列であり、バッチ取得・件数指定取得は現状未対応です");
+
         if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Stream)
             throw new InvalidOperationException(
                 "ToListAsync() is not supported on a Stream source. Use ForEachAsync or subscribe for event consumption.");

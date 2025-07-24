@@ -95,6 +95,9 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
 
     public virtual async Task<List<T>> ToListAsync(CancellationToken cancellationToken = default)
     {
+        if (_entityModel.EntityType == typeof(Core.Models.DlqEnvelope))
+            throw new InvalidOperationException("DLQは無限列挙/履歴列であり、バッチ取得・件数指定取得は現状未対応です");
+
         if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Stream)
             throw new InvalidOperationException("ToListAsync() is not supported on a Stream source. Use ForEachAsync or subscribe for event consumption.");
 

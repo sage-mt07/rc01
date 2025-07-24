@@ -43,6 +43,7 @@
 - `ToList`/`ToListAsync` は Pull Query として実行されます【F:src/Query/Pipeline/DMLQueryGenerator.cs†L27-L34】。
 - `WithManualCommit()` を指定しない `ForEachAsync()` は自動コミット動作となります【F:docs/old/manual_commit.md†L1-L23】。
 - `OnError(ErrorAction.DLQ)` を指定すると DLQ トピックへ送信されます【F:docs/old/defaults.md†L52-L52】。
+- `ctx.Set<DlqEnvelope>()` を指定すると DLQ ストリームを取得できます。DLQ は無限ログのため `Take()` や `ToListAsync()` などの一括取得 API は利用できず、`ForEachAsync()` のみサポートします。また DLQ ストリームで `.OnError(ErrorAction.DLQ)` を指定すると無限ループになるため禁止されています。
 - Messaging クラス自体は DLQ 送信処理を持たず、`ErrorOccurred`/`DeserializationError`/`ProduceError` などのイベントを通じて外部で DLQ 送信を行います。
 - `Set<T>().Limit(n)` を指定すると n 件取得後にストリームが終了します。残りのレコードは破棄されます。
 - バーエンティティでは `WithWindow().Select<TBar>()` で `BarTime` に代入した式が自動的に記録され、`Limit` の並び替えに使用されます。
