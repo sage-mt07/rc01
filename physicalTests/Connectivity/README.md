@@ -2,7 +2,14 @@
 
 These tests validate that each service in the docker environment is reachable.
 Run them sequentially so any failure clearly indicates which component is
-unavailable.
+unavailable. To keep environment state consistent, each test class encapsulates
+the complete setup–verification–cleanup sequence in a single `[Fact]` method.
+If multiple methods are required, apply `PriorityOrderer` with `[TestPriority]`
+attributes to enforce the execution order (see `PriorityOrderer.cs`).
+
+Tests such as `DummyMessages_EnableQueries` and `CreateAllObjectsByOnModelCreating`
+also follow this infrastructure pattern even though they live outside this
+folder.
 
 ## Recommended order and verification points
 
