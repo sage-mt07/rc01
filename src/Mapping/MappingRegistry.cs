@@ -42,6 +42,11 @@ public class MappingRegistry
         PropertyMeta[] valueProperties,
         string? topicName = null)
     {
+        if (_mappings.TryGetValue(pocoType, out var existing))
+        {
+            return existing;
+        }
+
         var ns = pocoType.Namespace?.ToLower() ?? string.Empty;
         var baseName = SanitizeName((topicName ?? pocoType.Name).ToLower());
 

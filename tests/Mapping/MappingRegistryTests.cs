@@ -27,8 +27,8 @@ public class MappingRegistryTests
             keyProps,
             valueProps);
 
-        Assert.Equal("sample-key", mapping.KeyType.Name);
-        Assert.Equal("sample-value", mapping.ValueType.Name);
+        Assert.Equal("sample_key", mapping.KeyType.Name);
+        Assert.Equal("sample_value", mapping.ValueType.Name);
         Assert.Equal("kafka.ksql.linq.tests.mapping", mapping.KeyType.Namespace);
         Assert.Equal("kafka.ksql.linq.tests.mapping", mapping.ValueType.Namespace);
         var retrieved = registry.GetMapping(typeof(Sample));
