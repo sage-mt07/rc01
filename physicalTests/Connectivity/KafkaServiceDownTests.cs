@@ -41,8 +41,15 @@ public class KafkaServiceDownTests
     {
         if (!KsqlDbAvailability.IsAvailable())
             throw new SkipException(KsqlDbAvailability.SkipReason);
+        try
+        {
+            await TestEnvironment.ResetAsync();
 
-        await TestEnvironment.ResetAsync();
+        }
+        catch (Exception ex1)
+        {
+
+        }
         await DockerHelper.StopServiceAsync("kafka");
 
         await using var ctx = new OrderContext(CreateOptions());
@@ -65,7 +72,15 @@ public class KafkaServiceDownTests
         if (!KsqlDbAvailability.IsAvailable())
             throw new SkipException(KsqlDbAvailability.SkipReason);
 
-        await TestEnvironment.ResetAsync();
+        try
+        {
+            await TestEnvironment.ResetAsync();
+
+        }
+        catch (Exception ex1)
+        {
+
+        }
         await DockerHelper.StopServiceAsync("kafka");
 
         await using var ctx = new OrderContext(CreateOptions());

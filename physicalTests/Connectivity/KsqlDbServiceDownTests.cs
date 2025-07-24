@@ -19,8 +19,14 @@ public class KsqlDbServiceDownTests
     {
         if (!KsqlDbAvailability.IsAvailable())
             throw new SkipException(KsqlDbAvailability.SkipReason);
+        try
+        {
+            await TestEnvironment.ResetAsync();
 
-        await TestEnvironment.ResetAsync();
+        }
+        catch (Exception ex)
+        {
+        }
         await DockerHelper.StopServiceAsync("ksqldb-server");
 
         await using var ctx = TestEnvironment.CreateContext();

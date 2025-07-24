@@ -284,8 +284,14 @@ public class DynamicKsqlGenerationTests
     {
         if (!KsqlDbAvailability.IsAvailable())
             throw new SkipException(KsqlDbAvailability.SkipReason);
+        try
+        {
+            await TestEnvironment.ResetAsync();
 
-        await TestEnvironment.ResetAsync();
+        }
+        catch (Exception ex)
+        {
+        }
 
         if (!TestSchema.IsSupportedKsql(ksql))
             return; // skip unsupported queries

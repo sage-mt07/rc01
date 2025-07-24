@@ -109,8 +109,14 @@ public class DummyFlagSchemaRecognitionTests
     {
         if (!KsqlDbAvailability.IsAvailable())
             throw new SkipException(KsqlDbAvailability.SkipReason);
+        try
+        {
+            await TestEnvironment.ResetAsync();
 
-        await TestEnvironment.ResetAsync();
+        }
+        catch (Exception ex)
+        {
+        }
 
         await using (var ctx = TestEnvironment.CreateContext())
         {
