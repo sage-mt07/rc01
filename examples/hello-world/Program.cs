@@ -46,8 +46,8 @@ class Program
         };
 
         await context.Set<HelloMessage>().AddAsync(message);
-        // wait briefly for message to be published
-        await Task.Delay(500);
+        // wait until the stream is ready
+        await context.WaitForEntityReadyAsync<HelloMessage>(TimeSpan.FromSeconds(5));
 
         await context.Set<HelloMessage>().ForEachAsync(m =>
         {
