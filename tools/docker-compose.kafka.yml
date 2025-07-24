@@ -39,5 +39,15 @@ services:
       KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
       KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
 
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.5.1
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+
 volumes:
   kafka-data:
