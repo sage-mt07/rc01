@@ -268,6 +268,11 @@ public abstract class KsqlContext : IKsqlContext
             if (_entityModels.TryGetValue(type, out var existing))
             {
                 existing.SetStreamTableType(model.GetExplicitStreamTableType());
+                existing.UseManualCommit = model.UseManualCommit;
+                existing.ErrorAction = model.ErrorAction;
+                existing.DeserializationErrorPolicy = model.DeserializationErrorPolicy;
+                existing.EnableCache = model.EnableCache;
+                existing.BarTimeSelector = model.BarTimeSelector;
             }
             else
             {
