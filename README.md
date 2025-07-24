@@ -170,19 +170,16 @@ await context.Set<OrderCandle>()
 ```
 
 ### Set<T>().Limit(N)
-`Limit` を指定すると、Pull Query として N 件だけ取得した時点で処理が終了します。余分
-なレコードは内部で破棄されるため、`ForEachAsync` や `ToListAsync` でも N 件で完了しま
-す。
+`Limit` は Table 型 (`Set<T>`) の保持件数を制限する DSL です。`OnModelCreating` 内で宣言し、指定件数を超えた古いレコードは自動削除されます。Stream 型や実行時クエリでは使用できません。
 
 ```csharp
-var recent = await context.Set<Order>()
-    .Limit(100)
-    .ToListAsync();
+protected override void OnModelCreating(IModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Order>().Limit(100); // 最大100件のみ保持
+}
 ```
 
-`Limit` がバーエンティティに適用される場合、`WithWindow().Select<TBar>()`
-で `BarTime` プロパティへ代入した式が自動的に抽出され、並び替えに利用されます。
-追加の設定は不要です。
+`WithWindow().Select<TBar>()` を利用している場合、`BarTime` セレクターは自動的に抽出され、並び替えに使用されます。
 
 ### RemoveAsync とトムストーン
 `RemoveAsync` を呼び出すと、指定キーに対する値 `null` のメッセージ（トムストーン）がト

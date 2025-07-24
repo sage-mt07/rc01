@@ -477,6 +477,62 @@ public abstract class KsqlContext : IKsqlContext
         return typeof(T).Name.ToLowerInvariant();
     }
 
+    internal async Task<bool> IsEntityReadyAsync<T>(CancellationToken cancellationToken = default) where T : class
+    {
+        var models = GetEntityModels();
+        if (!models.TryGetValue(typeof(T), out var model))
+            return false;
+
+        var statement = model.GetExplicitStreamTableType() == StreamTableType.Table
+            ? "SHOW TABLES;"
+            : "SHOW STREAMS;";
+
+        var name = (model.TopicName ?? typeof(T).Name).ToUpperInvariant();
+        var response = await ExecuteStatementAsync(statement);
+        if (!response.IsSuccess)
+            return false;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(response.Message);
+            var listName = statement.Contains("TABLES") ? "tables" : "streams";
+            foreach (var item in doc.RootElement.EnumerateArray())
+            {
+                if (!item.TryGetProperty(listName, out var arr))
+                    continue;
+
+                foreach (var element in arr.EnumerateArray())
+                {
+                    if (element.TryGetProperty("name", out var n) &&
+                        string.Equals(n.GetString(), name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // ignore parse errors
+        }
+
+        return false;
+    }
+
+    public async Task WaitForEntityReadyAsync<T>(TimeSpan timeout, CancellationToken cancellationToken = default) where T : class
+    {
+        var start = DateTime.UtcNow;
+        while (DateTime.UtcNow - start < timeout)
+        {
+            if (await IsEntityReadyAsync<T>(cancellationToken))
+                return;
+
+            await Task.Delay(100, cancellationToken);
+        }
+
+        throw new TimeoutException($"Entity {typeof(T).Name} not ready after {timeout}.");
+    }
+
     public ConsumerBuilder<object, T> CreateConsumerBuilder<T>(KafkaSubscriptionOptions? options = null) where T : class
         => _consumerManager.CreateConsumerBuilder<T>(options);
 

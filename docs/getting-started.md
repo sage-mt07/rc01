@@ -264,6 +264,8 @@ CREATE TABLE/STREAM を実行してテーブルを登録した直後は、KSQL �
 テスト目的で送信するダミーメッセージには `is_dummy=true` といったヘッダーを付与することで、consumer や KSQL 側で本番データと区別できます。このヘッダー値を利用して、スキーマ確定後のクリーンアップや検証を行ってください。
 詳細なテスト手順は `features/dummy_flag_test/instruction.md` も併せて参照してください。
 
+ダミーレコード送信後は、`WaitForEntityReadyAsync<T>()` を呼び出して ksqlDB が対象ストリーム/テーブルを認識するまで待機すると安全です。伝搬遅延による `DESCRIBE` 失敗を回避でき、テストや初期化処理での競合を防止できます。
+
 スキーマ登録済みのエンティティ名やフィールド名は **大文字・小文字を区別** します。`SchemaRegistryException` が発生する場合は、Schema Registry に登録されているスキーマと、テストコードで利用しているモデルの名前が完全に一致しているか確認してください。
 
 ## 5. プロデュース操作
@@ -520,19 +522,16 @@ public class WindowedOrderSummary
 ## 9. 削除と件数制限の操作
 
 ### Set<T>().Limit(N)
-`Limit` を付与すると、KSQL の `LIMIT` 句を伴う Pull Query が生成されます。取得数が N
- 件に達した時点で処理が完了し、それ以降のレコードは自動的に破棄されます。
+`Limit` は Table 型 (`Set<T>`) の保持件数を制限する DSL です。`OnModelCreating` 内で宣言し、指定件数を超えた古いレコードは自動削除されます。Stream 型や実行時クエリでは使用できません。
 
 ```csharp
-var latest = await context.Set<Trade>()
-    .Limit(50)
-    .ToListAsync();
+protected override void OnModelCreating(IModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Trade>().Limit(50);
+}
 ```
 
-バー生成に `WithWindow().Select<TBar>()` を使用している場合、`BarTime` への
-代入式から自動的にタイムスタンプセレクターが取得され、`Limit` の並び替えに活用
-されます。
-
+バー生成に `WithWindow().Select<TBar>()` を使用している場合、`BarTime` への代入式から自動的にタイムスタンプセレクターが取得され、`Limit` の並び替えに活用されます。
 ### RemoveAsync でトムストーン送信
 `RemoveAsync` はキーを指定して値 `null` のメッセージ（トムストーン）をトピックへ送信し
 ます。これにより KTable やキャッシュに保持された同一キーのデータが削除されます。
