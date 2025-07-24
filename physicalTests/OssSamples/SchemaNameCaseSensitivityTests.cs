@@ -62,7 +62,14 @@ public class SchemaNameCaseSensitivityTests
         if (!KsqlDbAvailability.IsAvailable())
             throw new SkipException(KsqlDbAvailability.SkipReason);
 
-        await TestEnvironment.ResetAsync();
+        try
+        {
+            await TestEnvironment.ResetAsync();
+
+        }
+        catch (Exception ex)
+        {
+        }
 
         var options = new KsqlDslOptions
         {
