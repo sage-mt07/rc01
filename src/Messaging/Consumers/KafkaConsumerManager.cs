@@ -1,25 +1,28 @@
-﻿using Confluent.Kafka;
+using Chr.Avro.Confluent;
+using Confluent.Kafka;
+using Confluent.Kafka.SyncOverAsync;
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Configuration.Abstractions;
 using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Configuration;
 using Kafka.Ksql.Linq.Core.Extensions;
+using Kafka.Ksql.Linq.Core.Models;
 using Kafka.Ksql.Linq.Messaging.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Configuration;
-using Kafka.Ksql.Linq.Core.Configuration;
 using Kafka.Ksql.Linq.Messaging.Consumers.Core;
-using Chr.Avro.Confluent;
-using Confluent.Kafka.SyncOverAsync;
 using Kafka.Ksql.Linq.Messaging.Internal;
-using Kafka.Ksql.Linq.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using static Confluent.Kafka.ConfigPropertyNames;
 using ConfluentSchemaRegistry = Confluent.SchemaRegistry;
 
 namespace Kafka.Ksql.Linq.Messaging.Consumers;
@@ -139,7 +142,7 @@ internal class KafkaConsumerManager : IDisposable
             yield return kafkaMessage.Value;
         }
     }
-
+  
     /// <summary>
     /// エンティティ一覧取得 - EventSetから使用
     /// </summary>

@@ -817,15 +817,25 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
     public async Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
         if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Table)
-            throw new InvalidOperationException(
-                "ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
+            throw new InvalidOperationException("ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
+        using var cts = (timeout != default && timeout != Timeout.InfiniteTimeSpan)
+            ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)
+            : null;
+        if (cts != null)
+            cts.CancelAfter(timeout);
+
+        var effectiveToken = cts?.Token ?? cancellationToken;
         try
         {
             var consumerManager = _ksqlContext.GetConsumerManager();
-
-            // Simplified implementation: streaming consumption
-            // TODO: integrate with the actual streaming Consumer implementation
-            await Task.Delay(100, cancellationToken); // シミュレート
+            await foreach (var item in consumerManager.ConsumeAsync<T>(cancellationToken))
+            {
+                await action(item);
+            }
+        }
+        catch (OperationCanceledException) when (cts != null && cts.IsCancellationRequested)
+        {
+            // タイムアウトで終了（正常系として握りつぶすか、ログに残すか、任意の対応）
         }
         catch (Exception ex)
         {
@@ -836,13 +846,29 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
     public async Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
         if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Table)
-            throw new InvalidOperationException(
-                "ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
+            throw new InvalidOperationException("ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
+
+        using var cts = (timeout != default && timeout != Timeout.InfiniteTimeSpan)
+            ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)
+            : null;
+        if (cts != null)
+            cts.CancelAfter(timeout);
+
+        var effectiveToken = cts?.Token ?? cancellationToken;
+
         try
         {
             var consumerManager = _ksqlContext.GetConsumerManager();
-
-            await Task.Delay(100, cancellationToken); // シミュレート
+            
+            // ここは「KafkaMessageContextも返す」IAsyncEnumerableをConsumerManagerで用意
+            await foreach (var (item, context) in consumerManager.ConsumeWithContextAsync<T>(effectiveToken))
+            {
+                await action(item, context);
+            }
+        }
+        catch (OperationCanceledException) when (cts != null && cts.IsCancellationRequested)
+        {
+            // タイムアウト終了（握りつぶし or ログ or 何もしない）
         }
         catch (Exception ex)
         {
@@ -855,9 +881,8 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
     /// </summary>
     public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
     {
-        // 簡略実装：実際のストリーミングConsumerと連携
-        var results = await ToListAsync(cancellationToken);
-        foreach (var item in results)
+        var consumerManager = _ksqlContext.GetConsumerManager();
+        await foreach (var item in consumerManager.ConsumeAsync<T>(cancellationToken))
         {
             yield return item;
         }
