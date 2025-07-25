@@ -142,6 +142,22 @@ internal class KafkaConsumerManager : IDisposable
             yield return kafkaMessage.Value;
         }
     }
+
+    /// <summary>
+    /// KafkaストリームからT型データとKafkaMessageContextを非同期で取得する。
+    /// </summary>
+    public async IAsyncEnumerable<(T, KafkaMessageContext)> ConsumeWithContextAsync<T>(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    ) where T : class
+    {
+        var consumer = await GetConsumerAsync<T>();
+
+        await foreach (var kafkaMessage in consumer.ConsumeAsync(cancellationToken))
+        {
+            var ctx = kafkaMessage.Context ?? new KafkaMessageContext();
+            yield return (kafkaMessage.Value, ctx);
+        }
+    }
   
     /// <summary>
     /// エンティティ一覧取得 - EventSetから使用
