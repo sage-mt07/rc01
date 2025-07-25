@@ -5,11 +5,10 @@ using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Configuration.Abstractions;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Dlq;
+using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq.Infrastructure.Admin;
 using Kafka.Ksql.Linq.Mapping;
-using Kafka.Ksql.Linq.Core.Models;
-using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.SchemaRegistryTools;
@@ -47,7 +46,10 @@ public abstract class KsqlContext : IKsqlContext
     private readonly KsqlDslOptions _dslOptions;
     private TableCacheRegistry? _cacheRegistry;
     private readonly MappingRegistry _mappingRegistry = new();
-    private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<KsqlContext>();
+    private readonly ILogger _logger;
+    private readonly ILoggerFactory? _loggerFactory;
+
+    internal ILogger Logger => _logger; 
 
 
 
@@ -58,12 +60,12 @@ public abstract class KsqlContext : IKsqlContext
 
     public const string DefaultSectionName = "KsqlDsl";
 
-    protected KsqlContext(IConfiguration configuration)
-        : this(configuration, DefaultSectionName)
+    protected KsqlContext(IConfiguration configuration,ILoggerFactory? loggerFactory=null)
+        : this(configuration, DefaultSectionName,loggerFactory)
     {
     }
 
-    protected KsqlContext(IConfiguration configuration, string sectionName)
+    protected KsqlContext(IConfiguration configuration, string sectionName,ILoggerFactory? loggerFactory=null)
     {
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
         _ksqlDbClient = new Lazy<HttpClient>(CreateClient);
@@ -71,15 +73,18 @@ public abstract class KsqlContext : IKsqlContext
         configuration.GetSection(sectionName).Bind(_dslOptions);
         DecimalPrecisionConfig.DecimalPrecision = _dslOptions.DecimalPrecision;
         DecimalPrecisionConfig.DecimalScale = _dslOptions.DecimalScale;
+        _loggerFactory = loggerFactory ?? configuration.CreateLoggerFactory();
+        _logger = _loggerFactory.CreateLoggerOrNull<KsqlContext>();
+
         _adminService = new KafkaAdminService(
         Microsoft.Extensions.Options.Options.Create(_dslOptions),
-        null);
+        _loggerFactory);
         InitializeEntityModels();
         try
         {
             _producerManager = new KafkaProducerManager(
                 Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                null);
+                _loggerFactory);
 
             if (!SkipSchemaRegistration)
             {
@@ -99,36 +104,41 @@ public abstract class KsqlContext : IKsqlContext
 
             _consumerManager = new KafkaConsumerManager(
                 Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                null);
+                _loggerFactory);
             _consumerManager.DeserializationError += (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
                 _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType);
 
-            this.UseTableCache(_dslOptions, null);
+            this.UseTableCache(_dslOptions, _loggerFactory);
             _cacheRegistry = this.GetTableCacheRegistry();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, $"KsqlContext initialization failed: {ex.Message} (section: {sectionName})");
+            _logger.LogError(ex, $"KsqlContext initialization failed: {ex.Message} (section: {sectionName})");
             throw;
         }
     }
 
-    protected KsqlContext(KsqlDslOptions options)
+    protected KsqlContext(KsqlDslOptions options,ILoggerFactory? loggerFactory=null)
     {
         _schemaRegistryClient = new Lazy<ConfluentSchemaRegistry.ISchemaRegistryClient>(CreateSchemaRegistryClient);
         _ksqlDbClient = new Lazy<HttpClient>(CreateClient);
         _dslOptions = options;
         DecimalPrecisionConfig.DecimalPrecision = _dslOptions.DecimalPrecision;
         DecimalPrecisionConfig.DecimalScale = _dslOptions.DecimalScale;
+
+        _loggerFactory = loggerFactory;
+        _logger = _loggerFactory.CreateLoggerOrNull<KsqlContext>();
+
+
         _adminService = new KafkaAdminService(
         Microsoft.Extensions.Options.Options.Create(_dslOptions),
-        null);
+        _loggerFactory);
         InitializeEntityModels();
         try
         {
             _producerManager = new KafkaProducerManager(
                  Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                 null);
+                 _loggerFactory);
             if (!SkipSchemaRegistration)
             {
                 InitializeWithSchemaRegistration();
@@ -147,16 +157,16 @@ public abstract class KsqlContext : IKsqlContext
 
             _consumerManager = new KafkaConsumerManager(
                 Microsoft.Extensions.Options.Options.Create(_dslOptions),
-                null);
+                _loggerFactory);
             _consumerManager.DeserializationError += (data, ex, topic, part, off, ts, headers, keyType, valueType) =>
                 _dlqProducer.SendAsync(data, ex, topic, part, off, ts, headers, keyType, valueType);
 
-            this.UseTableCache(_dslOptions, null);
+            this.UseTableCache(_dslOptions, _loggerFactory);
         _cacheRegistry = this.GetTableCacheRegistry();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, $"KsqlContext initialization failed: {ex.Message} ");
+            _logger.LogError(ex, $"KsqlContext initialization failed: {ex.Message} ");
             throw;
         }
     }
