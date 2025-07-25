@@ -108,18 +108,8 @@ public abstract class KsqlContext : IKsqlContext
         }
         catch (Exception ex)
         {
-            var hint = string.Empty;
-            if (ex is HttpRequestException || ex.InnerException is HttpRequestException)
-            {
-                hint = " Could not connect to ksqlDB endpoint.";
-            }
-            else if (ex is KafkaException || ex.InnerException is KafkaException)
-            {
-                hint = " Cannot connect to Kafka cluster.";
-            }
-
-            throw new InvalidOperationException(
-                $"FATAL: KsqlContext initialization failed.{hint} See inner exception for details. {ex.Message}", ex);
+            Logger.LogError(ex, $"KsqlContext initialization failed: {ex.Message} (section: {sectionName})");
+            throw;
         }
     }
 
@@ -166,18 +156,8 @@ public abstract class KsqlContext : IKsqlContext
         }
         catch (Exception ex)
         {
-            var hint = string.Empty;
-            if (ex is HttpRequestException || ex.InnerException is HttpRequestException)
-            {
-                hint = " Could not connect to ksqlDB endpoint.";
-            }
-            else if (ex is KafkaException || ex.InnerException is KafkaException)
-            {
-                hint = " Cannot connect to Kafka cluster.";
-            }
-
-            throw new InvalidOperationException(
-                $"FATAL: KsqlContext initialization failed.{hint} See inner exception for details. {ex.Message}", ex);
+            Logger.LogError(ex, $"KsqlContext initialization failed: {ex.Message} ");
+            throw;
         }
     }
 
@@ -400,8 +380,10 @@ public abstract class KsqlContext : IKsqlContext
             if (type == typeof(Core.Models.DlqEnvelope))
                 continue;
 
-            var subject = GetSubjectName(model);
-            var schema = BuildSchemaString(type);
+            var mapping = _mappingRegistry.GetMapping(type);
+            // ここでWithTopicやSanitizeName反映済みの動的型を取得
+            var subject = GetSubjectName(model, mapping); // mapping情報でsubject決定
+            var schema = BuildSchemaString(mapping.ValueType); // valueTypeベースでschema生成
 
             SchemaRegistryTools.SchemaRegistrationResult regResult;
             try
@@ -432,10 +414,9 @@ public abstract class KsqlContext : IKsqlContext
         }
     }
 
-    private static string GetSubjectName(EntityModel model)
+    private string GetSubjectName(EntityModel model, KeyValueTypeMapping mapping)
     {
-        var topicName = model.GetTopicName();
-        return $"{topicName}-value";
+        return $"{mapping.ValueType.Namespace}.{mapping.ValueType.Name}";
     }
 
     private static string BuildSchemaString(Type entityType)

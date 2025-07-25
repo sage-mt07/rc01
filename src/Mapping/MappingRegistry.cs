@@ -19,12 +19,12 @@ public class MappingRegistry
     private readonly ConcurrentDictionary<Type, KeyValueTypeMapping> _mappings = new();
     private readonly ModuleBuilder _moduleBuilder;
 
-    private static string SanitizeName(string name)
+    private static string AvroSanitizeName(string name)
     {
-        var sanitized = Regex.Replace(name, "[^A-Za-z0-9_-]", "_");
+        var sanitized = Regex.Replace(name, @"[^A-Za-z0-9_]", "_");
         if (string.IsNullOrEmpty(sanitized))
             sanitized = "_";
-        if (char.IsDigit(sanitized[0]))
+        if (!Regex.IsMatch(sanitized[0].ToString(), "[A-Za-z_]"))
             sanitized = "_" + sanitized;
         return sanitized;
     }
@@ -47,8 +47,22 @@ public class MappingRegistry
             return existing;
         }
 
-        var ns = pocoType.Namespace?.ToLower() ?? string.Empty;
-        var baseName = SanitizeName((topicName ?? pocoType.Name).ToLower());
+       
+        string ns;
+        if (!string.IsNullOrWhiteSpace(topicName))
+        {
+            // topicNameが "foo.orders" の場合は "foo" をnamespaceに使う（お好みで分割ロジック調整可）
+            var topicNs = topicName.Contains(".")
+                ? topicName.Split('.')[0]
+                : topicName;
+            ns = AvroSanitizeName(topicNs.ToLower());
+        }
+        else
+        {
+            ns = AvroSanitizeName(pocoType.Namespace?.ToLower() ?? string.Empty);
+        }
+
+        var baseName = AvroSanitizeName((topicName ?? pocoType.Name).ToLower());
 
         var keyType = CreateType(ns, $"{baseName}-key", keyProperties);
         var valueType = CreateType(ns, $"{baseName}-value", valueProperties);
@@ -114,7 +128,7 @@ public class MappingRegistry
 
     private Type CreateType(string ns, string name, PropertyMeta[] properties)
     {
-        var safeName = SanitizeName(name);
+        var safeName = AvroSanitizeName(name);
         var typeBuilder = _moduleBuilder.DefineType($"{ns}.{safeName}", TypeAttributes.Public | TypeAttributes.Class);
         foreach (var meta in properties)
         {
