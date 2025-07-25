@@ -1,6 +1,7 @@
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Query.Schema;
 using Kafka.Ksql.Linq.Core.Models;
+using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.SchemaRegistryTools;
 using Confluent.SchemaRegistry;
 using Kafka.Ksql.Linq.Mapping;
@@ -36,15 +37,19 @@ public static class KsqlContextQueryExtensions
         var schema = ExtractQuerySchemaFromEntityModel(entityModel);
         if (schema != null)
         {
-            context.GetMappingRegistry().Register(entityModel.EntityType, schema.KeyProperties, schema.ValueProperties);
+            context.GetMappingRegistry().Register(
+                entityModel.EntityType,
+                schema.KeyProperties,
+                schema.ValueProperties,
+                entityModel.GetTopicName());
             return schema;
         }
 
         if (entityModel.AccessMode == EntityAccessMode.ReadOnly)
         {
             var client = context.GetSchemaRegistryClient();
-            var meta = SchemaRegistryMetaProvider.GetMetaFromSchemaRegistry(pocoType, client);
-            context.GetMappingRegistry().RegisterMeta(pocoType, meta);
+            var meta = SchemaRegistryMetaProvider.GetMetaFromSchemaRegistry(entityModel, client);
+            context.GetMappingRegistry().RegisterMeta(pocoType, meta, entityModel.GetTopicName());
             schema = new QuerySchema
             {
                 SourceType = pocoType,
@@ -55,7 +60,7 @@ public static class KsqlContextQueryExtensions
                 ValueProperties = meta.ValueProperties
             };
             var ns = pocoType.Namespace?.ToLower() ?? string.Empty;
-            var baseName = pocoType.Name.ToLower();
+            var baseName = entityModel.GetTopicName();
             schema.KeyInfo.ClassName = $"{baseName}-key";
             schema.KeyInfo.Namespace = ns;
             schema.ValueInfo.ClassName = $"{baseName}-value";
@@ -99,7 +104,11 @@ public static class KsqlContextQueryExtensions
             if (schema.IsValid)
             {
                 QuerySchemaHelper.ValidateQuerySchema(schema, out _);
-                mapping.Register(schema.TargetType, schema.KeyProperties, schema.ValueProperties);
+                mapping.Register(
+                    schema.TargetType,
+                    schema.KeyProperties,
+                    schema.ValueProperties,
+                    schema.TopicName);
             }
         }
     }

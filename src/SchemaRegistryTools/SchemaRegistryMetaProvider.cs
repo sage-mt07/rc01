@@ -1,6 +1,8 @@
 using Avro;
 using Confluent.SchemaRegistry;
 using Kafka.Ksql.Linq.Core.Models;
+using Kafka.Ksql.Linq.Core.Abstractions;
+using Kafka.Ksql.Linq.Core.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,21 +19,20 @@ public static class SchemaRegistryMetaProvider
     /// Fetch key and value schemas for the given entity type and
     /// generate corresponding PropertyMeta definitions.
     /// </summary>
-    /// <param name="entityType">Entity type registered in Kafka.</param>
+    /// <param name="model">Entity model registered in Kafka.</param>
     /// <param name="client">Schema Registry client.</param>
     /// <returns>Tuple of key and value PropertyMeta arrays.</returns>
     public static (PropertyMeta[] KeyProperties, PropertyMeta[] ValueProperties) GetMetaFromSchemaRegistry(
-        Type entityType,
+        EntityModel model,
         ISchemaRegistryClient client)
     {
-        if (entityType == null) throw new ArgumentNullException(nameof(entityType));
+        if (model == null) throw new ArgumentNullException(nameof(model));
         if (client == null) throw new ArgumentNullException(nameof(client));
 
-        var ns = entityType.Namespace?.ToLower() ?? string.Empty;
-        var baseName = entityType.Name.ToLower();
+        var topicName = model.GetTopicName();
 
-        var keySubject = $"{ns}.{baseName}-key";
-        var valueSubject = $"{ns}.{baseName}-value";
+        var keySubject = $"{topicName}-key";
+        var valueSubject = $"{topicName}-value";
 
         var keySchema = client.GetLatestSchemaAsync(keySubject).GetAwaiter().GetResult().SchemaString;
         var valueSchema = client.GetLatestSchemaAsync(valueSubject).GetAwaiter().GetResult().SchemaString;
