@@ -47,20 +47,8 @@ public class MappingRegistry
             return existing;
         }
 
-       
-        string ns;
-        if (!string.IsNullOrWhiteSpace(topicName))
-        {
-            // topicNameが "foo.orders" の場合は "foo" をnamespaceに使う（お好みで分割ロジック調整可）
-            var topicNs = topicName.Contains(".")
-                ? topicName.Split('.')[0]
-                : topicName;
-            ns = AvroSanitizeName(topicNs.ToLower());
-        }
-        else
-        {
-            ns = AvroSanitizeName(pocoType.Namespace?.ToLower() ?? string.Empty);
-        }
+
+        string ns = AvroSanitizeName(pocoType.Namespace?.ToLower() ?? string.Empty);
 
         var baseName = AvroSanitizeName((topicName ?? pocoType.Name).ToLower());
 
