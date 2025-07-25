@@ -319,8 +319,6 @@ ChatGPT:
 ### ✅ 基本的な消費処理の構文
 ```csharp
 await context.Orders
-    .Where(o => o.Amount > 1000)
-    .Select(o => Process(o))
     .ForEachAsync();
 ```
 
