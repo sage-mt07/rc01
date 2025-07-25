@@ -133,13 +133,13 @@ internal class KafkaConsumerManager : IDisposable
     /// <summary>
     /// エンティティ取得 - EventSetから使用
     /// </summary>
-    public async IAsyncEnumerable<T> ConsumeAsync<T>([EnumeratorCancellation] CancellationToken cancellationToken = default) where T : class
+    public async IAsyncEnumerable<KafkaMessage<T,object>> ConsumeAsync<T>([EnumeratorCancellation] CancellationToken cancellationToken = default) where T : class
     {
         var consumer = await GetConsumerAsync<T>();
-
+       // KafkaMessage<TValue, TKey>
         await foreach (var kafkaMessage in consumer.ConsumeAsync(cancellationToken))
         {
-            yield return kafkaMessage.Value;
+            yield return kafkaMessage;
         }
     }
 

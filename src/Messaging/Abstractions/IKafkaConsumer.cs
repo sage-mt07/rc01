@@ -1,4 +1,4 @@
-﻿using Confluent.Kafka;
+using Confluent.Kafka;
 using Kafka.Ksql.Linq.Configuration.Abstractions;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Messaging.Producers.Core;
@@ -26,7 +26,7 @@ public interface IKafkaConsumer<TValue, TKey> : IDisposable
     /// <summary>
     /// オフセットコミット
     /// </summary>
-    Task CommitAsync();
+    Task CommitAsync(TopicPartitionOffset offset);
 
     /// <summary>
     /// オフセットシーク

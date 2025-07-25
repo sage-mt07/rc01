@@ -1,3 +1,4 @@
+using Confluent.Kafka;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Extensions;
 using Kafka.Ksql.Linq.Messaging.Internal;
@@ -145,7 +146,7 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
         return ForEachAsync((item, ctx) => action(item), timeout, cancellationToken);
     }
 
-    public virtual async Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    public virtual async Task ForEachAsync(Func<T, KafkaMessage<T,object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
         if (action == null)
             throw new ArgumentNullException(nameof(action));
@@ -153,79 +154,8 @@ public abstract class EventSet<T> : IEntitySet<T> where T : class
         if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Table)
             throw new InvalidOperationException("ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
 
-        var inactivity = timeout <= TimeSpan.Zero ? Timeout.InfiniteTimeSpan : timeout;
-        var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        await Task.CompletedTask;
 
-        await using var enumerator = GetAsyncEnumerator(combinedCts.Token);
-
-        while (true)
-        {
-            var moveNextTask = enumerator.MoveNextAsync().AsTask();
-            var delayTask = inactivity == Timeout.InfiniteTimeSpan
-                ? Task.Delay(Timeout.Infinite, combinedCts.Token)
-                : Task.Delay(inactivity, combinedCts.Token);
-
-            var completed = await Task.WhenAny(moveNextTask, delayTask);
-
-            if (completed == delayTask)
-            {
-                // No new data within the timeout period
-                break;
-            }
-
-            combinedCts.Token.ThrowIfCancellationRequested();
-
-            bool hasNext;
-            try
-            {
-                hasNext = moveNextTask.Result;
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                var ctx = new KafkaMessageContext
-                {
-                    MessageId = Guid.NewGuid().ToString(),
-                    Tags = new Dictionary<string, object>
-                    {
-                        ["processing_phase"] = "ForEachAsync"
-                    }
-                };
-
-                var shouldContinue = await _errorHandlingContext.HandleErrorAsync(default(T)!, ex, ctx);
-                if (!shouldContinue)
-                    continue;
-                throw;
-            }
-
-            if (!hasNext)
-            {
-                break;
-            }
-
-            var item = enumerator.Current;
-
-            try
-            {
-                var messageContext = CreateMessageContext(item);
-                await action(item, messageContext);
-            }
-            catch (Exception ex)
-            {
-                var messageContext = CreateMessageContext(item);
-                var shouldContinue = await _errorHandlingContext.HandleErrorAsync(item, ex, messageContext);
-
-                if (!shouldContinue)
-                {
-                    continue;
-                }
-
-                throw;
-            }
-        }
     }
 
     /// <summary>

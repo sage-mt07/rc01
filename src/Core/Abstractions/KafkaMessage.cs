@@ -1,4 +1,4 @@
-﻿using Confluent.Kafka;
+using Confluent.Kafka;
 using System;
 
 namespace Kafka.Ksql.Linq.Core.Abstractions;
@@ -16,4 +16,8 @@ public class KafkaMessage<TValue, TKey>
     public DateTime Timestamp { get; set; }
     public Headers? Headers { get; set; }
     public KafkaMessageContext? Context { get; set; }
+    public TopicPartitionOffset GetTopicPartitionOffset()
+    {
+        return new TopicPartitionOffset(new TopicPartition(Topic, Partition), Offset);
+    }
 }

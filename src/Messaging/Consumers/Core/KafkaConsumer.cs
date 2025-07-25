@@ -147,17 +147,19 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
         }
     }
 
-    public async Task CommitAsync()
+    public async Task CommitAsync(TopicPartitionOffset offset)
     {
+        if (offset == null) throw new ArgumentNullException(nameof(offset));
+
         try
         {
-            _consumer.Commit();
-            await Task.Delay(1);
-            _logger?.LogTrace("Offset committed: {EntityType} -> {Topic}", typeof(TValue).Name, TopicName);
+            _consumer.Commit(new[] { offset });
+            _logger?.LogTrace("Offset committed: {EntityType} -> {Offset}", typeof(TValue).Name, offset);
+            await Task.CompletedTask;  // Commitは同期APIなので擬似的に非同期化
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Failed to commit offset: {EntityType} -> {Topic}", typeof(TValue).Name, TopicName);
+            _logger?.LogError(ex, "Failed to commit offset: {EntityType} -> {Offset}", typeof(TValue).Name, offset);
             throw;
         }
     }

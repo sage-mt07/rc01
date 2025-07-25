@@ -15,6 +15,7 @@ using Kafka.Ksql.Linq.SchemaRegistryTools;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -820,7 +821,29 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
             throw new InvalidOperationException($"Failed to consume entities {typeof(T).Name} from Kafka", ex);
         }
     }
+    private readonly ConcurrentDictionary<object, TopicPartitionOffset> _uncommitted
+    = new ConcurrentDictionary<object, TopicPartitionOffset>();
 
+    public async Task CommitAsync(T poco)
+    {
+        if (_uncommitted.TryGetValue(poco, out var commitOffset))
+        {
+            await _ksqlContext.GetConsumerManager().GetConsumerAsync<T>().Result.CommitAsync(commitOffset);
+            var offsetsToRemove = _uncommitted
+                  .Where(kv => kv.Value.Offset <= commitOffset.Offset)
+                  .Select(kv => kv.Key)
+                  .ToList();
+
+            foreach (var key in offsetsToRemove)
+            {
+                _uncommitted.TryRemove(key, out _);
+            }
+        }
+        else
+        {
+            throw new InvalidOperationException("Commit対象が見つかりません");
+        }
+    }
     /// <summary>
     /// Streaming機能：各エンティティに対してアクションを実行
     /// </summary>
@@ -840,7 +863,21 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
             var consumerManager = _ksqlContext.GetConsumerManager();
             await foreach (var item in consumerManager.ConsumeAsync<T>(cancellationToken))
             {
-                await action(item);
+                if (item.Headers != null && item.Headers.TryGetLastBytes("is_dummy", out var headerValue))
+                {
+                    var isDummy = Encoding.UTF8.GetString(headerValue) == "true";
+                    if (isDummy)
+                    {
+                        // ダミーメッセージはスキップ
+                        continue;
+                    }
+                }
+                if (_entityModel.UseManualCommit)
+                {
+                    _uncommitted.TryAdd(item.Value, item.GetTopicPartitionOffset());
+                }
+
+                await action(item.Value);
             }
         }
         catch (OperationCanceledException) when (cts != null && cts.IsCancellationRequested)
@@ -894,34 +931,17 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
         var consumerManager = _ksqlContext.GetConsumerManager();
         await foreach (var item in consumerManager.ConsumeAsync<T>(cancellationToken))
         {
-            yield return item;
+            yield return item.Value;
         }
     }
 
     protected virtual IManualCommitMessage<T> CreateManualCommitMessage(T item)
         => new ManualCommitMessage<T>(item, () => Task.CompletedTask, () => Task.CompletedTask);
 
-    public async IAsyncEnumerable<object> ForEachAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        if (_entityModel.GetExplicitStreamTableType() == StreamTableType.Table)
-            throw new InvalidOperationException("ForEachAsync() is not supported on a Table source. Use ToListAsync to obtain the full snapshot.");
-
-        await using var enumerator = GetAsyncEnumerator(cancellationToken);
-
-        while (await enumerator.MoveNextAsync())
-        {
-            var item = enumerator.Current;
-
-            if (_entityModel.UseManualCommit)
-            {
-                yield return CreateManualCommitMessage(item);
-            }
-            else
-            {
-                yield return item;
-            }
-        }
-    }
+    //public async IAsyncEnumerable<object> ForEachAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    //{
+    //    return ForEachAsync(cancellationToken);
+    //}
 
     // Metadata取得
     public string GetTopicName() => (_entityModel.TopicName ?? typeof(T).Name).ToLowerInvariant();

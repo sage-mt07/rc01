@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +20,7 @@ public interface IEntitySet<T> : IAsyncEnumerable<T> where T : class
 
     // Streaming operations
     Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default);
-    Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default);
+    Task ForEachAsync(Func<T, KafkaMessage<T,object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default);
 
 
 
