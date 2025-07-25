@@ -51,6 +51,5 @@
 
 	<ItemGroup>
 	  <Folder Include="Query\Builders\Common\" />
-	  <Folder Include="Query\Abstractions\" />
 	</ItemGroup>
 </Project>

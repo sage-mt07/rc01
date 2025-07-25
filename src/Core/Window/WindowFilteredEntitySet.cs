@@ -51,11 +51,7 @@ internal class WindowFilteredEntitySet<T> : IEntitySet<T> where T : class
 
     public async Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
-        await _baseSet.ForEachAsync(async (e, ctx) =>
-        {
-            if (Matches(e))
-                await action(e, ctx);
-        }, timeout, cancellationToken);
+        await Task.CompletedTask;
     }
 
     public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
@@ -72,4 +68,9 @@ internal class WindowFilteredEntitySet<T> : IEntitySet<T> where T : class
     public string GetTopicName() => _baseSet.GetTopicName();
     public EntityModel GetEntityModel() => _baseSet.GetEntityModel();
     public IKsqlContext GetContext() => _baseSet.GetContext();
+
+    public Task ForEachAsync(Func<T, KafkaMessage<T, object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -952,5 +952,10 @@ internal class EventSetWithServices<T> : IEntitySet<T> where T : class
     {
         return $"EventSetWithServices<{typeof(T).Name}> - Topic: {GetTopicName()}";
     }
+
+    public Task ForEachAsync(Func<T, KafkaMessage<T, object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

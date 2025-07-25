@@ -253,6 +253,11 @@ EMIT {(_config.OutputMode == WindowOutputMode.Final ? "FINAL" : "CHANGES")}";
     {
         return $"WindowAggregatedEntitySet<{typeof(TResult).Name}> - {_windowMinutes}min → {_windowTableName}";
     }
+
+    public Task ForEachAsync(Func<TResult, KafkaMessage<TResult, object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 // 式木解析用のVisitorクラス群

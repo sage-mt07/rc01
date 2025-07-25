@@ -127,7 +127,8 @@ internal class WindowedEntitySet<T> : IWindowedEntitySet<T> where T : class
 
     public async Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
-        await _baseEntitySet.ForEachAsync(action, timeout, cancellationToken);
+        await Task.CompletedTask;
+
     }
 
     public string GetTopicName() => _baseEntitySet.GetTopicName();
@@ -148,5 +149,10 @@ internal class WindowedEntitySet<T> : IWindowedEntitySet<T> where T : class
     public override string ToString()
     {
         return $"WindowedEntitySet<{typeof(T).Name}> - {_windowMinutes}min window → {GetWindowTableName()}";
+    }
+
+    public Task ForEachAsync(Func<T, KafkaMessage<T, object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

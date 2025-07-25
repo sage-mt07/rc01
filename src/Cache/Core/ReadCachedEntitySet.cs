@@ -60,7 +60,7 @@ internal class ReadCachedEntitySet<T> : IEntitySet<T> where T : class
 
     public Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
     {
-        return _baseSet.ForEachAsync(action, timeout, cancellationToken);
+        throw new InvalidOperationException("dummy");
     }
 
     public string GetTopicName() => (_model.TopicName ?? typeof(T).Name).ToLowerInvariant();
@@ -71,5 +71,10 @@ internal class ReadCachedEntitySet<T> : IEntitySet<T> where T : class
     {
         foreach (var item in await ToListAsync(cancellationToken))
             yield return item;
+    }
+
+    public Task ForEachAsync(Func<T, KafkaMessage<T, object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }
