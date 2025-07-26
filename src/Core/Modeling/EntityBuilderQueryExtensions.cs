@@ -106,6 +106,21 @@ public static class EntityBuilderQueryExtensions
     }
 
     /// <summary>
+    /// IEntityBuilder<T> 用の HasQueryFrom 拡張メソッド
+    /// </summary>
+    public static EntityModelBuilder<TTarget> HasQueryFrom<TSource, TTarget>(
+        this IEntityBuilder<TTarget> builder,
+        Expression<Func<IQueryable<TSource>, IQueryable<TTarget>>> queryExpression)
+        where TTarget : class
+        where TSource : class
+    {
+        if (builder is not EntityModelBuilder<TTarget> concreteBuilder)
+            throw new ArgumentException("Builder must be EntityModelBuilder<TTarget>", nameof(builder));
+
+        return concreteBuilder.HasQueryFrom<TSource, TTarget>(queryExpression);
+    }
+
+    /// <summary>
     /// クエリビルダーを使用した詳細設定
     /// </summary>
     public static EntityModelBuilder<T> HasQuery<T>(

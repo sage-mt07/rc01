@@ -28,10 +28,11 @@ public class HasQueryFromTests
         protected override void OnModelCreating(IModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ApiMessage>();
-            modelBuilder.Entity<CategoryCount>()
-                .HasQueryFrom<ApiMessage>(q =>
-                    q.GroupBy(m => m.Category)
-                     .Select(g => new CategoryCount { Key = g.Key, Count = g.Count() }));
+            var catBuilder = (EntityModelBuilder<CategoryCount>)modelBuilder.Entity<CategoryCount>();
+            EntityBuilderQueryExtensions.HasQueryFrom<ApiMessage, CategoryCount>(
+                catBuilder,
+                q => q.GroupBy(m => m.Category)
+                      .Select(g => new CategoryCount { Key = g.Key, Count = g.Count() }));
         }
     }
 
