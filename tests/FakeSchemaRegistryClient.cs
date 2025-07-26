@@ -57,7 +57,11 @@ internal class FakeSchemaRegistryClient : ISchemaRegistryClient
     public Task<RegisteredSchema> GetRegisteredSchemaAsync(string subject, int version, bool lookupDeletedSchema) => throw new NotImplementedException();
     public Task<string> GetSchemaAsync(string subject, int version) => throw new NotImplementedException();
     public Task<RegisteredSchema> GetLatestWithMetadataAsync(string subject, IDictionary<string, string> headers, bool ignoreDeletedSchemas) => throw new NotImplementedException();
-    public Task<List<string>> GetAllSubjectsAsync() => throw new NotImplementedException();
+    public Task<List<string>> GetAllSubjectsAsync()
+    {
+        var subjects = _store.Keys.ToList();
+        return Task.FromResult(subjects);
+    }
     public Task<List<int>> GetSubjectVersionsAsync(string subject) => throw new NotImplementedException();
     public Task<bool> IsCompatibleAsync(string subject, string schema) => throw new NotImplementedException();
     public Task<bool> IsCompatibleAsync(string subject, Schema schema) => throw new NotImplementedException();

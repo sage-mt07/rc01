@@ -46,9 +46,7 @@ public class EntityModelBuilder<T> : IEntityBuilder<T> where T : class
     {
         if (partitions <= 0)
             throw new ArgumentException("Partitions must be greater than 0", nameof(partitions));
-
-        _entityModel.DecimalPrecisions.Clear(); // no partition info now
-        // partitions info removed in new API
+        _entityModel.Partitions = partitions;
         return this;
     }
 
@@ -56,8 +54,7 @@ public class EntityModelBuilder<T> : IEntityBuilder<T> where T : class
     {
         if (replicationFactor <= 0)
             throw new ArgumentException("ReplicationFactor must be greater than 0", nameof(replicationFactor));
-
-        // replication info removed in new API
+        _entityModel.ReplicationFactor = (short)replicationFactor;
         return this;
     }
 
@@ -77,6 +74,8 @@ public class EntityModelBuilder<T> : IEntityBuilder<T> where T : class
             throw new ArgumentException("Topic name cannot be null or empty", nameof(name));
 
         _entityModel.TopicName = name.ToLowerInvariant();
+        _entityModel.Partitions = partitions;
+        _entityModel.ReplicationFactor = (short)replication;
         return this;
     }
 

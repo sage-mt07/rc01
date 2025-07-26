@@ -11,6 +11,8 @@ using Kafka.Ksql.Linq.Infrastructure.Admin;
 using Kafka.Ksql.Linq.Mapping;
 using Kafka.Ksql.Linq.Messaging.Consumers;
 using Kafka.Ksql.Linq.Query.Abstractions;
+using Kafka.Ksql.Linq.Query.Ddl;
+using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq.SchemaRegistryTools;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -304,6 +306,8 @@ public abstract class KsqlContext : IKsqlContext
         {
             EntityType = entityType,
             TopicName = entityType.Name.ToLowerInvariant(),
+            Partitions = 1,
+            ReplicationFactor = 1,
             AllProperties = allProperties,
             KeyProperties = keyProperties
         };
@@ -391,23 +395,19 @@ public abstract class KsqlContext : IKsqlContext
             if (type == typeof(Core.Models.DlqEnvelope))
                 continue;
 
-            var mapping = _mappingRegistry.GetMapping(type);
-            // ここでWithTopicやSanitizeName反映済みの動的型を取得
-            var subject = GetSubjectName(model, mapping); // mapping情報でsubject決定
-            var schema = BuildSchemaString(mapping.ValueType); // valueTypeベースでschema生成
-
-            SchemaRegistryTools.SchemaRegistrationResult regResult;
-            try
+            if (model.QueryExpression != null)
             {
-                regResult = await client.RegisterSchemaIfNewAsync(subject, schema);
+                await EnsureQueryEntityDdlAsync(type, model);
             }
-            catch (Exception ex)
+            else
             {
-                Logger.LogError(ex, "Schema registration failed for {Subject}", subject);
-                throw;
+                await EnsureSimpleEntityDdlAsync(type, model);
             }
 
-            if (regResult.WasCreated)
+            var subject = $"{model.GetTopicName()}-value";
+            var subjects = await client.GetAllSubjectsAsync();
+
+            if (!subjects.Contains(subject))
             {
                 try
                 {
@@ -422,6 +422,70 @@ public abstract class KsqlContext : IKsqlContext
                     throw;
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Create topics and ksqlDB objects for an entity defined without queries.
+    /// </summary>
+    private async Task EnsureSimpleEntityDdlAsync(Type type, EntityModel model)
+    {
+        var warnings = model.ValidationResult?.Warnings ?? new List<string>();
+        if (warnings.Any(w => w.StartsWith("QuerySchema:")))
+            return;
+
+        var generator = new Kafka.Ksql.Linq.Query.Pipeline.DDLQueryGenerator();
+
+        var topic = model.GetTopicName();
+        var partitions = 1;
+        short replicas = 1;
+        if (_dslOptions.Topics.TryGetValue(topic, out var config) && config.Creation != null)
+        {
+            partitions = config.Creation.NumPartitions;
+            replicas = config.Creation.ReplicationFactor;
+        }
+
+        model.Partitions = partitions;
+        model.ReplicationFactor = replicas;
+
+        await _adminService.CreateDbTopicAsync(topic, partitions, replicas);
+
+        string ddl;
+        var schemaProvider = new Query.Ddl.EntityModelDdlAdapter(model);
+        ddl = model.StreamTableType == StreamTableType.Table
+            ? generator.GenerateCreateTable(schemaProvider)
+            : generator.GenerateCreateStream(schemaProvider);
+
+        var result = await ExecuteStatementAsync(ddl);
+        if (!result.IsSuccess)
+        {
+            Logger.LogWarning("DDL execution failed for {Entity}: {Message}", type.Name, result.Message);
+        }
+    }
+
+    /// <summary>
+    /// Generate and execute CREATE TABLE/STREAM AS statements for query entities.
+    /// </summary>
+    private async Task EnsureQueryEntityDdlAsync(Type type, EntityModel model)
+    {
+        var schema = Application.KsqlContextQueryExtensions.GetQuerySchema(this, type);
+        if (schema == null || model.QueryExpression == null)
+            return;
+
+        if (!_entityModels.TryGetValue(schema.SourceType, out var sourceModel))
+            return;
+
+        var generator = new Query.Pipeline.DDLQueryGenerator();
+        var objectName = model.GetTopicName();
+        var baseObject = sourceModel.GetTopicName();
+
+        string ddl = model.StreamTableType == StreamTableType.Table
+            ? generator.GenerateCreateTableAs(objectName, baseObject, model.QueryExpression)
+            : generator.GenerateCreateStreamAs(objectName, baseObject, model.QueryExpression);
+        var result = await ExecuteStatementAsync(ddl);
+        if (!result.IsSuccess)
+        {
+            Logger.LogWarning("DDL execution failed for {Entity}: {Message}", type.Name, result.Message);
         }
     }
 

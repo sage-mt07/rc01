@@ -12,6 +12,21 @@ public class EntityModel
 
     public string? TopicName { get; set; }
 
+    /// <summary>
+    /// LINQ expression used for query-based entity definitions.
+    /// </summary>
+    public LambdaExpression? QueryExpression { get; set; }
+
+    /// <summary>
+    /// Number of partitions for the backing Kafka topic.
+    /// </summary>
+    public int Partitions { get; set; } = 1;
+
+    /// <summary>
+    /// Replication factor for the backing Kafka topic.
+    /// </summary>
+    public short ReplicationFactor { get; set; } = 1;
+
     public Dictionary<PropertyInfo, (int Precision, int Scale)> DecimalPrecisions { get; } = new();
 
     public PropertyInfo[] KeyProperties { get; set; } = Array.Empty<PropertyInfo>();

@@ -32,6 +32,8 @@ public static class EntityBuilderQueryExtensions
         var schema = result.Schema;
         var entityModel = builder.GetModel();
 
+        entityModel.QueryExpression = queryExpression;
+
         // Key設定
         if (schema.KeyProperties.Length > 0)
         {
@@ -121,6 +123,10 @@ public static class EntityBuilderQueryExtensions
         }
 
         var entityModel = builder.GetModel();
+        if (queryBuilder.QueryExpression != null)
+        {
+            entityModel.QueryExpression = queryBuilder.QueryExpression;
+        }
 
         // スキーマ情報をEntityModelに適用
         ApplySchemaToEntityModel(entityModel, schema);

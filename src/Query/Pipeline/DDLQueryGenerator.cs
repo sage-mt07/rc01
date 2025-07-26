@@ -3,6 +3,8 @@ using Kafka.Ksql.Linq.Query.Abstractions;
 using Kafka.Ksql.Linq.Query.Builders;
 using Kafka.Ksql.Linq.Query.Builders.Common;
 using Kafka.Ksql.Linq.Core.Modeling;
+using Kafka.Ksql.Linq.Query.Ddl;
+using Kafka.Ksql.Linq.Query.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,14 +49,22 @@ internal class DDLQueryGenerator : GeneratorBase, IDDLQueryGenerator
     /// <summary>
     /// CREATE STREAM文生成
     /// </summary>
-    public string GenerateCreateStream(string streamName, string topicName, EntityModel entityModel)
+    public string GenerateCreateStream(IDdlSchemaProvider provider)
     {
         ModelCreatingScope.EnsureInScope();
+        DdlSchemaDefinition? schema = null;
         try
         {
-            var columns = GenerateColumnDefinitions(entityModel);
-            var partitions = GetPartitionCount(entityModel);
-            var query = $"CREATE STREAM {streamName} ({columns}) WITH (KAFKA_TOPIC='{topicName}', KEY_FORMAT='AVRO', VALUE_FORMAT='AVRO', PARTITIONS={partitions})";
+            schema = provider.GetSchema();
+            var columns = GenerateColumnDefinitions(schema);
+            var partitions = schema.Partitions;
+            var replicas = schema.Replicas;
+            var streamName = schema.ObjectName;
+            var topicName = schema.TopicName;
+            var hasKey = schema.Columns.Any(c => c.IsKey);
+
+            var keyFormat = hasKey ? "KEY_FORMAT='AVRO', " : string.Empty;
+            var query = $"CREATE STREAM IF NOT EXISTS {streamName} ({columns}) WITH (KAFKA_TOPIC='{topicName}', {keyFormat}VALUE_FORMAT='AVRO', PARTITIONS={partitions}, REPLICAS={replicas})";
 
             if (!query.TrimEnd().EndsWith(";"))
             {
@@ -65,22 +75,30 @@ internal class DDLQueryGenerator : GeneratorBase, IDDLQueryGenerator
         }
         catch (Exception ex)
         {
-            return HandleGenerationError("CREATE STREAM generation", ex, $"Stream: {streamName}, Topic: {topicName}");
+            return HandleGenerationError("CREATE STREAM generation", ex, $"Stream: {schema?.ObjectName}, Topic: {schema?.TopicName}");
         }
     }
 
     /// <summary>
     /// CREATE TABLE文生成
     /// </summary>
-    public string GenerateCreateTable(string tableName, string topicName, EntityModel entityModel)
+    public string GenerateCreateTable(IDdlSchemaProvider provider)
     {
         ModelCreatingScope.EnsureInScope();
+        DdlSchemaDefinition? schema = null;
         try
         {
-            var columns = GenerateColumnDefinitions(entityModel);
-            var partitions = GetPartitionCount(entityModel);
+            schema = provider.GetSchema();
+            var columns = GenerateColumnDefinitions(schema);
+            var partitions = schema.Partitions;
+            var replicas = schema.Replicas;
+            var tableName = schema.ObjectName;
+            var topicName = schema.TopicName;
+            var hasKey = schema.Columns.Any(c => c.IsKey);
 
-            var query = $"CREATE TABLE {tableName} ({columns}) WITH (KAFKA_TOPIC='{topicName}', KEY_FORMAT='AVRO', VALUE_FORMAT='AVRO', PARTITIONS={partitions})";
+            var keyFormat = hasKey ? "KEY_FORMAT='AVRO', " : string.Empty;
+
+            var query = $"CREATE TABLE IF NOT EXISTS {tableName} ({columns}) WITH (KAFKA_TOPIC='{topicName}', {keyFormat}VALUE_FORMAT='AVRO', PARTITIONS={partitions}, REPLICAS={replicas})";
 
             if (!query.TrimEnd().EndsWith(";"))
             {
@@ -91,7 +109,7 @@ internal class DDLQueryGenerator : GeneratorBase, IDDLQueryGenerator
         }
         catch (Exception ex)
         {
-            return HandleGenerationError("CREATE TABLE generation", ex, $"Table: {tableName}, Topic: {topicName}");
+            return HandleGenerationError("CREATE TABLE generation", ex, $"Table: {schema?.ObjectName}, Topic: {schema?.TopicName}");
         }
     }
 
@@ -144,62 +162,44 @@ internal class DDLQueryGenerator : GeneratorBase, IDDLQueryGenerator
     /// <summary>
     /// カラム定義生成
     /// </summary>
-    private string GenerateColumnDefinitions(EntityModel entityModel)
+    private string GenerateColumnDefinitions(DdlSchemaDefinition schema)
     {
+        var keyColumns = schema.Columns.Where(c => c.IsKey).ToList();
+        var nonKeyColumns = schema.Columns.Where(c => !c.IsKey).ToList();
+
         var columns = new List<string>();
 
-        foreach (var property in entityModel.EntityType.GetProperties().OrderBy(p => p.MetadataToken))
+        if (keyColumns.Count > 1)
         {
-
-            var columnName = KsqlNameUtils.Sanitize(property.Name);
-            var ksqlType = MapToKsqlType(property.PropertyType);
-
-            var definition = $"{columnName} {ksqlType}";
-            if (entityModel.KeyProperties.Contains(property))
+            var fields = keyColumns.Select(c => $"{c.Name} {c.Type}");
+            var structDef = $"STRUCT<{string.Join(", ", fields)}>";
+            var keyColumnName = $"{schema.ObjectName}_key";
+            columns.Add($"{keyColumnName} {structDef} PRIMARY KEY");
+            columns.AddRange(nonKeyColumns.Select(c => $"{c.Name} {c.Type}"));
+        }
+        else
+        {
+            foreach (var column in schema.Columns)
             {
-                definition += " PRIMARY KEY";
+                var definition = $"{column.Name} {column.Type}";
+                if (column.IsKey)
+                {
+                    definition += " PRIMARY KEY";
+                }
+                columns.Add(definition);
             }
-
-            columns.Add(definition);
         }
 
         return string.Join(", ", columns);
     }
 
-    /// <summary>
-    /// Determine partition count from entity attributes
-    /// </summary>
-    private static int GetPartitionCount(EntityModel entityModel)
-    {
-        return 1;
-    }
 
     /// <summary>
     /// C#型からKSQL型マッピング
     /// </summary>
     private static string MapToKsqlType(Type propertyType)
     {
-        var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
-
-        return underlyingType switch
-        {
-            Type t when t == typeof(int) => "INT",
-            Type t when t == typeof(short) => "INT",
-            Type t when t == typeof(long) => "BIGINT",
-            Type t when t == typeof(double) => "DOUBLE",
-            Type t when t == typeof(float) => "DOUBLE",
-            Type t when t == typeof(decimal) => $"DECIMAL({DecimalPrecisionConfig.DecimalPrecision}, {DecimalPrecisionConfig.DecimalScale})",
-            Type t when t == typeof(string) => "VARCHAR",
-            Type t when t == typeof(char) => "VARCHAR",
-            Type t when t == typeof(bool) => "BOOLEAN",
-            Type t when t == typeof(DateTime) => "TIMESTAMP",
-            Type t when t == typeof(DateTimeOffset) => "TIMESTAMP",
-            Type t when t == typeof(Guid) => "VARCHAR",
-            Type t when t == typeof(byte[]) => "BYTES",
-            _ when underlyingType.IsEnum => throw new NotSupportedException($"Type '{underlyingType.Name}' is not supported."),
-            _ when !underlyingType.IsPrimitive && underlyingType != typeof(string) && underlyingType != typeof(char) && underlyingType != typeof(Guid) && underlyingType != typeof(byte[]) => throw new NotSupportedException($"Type '{underlyingType.Name}' is not supported."),
-            _ => throw new NotSupportedException($"Type '{underlyingType.Name}' is not supported.")
-        };
+        return KsqlTypeMapping.MapToKsqlType(propertyType);
     }
 
     /// <summary>
