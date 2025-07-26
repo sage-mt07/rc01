@@ -43,7 +43,7 @@ public class KafkaConsumerManagerTests
         }
         public IAsyncEnumerable<KafkaMessage<SampleEntity, object>> ConsumeAsync(CancellationToken cancellationToken = default) => _consume(cancellationToken);
         public Task<KafkaBatch<SampleEntity, object>> ConsumeBatchAsync(KafkaBatchOptions options, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-        public Task CommitAsync() => Task.CompletedTask;
+        public Task CommitAsync(TopicPartitionOffset offset) => Task.CompletedTask;
         public Task SeekAsync(TopicPartitionOffset offset) => Task.CompletedTask;
         public List<TopicPartition> GetAssignedPartitions() => new();
         public void Dispose() { }

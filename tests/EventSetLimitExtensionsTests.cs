@@ -50,7 +50,8 @@ public class EventSetLimitExtensionsTests
         public Task AddAsync(RateCandle entity, Dictionary<string, string>? headers = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<List<RateCandle>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(_items.ToList());
         public Task ForEachAsync(Func<RateCandle, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.WhenAll(_items.Select(action));
-        public Task ForEachAsync(Func<RateCandle, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.WhenAll(_items.Select(i => action(i, new KafkaMessageContext())));
+        public Task ForEachAsync(Func<RateCandle, KafkaMessage<RateCandle, object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+            => Task.WhenAll(_items.Select(i => action(i, new KafkaMessage<RateCandle, object> { Value = i, Key = new object() } )));
         public string GetTopicName() => _model.TopicName!;
         public EntityModel GetEntityModel() => _model;
         public IKsqlContext GetContext() => new DummyContext();

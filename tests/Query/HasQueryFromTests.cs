@@ -1,5 +1,6 @@
 using Kafka.Ksql.Linq.Configuration;
 using Kafka.Ksql.Linq.Core.Modeling;
+using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Application;
 using System.Linq;
 using Xunit;

@@ -2,6 +2,7 @@ using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Core.Modeling;
 using Kafka.Ksql.Linq.Query.Pipeline;
 using Kafka.Ksql.Linq.Query.Abstractions;
+using Kafka.Ksql.Linq.Query.Ddl;
 using Kafka.Ksql.Linq.Application;
 using Kafka.Ksql.Linq;
 using Kafka.Ksql.Linq.Configuration;
@@ -58,10 +59,11 @@ public class DynamicKsqlGenerationTests
         foreach (var model in models.Values)
         {
             var name = model.TopicName ?? model.EntityType.Name.ToLowerInvariant();
+            var provider = new EntityModelDdlAdapter(model);
             if (model.StreamTableType == StreamTableType.Table)
-                yield return ExecuteInScope(() => ddl.GenerateCreateTable(name, name, model));
+                yield return ExecuteInScope(() => ddl.GenerateCreateTable(provider));
             else
-                yield return ExecuteInScope(() => ddl.GenerateCreateStream(name, name, model));
+                yield return ExecuteInScope(() => ddl.GenerateCreateStream(provider));
         }
 
         IQueryable<OrderValue> orders = new List<OrderValue>().AsQueryable();

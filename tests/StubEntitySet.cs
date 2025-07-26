@@ -18,7 +18,7 @@ internal class StubEntitySet<T> : IEntitySet<T> where T : class
     public Task RemoveAsync(T entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
     public Task<List<T>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<T>());
     public Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.CompletedTask;
-    public Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public Task ForEachAsync(Func<T, KafkaMessage<T, object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.CompletedTask;
     public string GetTopicName() => "stub";
     public EntityModel GetEntityModel() => new EntityModel { EntityType = typeof(T) };
     public IKsqlContext GetContext() => throw new NotImplementedException();

@@ -1,5 +1,5 @@
 using Kafka.Ksql.Linq.Core.Modeling;
-using Kafka.Ksql.Linq.Query.Linq;
+using Kafka.Ksql.Linq.Query;
 using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Tests;
 using System;
@@ -31,7 +31,7 @@ public class JoinableEntitySetTests
         public Task RemoveAsync(T entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<List<T>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<T>());
         public Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task ForEachAsync(Func<T, KafkaMessage<T, object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public string GetTopicName() => typeof(T).Name;
         public EntityModel GetEntityModel()
         {
