@@ -48,6 +48,9 @@ internal class QueryBuilder<T> : IQueryBuilder<T> where T : class
     private string? _topicName;
     private QueryExecutionMode? _executionMode;
 
+    public LambdaExpression? QueryExpression => _queryExpression as LambdaExpression;
+    public Type? SourceType => _sourceType;
+
     public IQueryBuilder<T> FromSource<TSource>(Expression<Func<IQueryable<TSource>, IQueryable<T>>> queryExpression) 
         where TSource : class
     {

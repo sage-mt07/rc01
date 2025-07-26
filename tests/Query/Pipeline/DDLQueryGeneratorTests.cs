@@ -1,10 +1,10 @@
-using Kafka.Ksql.Linq.Core.Modeling;
+using Kafka.Ksql.Linq.Core.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using Kafka.Ksql.Linq.Core.Abstractions;
 using Kafka.Ksql.Linq.Query.Pipeline;
+using Kafka.Ksql.Linq.Query.Ddl;
 using Xunit;
 using System.IO;
 namespace Kafka.Ksql.Linq.Tests.Query.Pipeline;
@@ -33,9 +33,10 @@ public class DDLQueryGeneratorTests
     {
         var model = CreateEntityModel();
         var generator = new DDLQueryGenerator();
-        var query = ExecuteInScope(() => generator.GenerateCreateStream("s1", "topic", model));
+        var query = ExecuteInScope(() => generator.GenerateCreateStream(new EntityModelDdlAdapter(model)));
         Assert.Contains("CREATE STREAM s1", query);
         Assert.Contains("KAFKA_TOPIC='topic'", query);
+        Assert.Contains("REPLICAS=1", query);
         File.AppendAllText("generated_queries.txt", query + Environment.NewLine);
     }
 
@@ -47,7 +48,7 @@ public class DDLQueryGeneratorTests
             .WithTopic("topic");
         var model = builder.GetEntityModel<TestEntity>()!;
         var generator = new DDLQueryGenerator();
-        var query = ExecuteInScope(() => generator.GenerateCreateStream("s1", "topic", model));
+        var query = ExecuteInScope(() => generator.GenerateCreateStream(new EntityModelDdlAdapter(model)));
         Assert.Contains("CREATE STREAM", query);
     }
 
@@ -56,8 +57,9 @@ public class DDLQueryGeneratorTests
     {
         var model = CreateEntityModel();
         var generator = new DDLQueryGenerator();
-        var query = ExecuteInScope(() => generator.GenerateCreateStream("s1", "topic", model));
+        var query = ExecuteInScope(() => generator.GenerateCreateStream(new EntityModelDdlAdapter(model)));
         Assert.Contains("KEY_FORMAT='AVRO'", query);
+        Assert.Contains("REPLICAS=1", query);
     }
 
     [Fact]
@@ -65,8 +67,9 @@ public class DDLQueryGeneratorTests
     {
         var model = CreateEntityModel();
         var generator = new DDLQueryGenerator();
-        var query = ExecuteInScope(() => generator.GenerateCreateTable("t1", "topic", model));
+        var query = ExecuteInScope(() => generator.GenerateCreateTable(new EntityModelDdlAdapter(model)));
         Assert.Contains("KEY_FORMAT='AVRO'", query);
+        Assert.Contains("REPLICAS=1", query);
     }
 
     [Fact]
@@ -92,7 +95,7 @@ public class DDLQueryGeneratorTests
         var generator = new DDLQueryGenerator();
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            generator.GenerateCreateStream("s1", "topic", model));
+            generator.GenerateCreateStream(new EntityModelDdlAdapter(model)));
 
         Assert.Contains("Where/GroupBy/Select", ex.Message);
     }

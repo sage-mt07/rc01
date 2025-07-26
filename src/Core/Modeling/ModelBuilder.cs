@@ -131,6 +131,8 @@ internal class ModelBuilder : IModelBuilder
         {
             EntityType = entityType,
             TopicName = entityType.Name.ToLowerInvariant(),
+            Partitions = 1,
+            ReplicationFactor = 1,
             AllProperties = allProperties,
             KeyProperties = keyProperties
         };
