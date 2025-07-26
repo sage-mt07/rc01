@@ -18,11 +18,9 @@ public class JoinLimitationEnforcerTests
         IQueryable<TestEntity> t1 = new List<TestEntity>().AsQueryable();
         IQueryable<ChildEntity> t2 = new List<ChildEntity>().AsQueryable();
         IQueryable<GrandChildEntity> t3 = new List<GrandChildEntity>().AsQueryable();
-        IQueryable<ExtraEntity> t4 = new List<ExtraEntity>().AsQueryable();
 
         var expr = t1.Join(t2, o => o.Id, i => i.ParentId, (o, i) => new { o, i })
                       .Join(t3, x => x.o.Id, g => g.ChildId, (x, g) => new { x.o, x.i, g })
-                      .Join(t4, x => x.o.Id, f => f.RefId, (x, f) => new { x.o, f })
                       .Expression;
 
         Assert.Throws<StreamProcessingException>(() => JoinLimitationEnforcer.ValidateJoinExpression(expr));

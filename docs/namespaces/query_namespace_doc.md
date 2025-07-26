@@ -36,10 +36,10 @@ LINQ式をKSQLクエリに変換する責務を担うnamespace。責務分離設
 ##### 共通基盤
 - **BuilderBase**: Builder共通制約・バリデーション
 - **BuilderValidation**: 式木安全性チェック、深度制限
-- **JoinLimitationEnforcer**: 3テーブル制限の厳格実装
+- **JoinLimitationEnforcer**: 2テーブル制限の厳格実装
 
-#### ストリーム処理制約
-- 3テーブルJOIN制限
+-#### ストリーム処理制約
+- 2テーブルJOIN制限
 - ネストした集約関数禁止
 - 式木深度制限（スタックオーバーフロー防止）
 
@@ -87,7 +87,7 @@ JSON関数: JsonExtractString等
 - **GeneratorBase**: Generator共通制約、Builder依存注入必須
 - **DMLQueryGenerator**: SELECT文生成（Pull/Push Query対応）
 - **DDLQueryGenerator**: CREATE STREAM/TABLE文生成
-- **JoinQueryGenerator**: JOIN専門生成器（3テーブル制限対応）
+- **JoinQueryGenerator**: JOIN専門生成器（2テーブル制限対応）
 
 #### 構造化組み立て
 - **QueryStructure**: クエリ構造統一管理
@@ -101,7 +101,7 @@ JSON関数: JsonExtractString等
 #### JOIN操作サポート
 - **IJoinableEntitySet\<T>**: JOIN可能なEntitySet
 - **IJoinResult\<TOuter, TInner>**: 2テーブルJOIN結果
-- **IJoinResult\<TOuter, TInner, TThird>**: 3テーブルJOIN結果
+ - **IJoinResult\<TOuter, TInner, TThird>**: (旧仕様) 3テーブルJOIN結果
 - **JoinableEntitySet\<T>**: 既存EntitySetのJOIN機能拡張
 
 ## アーキテクチャ特徴
@@ -114,7 +114,7 @@ JSON関数: JsonExtractString等
 
 ### ストリーム処理対応
 - Pull Query（一回限り）vs Push Query（ストリーミング）
-- 3テーブルJOIN制限
+- 2テーブルJOIN制限
 - co-partitioningパフォーマンス考慮
 
 #### Push Query と Pull Query の対応
@@ -159,7 +159,7 @@ Core.Abstractions → Query.Abstractions ← Query.Builders
 
 1. **Builder依存注入必須**: Generatorは必ずBuilder注入
 2. **キーワード分離**: Builder=句内容、Generator=完全文
-3. **3テーブル制限**: ストリーム処理性能のための制限
+3. **2テーブル制限**: ストリーム処理性能のための制限
 4. **式木安全性**: 深度・複雑度制限によるスタックオーバーフロー防止
 5. **NULL安全**: 全Builder・Generatorで統一されたNULL処理
 

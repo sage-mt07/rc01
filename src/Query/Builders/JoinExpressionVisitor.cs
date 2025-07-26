@@ -24,7 +24,7 @@ internal class JoinExpressionVisitor : ExpressionVisitor
                 var joinInfo = ProcessJoinCall(node);
                 _joins.Add(joinInfo);
 
-                // 3テーブル制限チェック
+                // 2テーブル制限チェック
                 if (_joins.Count > JoinLimitationEnforcer.MaxJoinTables - 1) // -1 because base table counts as 1
                 {
                     throw new InvalidOperationException(
