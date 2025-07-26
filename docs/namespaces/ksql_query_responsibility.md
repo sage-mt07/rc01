@@ -49,7 +49,7 @@
 
 ```csharp
 modelBuilder.Entity<CategoryCount>()
-    .HasQuery(q => q
+    .HasQueryFrom<ApiMessage>(q => q
         .Where(x => x.Category == "A")
         .GroupBy(x => x.Category)
         .Select(g => new CategoryCount { Key = g.Key, Count = g.Count() })

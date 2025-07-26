@@ -41,7 +41,7 @@ public class SampleKsqlContext : KsqlContext
         
         // 1. シンプルなGroupBy + Select
         modelBuilder.Entity<CustomerOrderSummary>()
-            .HasQuery<OrderEntity>(orders => orders
+            .HasQueryFrom<OrderEntity>(orders => orders
                 .GroupBy(o => o.CustomerId)
                 .Select(g => new CustomerOrderSummary
                 {
@@ -54,7 +54,7 @@ public class SampleKsqlContext : KsqlContext
 
         // 2. 複合キーの例
         modelBuilder.Entity<DailySalesEntity>()
-            .HasQuery<OrderEntity>(orders => orders
+            .HasQueryFrom<OrderEntity>(orders => orders
                 .GroupBy(o => new { o.CustomerId, Date = o.OrderDate.Date })
                 .Select(g => new DailySalesEntity
                 {
@@ -66,7 +66,7 @@ public class SampleKsqlContext : KsqlContext
 
         // 3. キーなし（Stream型）の例
         modelBuilder.Entity<OrderEventEntity>()
-            .HasQuery<OrderEntity>(orders => orders
+            .HasQueryFrom<OrderEntity>(orders => orders
                 .Where(o => o.Status == "COMPLETED")
                 .Select(o => new OrderEventEntity
                 {
@@ -180,7 +180,7 @@ public class AdvancedKsqlContext : KsqlContext
         
         // 1. 単純集約
         modelBuilder.Entity<OrderCountByStatus>()
-            .HasQuery<OrderEntity>(orders => orders
+            .HasQueryFrom<OrderEntity>(orders => orders
                 .GroupBy(o => o.Status)
                 .Select(g => new OrderCountByStatus
                 {
@@ -191,7 +191,7 @@ public class AdvancedKsqlContext : KsqlContext
 
         // 2. フィルタ + 集約
         modelBuilder.Entity<HighValueOrderSummary>()
-            .HasQuery<OrderEntity>(orders => orders
+            .HasQueryFrom<OrderEntity>(orders => orders
                 .Where(o => o.Amount > 1000)
                 .GroupBy(o => o.CustomerId)
                 .Select(g => new HighValueOrderSummary
@@ -204,7 +204,7 @@ public class AdvancedKsqlContext : KsqlContext
 
         // 3. 複雑な計算フィールド
         modelBuilder.Entity<CustomerMetrics>()
-            .HasQuery<OrderEntity>(orders => orders
+            .HasQueryFrom<OrderEntity>(orders => orders
                 .GroupBy(o => o.CustomerId)
                 .Select(g => new CustomerMetrics
                 {

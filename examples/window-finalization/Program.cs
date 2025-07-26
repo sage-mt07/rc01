@@ -34,7 +34,7 @@ public class SalesContext : KsqlContext
         modelBuilder.Entity<Sale>();
         modelBuilder.Entity<SaleWindowTotal>()
             // 集約元エンティティを明示する
-            .HasQuery<Sale>(q => q.Window(TumblingWindow.OfMinutes(1).EmitFinal())
+            .HasQueryFrom<Sale>(q => q.Window(TumblingWindow.OfMinutes(1).EmitFinal())
                                  .UseFinalized()
                                  // 意味のあるキーでグループ化
                                  .GroupBy(s => s.ProductId)
