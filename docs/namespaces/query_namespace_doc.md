@@ -101,7 +101,6 @@ JSON関数: JsonExtractString等
 #### JOIN操作サポート
 - **IJoinableEntitySet\<T>**: JOIN可能なEntitySet
 - **IJoinResult\<TOuter, TInner>**: 2テーブルJOIN結果
- - **IJoinResult\<TOuter, TInner, TThird>**: (旧仕様) 3テーブルJOIN結果
 - **JoinableEntitySet\<T>**: 既存EntitySetのJOIN機能拡張
 
 ## アーキテクチャ特徴
