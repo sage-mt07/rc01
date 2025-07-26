@@ -8,11 +8,11 @@ namespace Kafka.Ksql.Linq.Query.Builders.Common;
 
 /// <summary>
 /// JOIN制限強制クラス
-/// 設計理由：ストリーム処理における3テーブル制限の厳格実装
+/// 設計理由：ストリーム処理における2テーブル制限の厳格実装
 /// </summary>
 internal static class JoinLimitationEnforcer
 {
-    public const int MaxJoinTables = 3;
+    public const int MaxJoinTables = 2;
 
     /// <summary>
     /// JOIN式の検証
