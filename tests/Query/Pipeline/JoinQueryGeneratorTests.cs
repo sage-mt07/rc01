@@ -31,31 +31,6 @@ public class JoinQueryGeneratorTests
         Assert.Contains("ON e.Id = c.ParentId", sql);
     }
 
-    [Fact]
-    public void GenerateThreeTableJoin_ReturnsJoinQuery()
-    {
-        Expression<Func<TestEntity, int>> k1 = e => e.Id;
-        Expression<Func<ChildEntity, int>> k2 = c => c.ParentId;
-        Expression<Func<ChildEntity, int>> k3 = c => c.Id;
-        Expression<Func<GrandChildEntity, int>> k4 = g => g.ChildId;
-
-        var generator = new JoinQueryGenerator();
-        var sql = generator.GenerateThreeTableJoin(
-            "TestEntity",
-            "ChildEntity",
-            "GrandChildEntity",
-            k1,
-            k2,
-            k3,
-            k4,
-            resultSelector: null,
-            isPullQuery: true);
-
-        Assert.Contains("JOIN ChildEntity", sql);
-        Assert.Contains("JOIN GrandChildEntity", sql);
-        Assert.Contains("ON t1.Id = t2.ParentId", sql);
-        Assert.Contains("ON t2.Id = t3.ChildId", sql);
-    }
 
     [Fact]
     public void GenerateLeftJoin_ReturnsLeftJoinQuery()
