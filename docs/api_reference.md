@@ -92,7 +92,9 @@
 | `.WithReplicationFactor(replicationFactor)` | レプリケーション係数を設定（拡張） |
 | `.WithPartitioner(partitioner)` | カスタムパーティショナーを指定（拡張） |
 | `.HasQuery(query)` | LINQ クエリからモデルを構築 |
+| `.HasQueryFrom<TSource>(query)` | ソース型を指定したクエリ定義 |
 | `DefineQuery<TSource, TTarget>(query)` | ソースとターゲットを指定したクエリ定義 |
+| `DefineQueryFrom<TSource, TTarget>(query)` | `HasQueryFrom` の ModelBuilder 版 |
 
 <a id="fluent-api-guide"></a>
 ## Fluent API ガイドライン

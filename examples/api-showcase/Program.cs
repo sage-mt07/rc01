@@ -29,7 +29,7 @@ public class ApiContext : KsqlContext
     {
         modelBuilder.Entity<ApiMessage>();
         modelBuilder.Entity<CategoryCount>()
-            .HasQuery(q => q.Where(m => m.Category == "A")
+            .HasQueryFrom<ApiMessage>(q => q.Where(m => m.Category == "A")
                              .GroupBy(m => m.Category)
                              .Select(g => new CategoryCount { Key = g.Key, Count = g.Count() }));
     }

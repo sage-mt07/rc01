@@ -33,4 +33,17 @@ public static class ModelBuilderQueryExtensions
         var entityBuilder = (EntityModelBuilder<TTarget>)modelBuilder.Entity<TTarget>();
         return entityBuilder.HasQuery(queryExpression);
     }
+
+    /// <summary>
+    /// 新しいFrom APIを用いたクエリ定義
+    /// </summary>
+    public static EntityModelBuilder<TTarget> DefineQueryFrom<TSource, TTarget>(
+        this IModelBuilder modelBuilder,
+        Expression<Func<IQueryable<TSource>, IQueryable<TTarget>>> queryExpression)
+        where TSource : class
+        where TTarget : class
+    {
+        var entityBuilder = (EntityModelBuilder<TTarget>)modelBuilder.Entity<TTarget>();
+        return entityBuilder.HasQueryFrom<TSource, TTarget>(queryExpression);
+    }
 }

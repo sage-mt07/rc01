@@ -92,6 +92,18 @@ public static class EntityBuilderQueryExtensions
     }
 
     /// <summary>
+    /// ソース型を明示したクエリ定義
+    /// </summary>
+    public static EntityModelBuilder<TTarget> HasQueryFrom<TSource, TTarget>(
+        this EntityModelBuilder<TTarget> builder,
+        Expression<Func<IQueryable<TSource>, IQueryable<TTarget>>> queryExpression)
+        where TTarget : class
+        where TSource : class
+    {
+        return builder.HasQuery(q => q.FromSource(queryExpression));
+    }
+
+    /// <summary>
     /// クエリビルダーを使用した詳細設定
     /// </summary>
     public static EntityModelBuilder<T> HasQuery<T>(
