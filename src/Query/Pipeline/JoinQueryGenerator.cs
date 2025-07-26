@@ -10,7 +10,7 @@ namespace Kafka.Ksql.Linq.Query.Pipeline;
 
 /// <summary>
 /// JOINクエリ生成器（新規作成）
-/// 設計理由：責務分離設計に準拠、JOIN専門生成器として3テーブル制限を含む完全なJOIN文生成
+/// 設計理由：責務分離設計に準拠、2テーブルJOINとLEFT JOINに特化
 /// </summary>
 internal class JoinQueryGenerator : GeneratorBase
 {
@@ -69,44 +69,6 @@ internal class JoinQueryGenerator : GeneratorBase
         catch (System.Exception ex)
         {
             return HandleGenerationError("two-table JOIN generation", ex, $"Tables: {outerTable}, {innerTable}");
-        }
-    }
-
-    /// <summary>
-    /// 3テーブルJOINクエリ生成（制限対応）
-    /// </summary>
-    public string GenerateThreeTableJoin(
-        string firstTable,
-        string secondTable,
-        string thirdTable,
-        Expression firstSecondKeySelector,
-        Expression secondFirstKeySelector,
-        Expression secondThirdKeySelector,
-        Expression thirdSecondKeySelector,
-        Expression? resultSelector = null,
-        bool isPullQuery = true)
-    {
-        try
-        {
-            // 3テーブル制限の明示的チェック
-            JoinLimitationEnforcer.ValidateJoinExpression(
-                Expression.Constant($"THREE_TABLE_JOIN:{firstTable},{secondTable},{thirdTable}"));
-
-            var context = new QueryAssemblyContext($"{firstTable}_JOIN_{secondTable}_JOIN_{thirdTable}", isPullQuery);
-
-            // 段階的JOIN構築
-            var query = BuildThreeTableJoinQuery(
-                firstTable, secondTable, thirdTable,
-                firstSecondKeySelector, secondFirstKeySelector,
-                secondThirdKeySelector, thirdSecondKeySelector,
-                resultSelector);
-
-            return ApplyQueryPostProcessing(query, context);
-        }
-        catch (System.Exception ex)
-        {
-            return HandleGenerationError("three-table JOIN generation", ex,
-                $"Tables: {firstTable}, {secondTable}, {thirdTable}");
         }
     }
 
@@ -247,50 +209,6 @@ internal class JoinQueryGenerator : GeneratorBase
         // デフォルトは両テーブルの全カラムを返す
         var newExpression = Expression.New(typeof(object).GetConstructors()[0]);
         return Expression.Lambda(newExpression, outerParam, innerParam);
-    }
-
-    /// <summary>
-    /// 3テーブルJOINクエリ構築
-    /// </summary>
-    private string BuildThreeTableJoinQuery(
-        string firstTable,
-        string secondTable,
-        string thirdTable,
-        Expression firstSecondKeySelector,
-        Expression secondFirstKeySelector,
-        Expression secondThirdKeySelector,
-        Expression thirdSecondKeySelector,
-        Expression? resultSelector)
-    {
-        // 段階的JOIN（2段階に分けて実行）
-        var firstJoinAlias = $"{firstTable}_TO_{secondTable}";
-        var secondJoinAlias = $"{firstJoinAlias}_TO_{thirdTable}";
-
-        // キー抽出
-        var firstSecondKeys = ExtractKeys(firstSecondKeySelector);
-        var secondFirstKeys = ExtractKeys(secondFirstKeySelector);
-        var secondThirdKeys = ExtractKeys(secondThirdKeySelector);
-        var thirdSecondKeys = ExtractKeys(thirdSecondKeySelector);
-
-        // エイリアス設定
-        var t1Alias = "t1";
-        var t2Alias = "t2";
-        var t3Alias = "t3";
-
-        // JOIN条件構築
-        var join1Conditions = BuildJoinConditions(firstSecondKeys, secondFirstKeys, t1Alias, t2Alias);
-        var join2Conditions = BuildJoinConditions(secondThirdKeys, thirdSecondKeys, t2Alias, t3Alias);
-
-        // プロジェクション構築
-        var projection = resultSelector != null ?
-            ProcessResultSelector(resultSelector, t1Alias, t2Alias, t3Alias) :
-            $"{t1Alias}.*, {t2Alias}.*, {t3Alias}.*";
-
-        // 完全なクエリ組み立て
-        return $"SELECT {projection} " +
-               $"FROM {firstTable} {t1Alias} " +
-               $"JOIN {secondTable} {t2Alias} ON {join1Conditions} " +
-               $"JOIN {thirdTable} {t3Alias} ON {join2Conditions}";
     }
 
     /// <summary>
