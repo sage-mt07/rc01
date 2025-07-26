@@ -10,10 +10,6 @@ namespace Kafka.Ksql.Linq.Tests.Query.Builders;
 
 public class JoinClauseBuilderTests
 {
-    private class FourthEntity
-    {
-        public int RefId { get; set; }
-    }
 
     [Fact]
     public void Build_InnerJoin_ReturnsJoinSql()
@@ -54,16 +50,14 @@ public class JoinClauseBuilderTests
     }
 
     [Fact]
-    public void Build_TooManyTables_Throws()
+    public void Build_JoinWithThirdTable_Throws()
     {
         IQueryable<TestEntity> t1 = new List<TestEntity>().AsQueryable();
         IQueryable<ChildEntity> t2 = new List<ChildEntity>().AsQueryable();
         IQueryable<GrandChildEntity> t3 = new List<GrandChildEntity>().AsQueryable();
-        IQueryable<FourthEntity> t4 = new List<FourthEntity>().AsQueryable();
 
         var join = Queryable.Join(t1, t2, o => o.Id, i => i.ParentId, (o, i) => new { o, i })
-                     .Join(t3, x => x.o.Id, g => g.ChildId, (x, g) => new { x.o, x.i, g })
-                     .Join(t4, x => x.o.Id, f => f.RefId, (x, f) => new { x.o, f });
+                     .Join(t3, x => x.o.Id, g => g.ChildId, (x, g) => new { x.o, x.i, g });
 
         var builder = new JoinClauseBuilder();
 

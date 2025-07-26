@@ -50,4 +50,21 @@ public class JoinQueryGeneratorTests
         Assert.Contains("LEFT JOIN ChildEntity", sql);
         Assert.DoesNotContain("EMIT CHANGES", sql);
     }
+
+    [Fact]
+    public void GenerateFromLinqJoin_ThirdTable_Throws()
+    {
+        IQueryable<TestEntity> t1 = new List<TestEntity>().AsQueryable();
+        IQueryable<ChildEntity> t2 = new List<ChildEntity>().AsQueryable();
+        IQueryable<GrandChildEntity> t3 = new List<GrandChildEntity>().AsQueryable();
+
+        var expr = t1.Join(t2, o => o.Id, i => i.ParentId, (o, i) => new { o, i })
+                      .Join(t3, x => x.o.Id, g => g.ChildId, (x, g) => new { x.o, x.i, g })
+                      .Expression;
+
+        var generator = new JoinQueryGenerator();
+
+        var ex = Assert.Throws<InvalidOperationException>(() => generator.GenerateFromLinqJoin(expr));
+        Assert.Contains("maximum", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
 }
