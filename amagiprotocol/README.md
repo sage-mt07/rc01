@@ -25,7 +25,7 @@
 
 ### Week4: 6/29-7/1 テスト拡充とAPI整備
 - 6/29 DSLテスト指示集 … [../../reports/jinto_query_test_prompts_20250629_1025.md](../../reports/jinto_query_test_prompts_20250629_1025.md)
-- 6/29 3テーブル結合テスト … [../../reports/jinto_query_test_3joins_20250629_1026.md](../../reports/jinto_query_test_3joins_20250629_1026.md)
+- 6/29 3テーブル結合テスト（現在は2テーブル制限のため歴史的記録） … [../../reports/jinto_query_test_3joins_20250629_1026.md](../../reports/jinto_query_test_3joins_20250629_1026.md)
 - 7/1 鏡花がAPIリファレンスレビュー … [../../reports/20250701_223827.txt](../../reports/20250701_223827.txt)
 
 ### Week5: 7/2-7/6 README統合
