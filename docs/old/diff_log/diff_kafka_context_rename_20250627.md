@@ -1,4 +1,5 @@
 # 差分レポート（KafkaContext ↔ KsqlContext 命名揺れ）
+> **Note:** このレポートには `UnifiedThreeWayJoinResult.cs` 等、現在は削除されたファイルへの言及が含まれています。JOIN 機能は後に2テーブル制限へ変更されました。
 
 🗕 2025年6月27日（JST）
 🧐 作業者: 鏡花（品質監査AI）
