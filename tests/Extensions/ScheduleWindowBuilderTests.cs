@@ -122,7 +122,8 @@ public class ScheduleWindowBuilderTests
         public Task RemoveAsync(T entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<List<T>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(_query.ToList());
         public Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.WhenAll(_query.Select(action));
-        public Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.WhenAll(_query.Select(i => action(i, new KafkaMessageContext())));
+        public Task ForEachAsync(Func<T, KafkaMessage<T, object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+            => Task.WhenAll(_query.Select(i => action(i, new KafkaMessage<T, object> { Value = i, Key = new object() } )));
         public string GetTopicName() => _model.TopicName ?? typeof(T).Name.ToLowerInvariant();
         public EntityModel GetEntityModel() => _model;
         public IKsqlContext GetContext() => _context;

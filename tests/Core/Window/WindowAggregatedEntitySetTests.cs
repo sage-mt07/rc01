@@ -36,7 +36,7 @@ public class WindowAggregatedEntitySetTests
         public Task RemoveAsync(T entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<List<T>> ToListAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<T>());
         public Task ForEachAsync(Func<T, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task ForEachAsync(Func<T, KafkaMessageContext, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task ForEachAsync(Func<T, KafkaMessage<T, object>, Task> action, TimeSpan timeout = default, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public string GetTopicName() => _model.TopicName ?? typeof(T).Name.ToLowerInvariant();
         public EntityModel GetEntityModel() => _model;
         public IKsqlContext GetContext() => _context;

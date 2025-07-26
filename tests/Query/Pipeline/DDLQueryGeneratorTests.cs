@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using Kafka.Ksql.Linq.Query.Pipeline;
 using Kafka.Ksql.Linq.Query.Ddl;
+using Kafka.Ksql.Linq.Core.Modeling;
 using Xunit;
 using System.IO;
 namespace Kafka.Ksql.Linq.Tests.Query.Pipeline;
