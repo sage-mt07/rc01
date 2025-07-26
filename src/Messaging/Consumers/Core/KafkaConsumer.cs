@@ -296,29 +296,30 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
                 $"Failed to convert key from {keyObject?.GetType()?.Name ?? "null"} to {typeof(TKey).Name}");
         }
 
-        return new KafkaMessage<TValue, TKey>
-        {
-            Value = completeEntity,  // ✅ 修正：Key値が復元された完全なPOCO
-            Key = key,
-            Topic = consumeResult.Topic,
-            Partition = consumeResult.Partition.Value,
-            Offset = consumeResult.Offset.Value,
-            Timestamp = consumeResult.Message.Timestamp.UtcDateTime,
-            Headers = consumeResult.Message.Headers,
-            Context = new KafkaMessageContext
+            return new KafkaMessage<TValue, TKey>
             {
-                MessageId = Guid.NewGuid().ToString(),
-                CorrelationId = ExtractCorrelationId(consumeResult.Message.Headers),
-                Tags = new Dictionary<string, object>
+                Value = completeEntity,  // ✅ 修正：Key値が復元された完全なPOCO
+                Key = key,
+                Topic = consumeResult.Topic,
+                Partition = consumeResult.Partition.Value,
+                Offset = consumeResult.Offset.Value,
+                Timestamp = consumeResult.Message.Timestamp.UtcDateTime,
+                Headers = consumeResult.Message.Headers,
+                Context = new KafkaMessageContext
                 {
-                    ["topic"] = consumeResult.Topic,
-                    ["partition"] = consumeResult.Partition.Value,
-                    ["offset"] = consumeResult.Offset.Value,
+                    MessageId = Guid.NewGuid().ToString(),
+                    CorrelationId = ExtractCorrelationId(consumeResult.Message.Headers),
+                    Headers = ConvertHeadersToDictionary(consumeResult.Message.Headers),
+                    Tags = new Dictionary<string, object>
+                    {
+                        ["topic"] = consumeResult.Topic,
+                        ["partition"] = consumeResult.Partition.Value,
+                        ["offset"] = consumeResult.Offset.Value,
                     ["key_merge_applied"] = _entityModel.KeyProperties?.Length > 0  // デバッグ情報
                 }
-            }
-        };
-    }
+                }
+            };
+        }
 
     private void HandleDeserializationFailure(byte[]? data, Exception ex, ConsumeResult<object, object> result)
     {
@@ -367,6 +368,23 @@ internal class KafkaConsumer<TValue, TKey> : IKafkaConsumer<TValue, TKey>
         }
 
         return null;
+    }
+
+    private static Dictionary<string, object> ConvertHeadersToDictionary(Headers? headers)
+    {
+        var dict = new Dictionary<string, object>();
+        if (headers == null) return dict;
+
+        foreach (var header in headers)
+        {
+            if (header.GetValueBytes() != null)
+            {
+                var value = System.Text.Encoding.UTF8.GetString(header.GetValueBytes());
+                dict[header.Key] = value;
+            }
+        }
+
+        return dict;
     }
 
     public void Dispose()

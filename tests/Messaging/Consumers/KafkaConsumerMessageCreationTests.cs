@@ -156,4 +156,30 @@ public class KafkaConsumerMessageCreationTests
         Assert.Same(headers, result.Headers);
         Assert.Equal("abc", result.Context?.CorrelationId);
     }
+
+    [Fact]
+    public async Task ConsumeBatchAsync_WithHeaders_PopulatesContextHeaders()
+    {
+        var fake = DispatchProxy.Create<IConsumer<object, object>, FakeConsumer>() as FakeConsumer;
+        var headers = new Headers { new Header("foo", System.Text.Encoding.UTF8.GetBytes("bar")) };
+        var msg = new Message<object, object> { Key = new byte[] { 1 }, Value = new byte[] { 2 }, Headers = headers, Timestamp = new Timestamp(DateTime.UtcNow) };
+        fake!.Queue.Enqueue(new ConsumeResult<object, object>
+        {
+            Message = msg,
+            Topic = "t",
+            Partition = new Partition(0),
+            Offset = new Offset(2)
+        });
+        var keyDeser = new StubDeserializer { Handler = (_,_,_) => 5 };
+        var valDeser = new StubDeserializer { Handler = (_,_,_) => new TestEntity() };
+        var consumer = CreateConsumer(fake, keyDeser, valDeser);
+        var opts = new KafkaBatchOptions { MaxBatchSize = 1, MaxWaitTime = TimeSpan.FromSeconds(1) };
+
+        var batch = await consumer.ConsumeBatchAsync(opts);
+
+        Assert.Single(batch.Messages);
+        var result = batch.Messages[0];
+        Assert.True(result.Context!.Headers.ContainsKey("foo"));
+        Assert.Equal("bar", result.Context!.Headers["foo"]);
+    }
 }
